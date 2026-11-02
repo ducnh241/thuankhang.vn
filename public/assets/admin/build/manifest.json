@@ -1,0 +1,29 @@
+{
+  "resources/admin/css/app.css": {
+    "file": "assets/app-zOeMDQc9.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/admin/css/app.css",
+    "isEntry": true
+  },
+  "resources/admin/js/app.js": {
+    "file": "assets/app-CwAlbKbc.js",
+    "name": "app",
+    "src": "resources/admin/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/admin/js/editor.js"
+    ]
+  },
+  "resources/admin/js/editor.js": {
+    "file": "assets/editor-BEHIWhA3.js",
+    "name": "editor",
+    "src": "resources/admin/js/editor.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/admin/js/app.js"
+    ]
+  }
+}

@@ -1,0 +1,2941 @@
+/*
+ * Ant Design component styles + template styles are plain (unlayered) CSS, so they cascade exactly like the
+ * original. Tailwind's preflight is left out (Ant Design ships its own reset) and utilities are `!important`
+ * so a utility class always wins over a component style.
+ */
+@layer theme, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities) important source(none);
+@import './vendor/antd.css';
+
+/* ProCMS (ducnh.com): Tailwind chỉ quét view Blade của backend / đăng nhập và JS admin, không quét cả dự án */
+@source '../../views/auth';
+@source '../../views/backend';
+@source '../../views/layouts';
+@source '../js';
+
+@theme {
+  /* The layout switches to its mobile version below 992px. */
+  --breakpoint-lg: 62rem;
+}
+
+/* Base */
+*,
+::before,
+::after {
+  box-sizing: inherit;
+}
+html {
+  box-sizing: border-box;
+}
+body {
+  background-color: #f7f7f9;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: 14px;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji';
+}
+html,
+body {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+a:hover {
+  text-decoration: none;
+}
+svg {
+  overflow: hidden;
+  vertical-align: middle;
+}
+.anticon {
+  vertical-align: middle;
+}
+b,
+strong {
+  font-weight: 600;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 0.5rem;
+  font-family: inherit;
+  font-weight: 400;
+  line-height: 1.2;
+}
+h1 {
+  font-size: 2.5rem;
+}
+h2 {
+  font-size: 2rem;
+}
+h3 {
+  font-size: 1.75rem;
+}
+h4 {
+  font-size: 1.5rem;
+}
+h5 {
+  font-size: 1.25rem;
+}
+h6 {
+  font-size: 1rem;
+}
+.icon-sprite {
+  display: none;
+}
+
+/* Ant Design tweaks shared by the whole template */
+.ant-menu-vertical .ant-menu-item,
+.ant-menu-vertical-left .ant-menu-item,
+.ant-menu-vertical-right .ant-menu-item,
+.ant-menu-inline .ant-menu-item,
+.ant-menu-vertical .ant-menu-submenu-title,
+.ant-menu-vertical-left .ant-menu-submenu-title,
+.ant-menu-vertical-right .ant-menu-submenu-title,
+.ant-menu-inline .ant-menu-submenu-title,
+.ant-menu-vertical .ant-menu-item:not(:last-child),
+.ant-menu-vertical-left .ant-menu-item:not(:last-child),
+.ant-menu-vertical-right .ant-menu-item:not(:last-child),
+.ant-menu-inline .ant-menu-item:not(:last-child) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.ant-menu-submenu-open.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::before {
+  transform: rotate(45deg) translateX(3px);
+}
+.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::before {
+  transform: rotate(-45deg) translateX(3px);
+}
+.ant-menu-submenu-open.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
+  transform: rotate(-45deg) translateX(-3px);
+}
+.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
+  transform: rotate(45deg) translateX(-3px);
+}
+.ant-menu-submenu-vertical > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
+.ant-menu-submenu-vertical-left > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
+.ant-menu-submenu-vertical-right > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
+.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
+.ant-menu-submenu-vertical > .ant-menu-submenu-title .ant-menu-submenu-arrow::after,
+.ant-menu-submenu-vertical-left > .ant-menu-submenu-title .ant-menu-submenu-arrow::after,
+.ant-menu-submenu-vertical-right > .ant-menu-submenu-title .ant-menu-submenu-arrow::after,
+.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
+  height: 1px;
+}
+.ant-card-bordered {
+  box-shadow: rgba(0, 0, 0, 0.1) 0 0 1px;
+  background-clip: padding-box;
+  border: 0 !important;
+}
+.ant-card-head-title {
+  font-weight: 700;
+}
+.ant-layout-sider-children {
+  background: #fff;
+  overflow: hidden;
+  flex: 1 1 auto;
+  flex-direction: column;
+  display: flex;
+}
+
+/* Demo cards: spacing between buttons and paragraphs */
+.demo-card div:not(.ant-btn-group) > .ant-btn,
+.demo-card span:not(.ant-btn-group) > .ant-btn,
+.demo-card .ant-btn-group {
+  margin-right: 8px;
+  margin-bottom: 12px;
+}
+.demo-card p {
+  display: block;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+.dynamic-delete-button {
+  margin: 0 8px;
+  cursor: pointer;
+  position: relative;
+  top: 4px;
+  font-size: 24px;
+  color: #999;
+  transition: all 0.3s;
+}
+.dynamic-delete-button:hover {
+  color: #777;
+}
+
+/* Page shell */
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: auto;
+  max-height: -webkit-fill-available;
+  background-color: #f0f0f0;
+}
+.page .workspace {
+  height: calc(100vh - 60px);
+  max-height: -webkit-fill-available;
+  width: 100%;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  flex-grow: 1;
+  flex-direction: row;
+}
+.page .workspace > .ant-layout {
+  overflow-x: hidden;
+  /* ProCMS: luôn chừa chỗ thanh cuộn — trang ngắn / dài (đổi tab, lọc danh sách) không làm nội dung rộng ra hẹp lại
+     khi thanh cuộn hiện / ẩn (máy tắt thanh cuộn nổi, vd Windows, macOS "luôn hiện thanh cuộn") */
+  scrollbar-gutter: stable;
+}
+.page-inner {
+  margin: 0 auto;
+  padding: 1.5rem;
+  position: relative;
+  background-color: #f0f0f0;
+  min-height: calc(100vh - 60px);
+}
+/* Desktop has no top header (brand and account live in the sidebar): the workspace takes the full height.
+   The content sits in a panel with rounded top corners, below a thin strip in the sidebar colour; the top bar is
+   8px shorter so its bottom line stays level with the sidebar's account row (60px). */
+@media (min-width: 992px) {
+  .page .workspace {
+    height: 100vh;
+    background: #142139;
+  }
+  .page .workspace > .ant-layout {
+    margin-top: 8px;
+    border-radius: 12px 12px 0 0;
+    background: #f0f0f0;
+    /* border-radius alone does not round the scrollbar track of a scrolling page: clip it too */
+    clip-path: inset(0 round 12px 12px 0 0);
+  }
+  .page-inner {
+    min-height: calc(100vh - 8px);
+  }
+  .page .page-topbar {
+    padding: 9px 16px 10px;
+  }
+  .page .page-topbar-inner {
+    min-height: 32px;
+  }
+}
+
+/* Header */
+.app-header .ant-layout-header {
+  position: relative;
+  flex-flow: row;
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  z-index: 11;
+  padding: 0 0.3rem;
+  box-shadow:
+    rgba(0, 0, 0, 0.02) 0 2px 2px,
+    rgba(0, 0, 0, 0.02) 0 1px 0;
+}
+.app-header .brand {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  white-space: nowrap;
+  margin: 0;
+  color: #007bff;
+  justify-content: center;
+}
+.app-header .ant-menu {
+  width: 100%;
+  display: flex;
+  font-family: inherit;
+  line-height: 36px;
+  box-shadow: none;
+  border: 0;
+  margin-bottom: 1px;
+}
+.app-header .ant-menu-horizontal {
+  line-height: inherit;
+}
+.app-header .ant-menu-item,
+.app-header .ant-menu-submenu-title {
+  padding: 0 1rem;
+}
+.app-header .ant-menu-item,
+.app-header .ant-menu-submenu {
+  top: 2px;
+}
+.app-header .trigger {
+  display: inline-block;
+  transform: rotate(90deg);
+}
+/* Mobile bar: brand name in black, like the page top bar text */
+.app-header .brand strong {
+  color: #000;
+}
+
+/* Sidebar */
+.app-sidebar {
+  height: 100%;
+  display: flex;
+}
+/* Signed-in user on top, menu below (scrolls) */
+.app-sidebar .ant-layout-sider-children,
+.drawer-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+.app-sidebar .sidebar {
+  min-height: 0;
+}
+/* Top row of the sidebar: avatar (opens the account menu) + brand; 60px with a bottom line, level with the
+   page top bar */
+.sidebar-user {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.sidebar-user-button {
+  display: flex;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: box-shadow 0.3s;
+}
+.sidebar-user-button:hover,
+.sidebar-user-button[aria-expanded='true'] {
+  box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.45);
+}
+.sidebar-user-button:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 2px;
+}
+.sidebar-user-brand {
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 1.25rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* Account menu: Ant Design menu item spacing */
+.account-menu .ant-dropdown-menu {
+  min-width: 180px;
+  padding: 4px 0;
+}
+.account-menu .ant-dropdown-menu-item {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+.chat-drawer .ant-drawer-header,
+.chat-drawer .ant-drawer-body {
+  padding: 0;
+}
+.drawer-sidebar {
+  overflow: hidden;
+  flex: 1 1 auto;
+  flex-direction: column;
+  display: flex;
+  height: 100vh;
+  max-height: -webkit-fill-available;
+}
+.app-sidebar .ant-layout-sider {
+  box-shadow:
+    rgba(0, 0, 0, 0.02) 0 0 3px,
+    rgba(0, 0, 0, 0.05) 0 0 1px;
+  z-index: 10;
+}
+.app-sidebar .ant-menu-item > a {
+  display: flex;
+  align-items: center;
+}
+.app-sidebar .ant-menu-item .anticon,
+.app-sidebar .ant-menu-submenu-title .anticon {
+  margin-right: 0.5rem;
+}
+.app-sidebar .ant-menu-inline .ant-menu-item,
+.app-sidebar .ant-menu-inline .ant-menu-submenu-title {
+  width: 100%;
+}
+/* Section titles in the sidebar (e.g. SYSTEM) */
+.app-sidebar .ant-menu-item-group-title {
+  margin-top: 12px;
+  padding: 8px 24px 4px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.app-sidebar .ant-menu-item-group-list {
+  margin: 0;
+  padding: 0;
+}
+.app-sidebar .sidebar .ant-badge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.app-sidebar .sidebar .ant-badge.right {
+  right: 16px;
+}
+
+/* Popups created by jQuery */
+.popup-root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+/* Rich text editor (Tiptap, src/js/editor.js) */
+.rich-editor {
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #fff;
+  transition: all 0.3s;
+}
+.rich-editor:hover {
+  border-color: #2997ff;
+}
+.rich-editor:focus-within {
+  border-color: #2997ff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+.rich-editor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: nowrap; /* one line: groups that don't fit move into the "···" menu */
+  overflow: hidden;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 4px 4px 0 0;
+  background: #fafafa;
+}
+.rich-editor-group {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+.rich-editor-group.is-collapsed {
+  display: none;
+}
+.rich-editor-group.no-divider > .ant-divider {
+  display: none;
+}
+.rich-editor-toolbar .rich-editor-align {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+}
+.rich-editor-toolbar .rich-editor-caret {
+  margin-left: 2px;
+  font-size: 10px;
+}
+.rich-editor-toolbar [data-more] {
+  flex: none;
+  margin-left: auto;
+}
+.rich-editor-toolbar .ant-btn.is-active {
+  color: #007bff;
+  background: #e6f6ff;
+}
+.rich-editor-toolbar .ant-btn[disabled] {
+  background: transparent;
+}
+.rich-editor-content .rich-editor-prose,
+.rich-editor-source {
+  display: block;
+  width: 100%;
+  min-height: 200px;
+  max-height: 520px;
+  overflow: auto;
+  padding: 8px 11px;
+  outline: none;
+  border: 0;
+  color: rgba(0, 0, 0, 0.85);
+  line-height: 1.5715;
+}
+.rich-editor-source {
+  font-family: 'Anonymous Pro', SFMono-Regular, Consolas, monospace;
+  resize: vertical;
+}
+.rich-editor-footer {
+  padding: 2px 11px 4px;
+  border-top: 1px solid #f0f0f0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  text-align: right;
+}
+
+/* Content typography (Ant Design Typography scale) */
+.rich-editor-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: #bfbfbf;
+  pointer-events: none;
+}
+.rich-editor-prose > * + * {
+  margin-top: 0.75em;
+}
+.rich-editor-prose p,
+.rich-editor-prose ul,
+.rich-editor-prose ol,
+.rich-editor-prose blockquote,
+.rich-editor-prose h2,
+.rich-editor-prose h3,
+.rich-editor-prose h4 {
+  margin-bottom: 0;
+}
+.rich-editor-prose h2 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.rich-editor-prose h3 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.rich-editor-prose h4 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.rich-editor-prose ul,
+.rich-editor-prose ol {
+  padding-left: 1.5em;
+}
+.rich-editor-prose ul {
+  list-style: disc;
+}
+.rich-editor-prose ol {
+  list-style: decimal;
+}
+.rich-editor-prose li > p {
+  margin: 0;
+}
+.rich-editor-prose blockquote {
+  padding: 0 0 0 0.6em;
+  border-left: 4px solid rgba(100, 100, 100, 0.2);
+  color: rgba(0, 0, 0, 0.65);
+}
+.rich-editor-prose a {
+  text-decoration: underline;
+}
+.rich-editor-prose code {
+  margin: 0 0.2em;
+  padding: 0.2em 0.4em 0.1em;
+  border: 1px solid rgba(100, 100, 100, 0.2);
+  border-radius: 3px;
+  background: rgba(150, 150, 150, 0.1);
+  font-size: 85%;
+}
+.rich-editor-prose pre {
+  padding: 0.4em 0.6em;
+  border: 1px solid rgba(100, 100, 100, 0.2);
+  border-radius: 3px;
+  background: rgba(150, 150, 150, 0.1);
+  white-space: pre-wrap;
+}
+.rich-editor-prose pre code {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.rich-editor-prose hr {
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid #f0f0f0;
+}
+.rich-editor-prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.rich-editor-prose img.ProseMirror-selectednode,
+.rich-editor-prose hr.ProseMirror-selectednode {
+  outline: 2px solid #007bff;
+}
+.rich-editor-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.rich-editor-prose th,
+.rich-editor-prose td {
+  position: relative;
+  min-width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+.rich-editor-prose th {
+  background: #fafafa;
+  font-weight: 500;
+  text-align: left;
+}
+.rich-editor-prose .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 123, 255, 0.08);
+  content: '';
+  pointer-events: none;
+}
+.rich-editor-prose .tableWrapper {
+  overflow-x: auto;
+}
+
+/* Search engine listing preview */
+.seo-preview {
+  padding: 16px 20px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow-wrap: anywhere;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.seo-preview-site {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.seo-preview-favicon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #f0f0f0;
+  border-radius: 50%;
+  background: #f5f5f5;
+  color: #007bff;
+  font-size: 14px;
+}
+.seo-preview-name {
+  color: #202124;
+  font-size: 14px;
+  line-height: 20px;
+}
+.seo-preview-url {
+  overflow: hidden;
+  color: #4d5156;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.seo-preview-title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #1a0dab;
+  font-size: 20px;
+  line-height: 26px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.seo-preview-description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 4px;
+  color: #4d5156;
+  line-height: 22px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.seo-preview-price {
+  margin-top: 6px;
+  color: #4d5156;
+}
+.seo-preview-price:empty {
+  display: none;
+}
+
+/* Page top bar (products.html, product-edit.html): sticks to the top of the scrolling content, full width.
+   Title or breadcrumb on the left, page actions on the right. On the edit page, while there are unsaved changes, a
+   Save / Discard bar shows in the centre (on small screens it covers the whole bar). */
+.page-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: -1.5rem -1.5rem 1.5rem;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: #f0f0f0;
+}
+.page-topbar-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 39px; /* 60px bar, level with the brand row of the sidebar */
+}
+.page-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+/* Breadcrumb, the same on every page: parent levels (links or plain text) in grey, a small chevron between levels,
+   the current page in dark semibold; all 16px on one line. The current page shrinks with "…" when space runs out. */
+.page-topbar-crumb,
+h1.page-topbar-crumb {
+  flex: none;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  white-space: nowrap;
+}
+a.page-topbar-crumb {
+  transition: color 0.3s;
+}
+a.page-topbar-crumb:hover {
+  color: #007bff;
+}
+.page-topbar-sep {
+  display: inline-flex;
+  flex: none;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 11px;
+  line-height: 0;
+}
+.page-topbar-title,
+h1.page-topbar-title {
+  overflow: hidden;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* A detail of the current page (e.g. the report period): after a thin divider, smaller and grey */
+.page-topbar-divider {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.15);
+}
+.page-topbar-sub {
+  flex: none;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+}
+.page-topbar-left .ant-tag {
+  flex: none;
+  margin-right: 0;
+}
+.page-topbar-right {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+.page-topbar .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.page-topbar .ant-btn > .anticon {
+  line-height: 0;
+}
+/* <a> buttons get no top padding from Ant Design, which shifts their content up in a flex button */
+.page-topbar a.ant-btn {
+  padding-top: 4px;
+  line-height: 1.5715;
+}
+
+.save-bar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 3px 3px 14px;
+  border: 1px solid #91d5ff;
+  border-radius: 20px;
+  background: #e6f7ff;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  animation: save-bar-in 0.2s ease-out;
+}
+.save-bar.hidden {
+  display: none;
+}
+.save-bar-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 10px;
+  font-weight: 500;
+}
+.save-bar-text .anticon {
+  color: #faad14;
+  line-height: 0;
+}
+.save-bar-discard,
+.save-bar-save {
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.save-bar-discard {
+  border-color: #d9d9d9;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.65);
+}
+.save-bar-discard:hover {
+  border-color: #007bff;
+  color: #007bff;
+}
+.save-bar-save {
+  background: #007bff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+  color: #fff;
+}
+.save-bar-save:hover {
+  background: #2997ff;
+}
+.save-bar button:focus-visible {
+  outline: 2px solid #69b1ff;
+  outline-offset: 2px;
+}
+@keyframes save-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -80%);
+  }
+}
+
+/* Below 768px there is no room in the middle: the save bar covers the whole top bar */
+@media (max-width: 767px) {
+  .save-bar {
+    inset: -4px 0;
+    justify-content: flex-end;
+    transform: none;
+    animation: none;
+  }
+  .save-bar-text {
+    margin-right: auto;
+  }
+  /* opacity hides them at once (the buttons' own transitions would delay visibility by 0.3s) */
+  .page-topbar.is-dirty .page-topbar-left,
+  .page-topbar.is-dirty .page-topbar-right {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+/* Category tree (categories.html) */
+.cat-tree,
+.cat-children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cat-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 40px;
+  margin-bottom: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #fff;
+  transition: border-color 0.3s, background 0.3s;
+}
+.cat-row:hover {
+  border-color: #d9d9d9;
+}
+.cat-row.is-selected {
+  border-color: #91d5ff;
+  background: #e6f7ff;
+}
+.cat-row.is-dragging {
+  opacity: 0.4;
+}
+.cat-handle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  border-right: 1px solid #f0f0f0;
+  color: rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+.cat-label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: rgba(0, 0, 0, 0.85);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cat-label:focus-visible,
+.cat-toggle:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+.cat-icon {
+  flex: none;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 16px;
+  line-height: 0;
+}
+.cat-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cat-count {
+  flex: none;
+  color: #007bff;
+}
+.cat-tag {
+  flex: none;
+  margin: 0;
+  font-size: 11px;
+  line-height: 18px;
+}
+.cat-toggle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  border: 0;
+  background: none;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+  cursor: pointer;
+}
+.cat-toggle:hover {
+  color: #007bff;
+}
+/* Drop indicators: a line before / after, or a highlighted row for "inside" */
+.cat-row.drop-before::before,
+.cat-row.drop-after::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: #007bff;
+  content: '';
+}
+.cat-row.drop-before::before {
+  top: -6px;
+}
+.cat-row.drop-after::after {
+  bottom: -6px;
+}
+.cat-row.drop-inside {
+  border-color: #007bff;
+  background: #e6f7ff;
+}
+/* ProCMS: icon trước tên lựa chọn trong ô chọn (<option data-icon>), vd ô Liên kết của menu: icon + chữ trong một khung
+   flex căn giữa dọc (không chỉnh vertical-align — lệch theo cỡ chữ / line-height), chữ dài cắt "…" */
+.ant-select-item-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ant-select-item-icon {
+  display: inline-flex;
+  flex: none;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  line-height: 0;
+}
+.ant-select-item-icon svg {
+  display: block;
+}
+.ant-select-item-text {
+  overflow: hidden;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ant-select-item-option-disabled .ant-select-item-icon {
+  color: rgba(0, 0, 0, 0.25);
+}
+/* ProCMS: ô Liên kết nhiều cấp của trang Menu (link-picker.js) — dòng quay lại + ô tìm ở đầu danh sách cấp trong, mũi
+   tên "›" sau loại có danh sách con */
+.link-picker-head {
+  margin: 0 4px 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.link-picker-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: rgba(0, 0, 0, 0.85);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.link-picker-back:hover {
+  background: #f5f5f5;
+}
+.link-picker-back .anticon {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+.link-picker-search {
+  padding: 0 4px 6px;
+}
+/* Ô tìm cao như ô nhập thường (32px), mép trái thẳng với nút quay lại; kính lúp mờ như ô tìm của danh sách */
+.link-picker-search .ant-input-affix-wrapper {
+  padding: 4px 8px;
+}
+.link-picker-search .ant-input-prefix {
+  margin-right: 8px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.link-picker-dropdown .ant-select-item-option-state {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+.link-picker-dropdown .ant-select-item-empty {
+  padding: 5px 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+/* ProCMS: cây mục menu — tiêu đề + link của mục (dòng phụ, mờ) */
+.menu-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 6px 0;
+  line-height: 1.35;
+}
+.menu-link {
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* ProCMS: dòng "N dự án thuộc danh mục này" cuối thẻ form danh mục */
+.cat-usage {
+  padding: 12px 24px;
+  border-top: 1px solid #f0f0f0;
+  color: rgba(0, 0, 0, 0.45);
+}
+.cat-label,
+.cat-label:hover {
+  color: rgba(0, 0, 0, 0.85);
+  text-decoration: none;
+}
+.cat-hint {
+  margin: 4px 0 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+/* Product preview modal */
+.product-preview-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fafafa;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 48px;
+}
+.product-preview-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-preview-thumbs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.product-preview-thumbs img {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+/* Edit pages (.edit-form): labels always sit above their field, also inside grid columns on small screens */
+.edit-form .ant-form-item {
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+/* Same specificity as Ant Design's small-screen rule (flex: 0 0 100%), which would otherwise resolve 100%
+   against the item height inside grid cells and push the field into the next one. */
+.edit-form .ant-form-item .ant-form-item-label,
+.edit-form .ant-form-item .ant-form-item-control {
+  flex: none;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Menu editor (menu-edit.html) */
+.menu-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.menu-row {
+  position: relative;
+  margin-bottom: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #fff;
+  transition:
+    margin-left 0.15s,
+    box-shadow 0.15s;
+}
+.menu-row.is-dragging {
+  z-index: 2;
+  opacity: 0.95;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transition: none;
+}
+.menu-row.is-child-of-dragging {
+  opacity: 0.6;
+}
+.menu-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 8px 12px 8px 8px;
+}
+.menu-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: rgba(0, 0, 0, 0.35);
+  cursor: grab;
+  touch-action: none;
+}
+.menu-handle:hover,
+.menu-handle:focus-visible {
+  color: rgba(0, 0, 0, 0.65);
+  background: #f5f5f5;
+  outline: none;
+}
+.menu-handle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.35);
+}
+.menu-row.is-dragging .menu-handle {
+  cursor: grabbing;
+}
+.menu-placeholder {
+  height: 56px;
+  margin-bottom: 12px;
+  border: 1px dashed #7ac8ff;
+  border-radius: 4px;
+  background: #e6f6ff;
+}
+.menu-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.menu-add:hover {
+  border-color: #2997ff;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Small screens: horizontal forms stack label above control (Ant Design), so drop the column offsets that
+   would otherwise push buttons and checkboxes past the right edge. */
+@media (max-width: 575px) {
+  .ant-form .ant-form-item-control[class*='ant-col-offset-'] {
+    margin-left: 0;
+  }
+}
+
+/* Long unbroken words in help / extra text wrap instead of widening the page. */
+.ant-form-item-extra,
+.ant-form-item-explain {
+  overflow-wrap: anywhere;
+}
+/* ProCMS: ô vừa báo lỗi vừa có dòng gợi ý — Ant bỏ khoảng cách dưới ô khi có lỗi nên gợi ý dính sát nhãn ô sau */
+.ant-form-item-with-help .ant-form-item-extra {
+  padding-bottom: 8px;
+}
+/* (báo lỗi dài xuống 2 dòng cũng vậy) */
+.ant-form-item-with-help .ant-form-item-explain:last-child {
+  padding-bottom: 8px;
+}
+
+/* Login page */
+.login-page {
+  min-height: 100vh;
+  background: #fff;
+}
+.login-brand {
+  background: linear-gradient(135deg, #0050b3 0%, #007bff 100%);
+}
+
+/* Statistic numbers use the template font (Ant Design sets its own stack on them). */
+.ant-statistic-content {
+  font-family: inherit;
+}
+
+/* Products list (products.html): metrics strip, index card, filter pills, bulk bar */
+.product-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  overflow-x: auto;
+}
+.product-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 16px;
+  border: 0;
+  border-right: 1px solid #f0f0f0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: rgba(0, 0, 0, 0.65);
+}
+.product-metric:last-child {
+  border-right: 0;
+}
+button.product-metric {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button.product-metric:hover {
+  background: #fafafa;
+}
+button.product-metric:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+.product-metric.is-active {
+  background: #e6f7ff;
+  box-shadow: inset 0 -2px 0 #007bff;
+}
+.product-metric-label {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+.product-metric-value {
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.product-metric-sub {
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Buttons with an icon: icon and label share one centre line (header, bulk bar, empty state, quick view) */
+#products .ant-btn:not(.ant-btn-icon-only),
+#news .ant-btn:not(.ant-btn-icon-only),
+#orders .ant-btn:not(.ant-btn-icon-only),
+.product-drawer .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#products .ant-btn > .anticon,
+#news .ant-btn > .anticon,
+#orders .ant-btn > .anticon,
+.product-drawer .ant-btn > .anticon {
+  line-height: 0;
+}
+/* Dropdown caret: small and close to the label, as in Ant Design's dropdown buttons. Nudged down 1px so it lines
+   up with the middle of the lowercase letters rather than the line box. */
+#more-actions > .anticon-down {
+  position: relative;
+  top: 1px;
+  margin-left: 6px;
+  font-size: 10px;
+}
+/* Ant Design drops the top padding of <a> buttons (it centres them with line-height instead), which shifts
+   their content up once the button is a flex box */
+#products a.ant-btn,
+#news a.ant-btn,
+#orders a.ant-btn,
+.product-drawer a.ant-btn {
+  padding-top: 4px;
+  line-height: 1.5715;
+}
+
+
+.product-index {
+  overflow: hidden;
+}
+.product-index-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.product-views {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.product-view {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: rgba(0, 0, 0, 0.65);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.product-view:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.product-view.is-active {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+}
+.product-view:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+.product-search {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Filter pills: dashed while empty, solid with a × when applied */
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 12px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.65);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.filter-pill:hover {
+  border-color: #007bff;
+  color: #007bff;
+}
+.filter-pill .anticon {
+  font-size: 10px;
+}
+.filter-pill.is-applied {
+  padding: 0;
+  border-style: solid;
+  border-color: #91d5ff;
+  background: #e6f7ff;
+  color: rgba(0, 0, 0, 0.85);
+  cursor: default;
+}
+.filter-pill-label,
+.filter-pill-clear {
+  height: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.filter-pill-label {
+  max-width: 240px;
+  overflow: hidden;
+  padding: 0 4px 0 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.filter-pill-clear {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px 0 2px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.filter-pill-clear:hover {
+  color: rgba(0, 0, 0, 0.85);
+}
+.ant-table-filter-dropdown .ant-dropdown-menu-item .ant-checkbox-wrapper + span {
+  padding-left: 8px;
+}
+
+/* Table */
+.product-table {
+  width: 100%;
+  min-width: 860px;
+}
+/* ProCMS: tiêu đề bảng danh sách cao như bảng Ant Design cỡ thường (16px trên dưới, dòng dữ liệu vẫn gọn như bản
+   small của template) + vạch ngăn mờ giữa các cột tiêu đề như Ant Design 4 bản mới */
+.ant-table.ant-table-small .product-table .ant-table-thead > tr > th {
+  position: relative;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+@media (min-width: 640px) {
+  /* (điện thoại tắt: cột cuối có thể bị ẩn, vạch sẽ lơ lửng ở mép phải) */
+  .product-table .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column)::before {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 1px;
+    height: 1.6em;
+    background-color: rgba(0, 0, 0, 0.06);
+    transform: translateY(-50%);
+    content: '';
+  }
+}
+.product-row {
+  cursor: pointer;
+}
+.product-table .ant-table-cell {
+  white-space: nowrap;
+}
+.product-thumb {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #fafafa;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 24px;
+}
+.product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-name {
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+  white-space: normal;
+}
+.product-name:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
+.product-row-meta {
+  display: none;
+  margin-top: 2px;
+  font-size: 12px;
+}
+.product-row-meta .ant-tag {
+  margin-right: 4px;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.product-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+/* 36px touch targets with 20px icons, centred in the button */
+.product-row-actions .ant-btn-icon-only {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.product-row-actions .ant-btn-icon-only > .anticon {
+  font-size: 20px;
+  line-height: 0;
+}
+.product-thumb-lg {
+  width: 80px;
+  height: 80px;
+  font-size: 32px;
+}
+.product-drawer .ant-descriptions-item-label {
+  width: 120px;
+}
+
+/* Projects list (projects.html) */
+.project-thumb,
+.page-thumb {
+  color: #007bff;
+  font-size: 22px;
+  background: #e6f2ff;
+}
+.project-filter .ant-dropdown-menu {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* News list (news.html) */
+.post-table .product-name {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 420px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.post-date {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+.post-drawer-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: #fafafa;
+  object-fit: cover;
+}
+
+/* Post preview (news-edit.html) */
+.post-preview-title {
+  margin: 0 0 8px;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.post-preview-meta {
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.post-preview-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: #fafafa;
+  object-fit: cover;
+}
+.post-preview-excerpt {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 16px;
+}
+
+/* Bulk actions cover the table header while rows are selected */
+.product-bulk {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+.product-bulk.hidden {
+  display: none;
+}
+/* ProCMS: nút trong thanh "N đã chọn" (vd Xóa) căn icon với chữ như nút của template (#orders .ant-btn) */
+.product-bulk .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-bulk .ant-btn > .anticon {
+  line-height: 0;
+}
+
+
+.product-index-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Phones: product + actions only, status moves under the name */
+@media (max-width: 575px) {
+  .product-metrics {
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+  }
+  .product-table {
+    min-width: 0;
+  }
+  .product-table [data-col] {
+    display: none;
+  }
+  .product-row-meta {
+    display: block;
+  }
+  .product-thumb:not(.product-thumb-lg) {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  .product-table .ant-table-cell {
+    white-space: normal;
+  }
+}
+
+/* Category type dropdown above the tree (categories.html) */
+.cat-type {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.cat-type-label {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(0, 0, 0, 0.85);
+}
+.cat-type-help {
+  margin: 6px 0 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+/* Dark sidebar (#142139): desktop sider and the mobile drawer. Selected item: a soft blue tint with a blue
+   bar on the left, so it stands out without a full primary-blue block. */
+.app-sidebar .ant-layout-sider,
+.app-sidebar .ant-layout-sider-children,
+.chat-drawer .ant-drawer-content,
+.app-sidebar .sidebar,
+.app-sidebar .sidebar .ant-menu-sub {
+  background: #142139;
+}
+.app-sidebar .sidebar {
+  border-right: 0;
+}
+.app-sidebar .sidebar .ant-menu-sub {
+  background: #0e1a2f;
+}
+.app-sidebar .sidebar .ant-menu-item,
+.app-sidebar .sidebar .ant-menu-item > a,
+.app-sidebar .sidebar .ant-menu-item > span > a,
+.app-sidebar .sidebar .ant-menu-submenu-title {
+  color: rgba(255, 255, 255, 0.65);
+}
+.app-sidebar .sidebar .ant-menu-item:hover,
+.app-sidebar .sidebar .ant-menu-item:hover a,
+.app-sidebar .sidebar .ant-menu-submenu-title:hover,
+.app-sidebar .sidebar .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #fff;
+}
+/* The sub menu arrow follows the title colour (Ant Design gives it its own dark / blue colours) */
+.app-sidebar .sidebar .ant-menu-submenu-arrow,
+.app-sidebar .sidebar .ant-menu-submenu:hover > .ant-menu-submenu-title > .ant-menu-submenu-arrow {
+  color: inherit;
+}
+.app-sidebar .sidebar .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.app-sidebar .sidebar .ant-menu-item-selected {
+  background-color: rgba(77, 163, 255, 0.16) !important;
+  box-shadow: inset 3px 0 0 #4da3ff;
+}
+.app-sidebar .sidebar .ant-menu-item-selected .anticon {
+  color: #4da3ff;
+}
+.app-sidebar .sidebar .ant-menu-item-selected,
+.app-sidebar .sidebar .ant-menu-item-selected > a,
+.app-sidebar .sidebar .ant-menu-item-selected > span > a,
+.app-sidebar .sidebar .ant-menu-item:hover > span > a {
+  color: #fff;
+}
+.app-sidebar .sidebar .ant-menu-item::after {
+  display: none;
+}
+.app-sidebar .ant-menu-item-group-title {
+  color: rgba(255, 255, 255, 0.45);
+}
+.app-sidebar .sidebar-user {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.app-sidebar .sidebar-user-brand,
+.app-sidebar .sidebar-user-brand:hover {
+  color: #fff;
+}
+
+/* Settings page (settings.html) */
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+}
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: rgba(0, 0, 0, 0.65);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+.settings-tab .anticon {
+  font-size: 16px;
+  line-height: 0;
+}
+.settings-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.85);
+}
+.settings-tab.is-active {
+  background: #e6f7ff;
+  color: #007bff;
+  font-weight: 500;
+}
+/* ProCMS: tab có ô đang báo lỗi (kể cả khi tab đang ẩn) */
+.settings-tab.has-error::after {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #ff4d4f;
+  content: '';
+}
+.settings-tab:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+/* Phones and tablets: the sections become a row of tabs above the form */
+@media (max-width: 991px) {
+  .settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .settings-tab {
+    flex: none;
+    width: auto;
+  }
+}
+/* ProCMS: điện thoại — bỏ icon, thu lề để 4 tab vừa một hàng không phải cuộn ngang; máy rất hẹp (< 400px) xếp 2 × 2 */
+@media (max-width: 575px) {
+  .settings-tab {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .settings-tab .anticon {
+    display: none;
+  }
+}
+@media (max-width: 399px) {
+  .settings-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .settings-tab {
+    justify-content: center;
+    width: 100%;
+  }
+  .settings-tab.has-error::after {
+    margin-left: 0;
+  }
+}
+.settings-card-desc {
+  margin: -4px 0 16px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.settings-code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+}
+.settings-map {
+  overflow: hidden;
+  margin-top: 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+.settings-map iframe {
+  display: block;
+  width: 100%;
+  height: 280px;
+  border: 0;
+}
+.seo-preview-favicon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+/* ProCMS: form dọc trên điện thoại. Luật xs của Ant (nhãn / ô: flex 0 0 100%, flex-wrap) dành cho form ngang; với form
+   dọc (flex-direction: column) nằm trong ô lưới (ô lưới kéo giãn → chiều cao xác định), 100% thành cả chiều cao: nhãn chiếm
+   hết, ô nhập bị đẩy sang cột bên cạnh → tràn ngang (vd 2 ô mật khẩu cạnh nhau). Form dọc: nhãn / ô theo nội dung. */
+@media (max-width: 575px) {
+  .ant-form.ant-form-vertical .ant-form-item .ant-form-item-label,
+  .ant-form.ant-form-vertical .ant-form-item .ant-form-item-control {
+    flex: 0 0 auto;
+  }
+}
+
+/* ProCMS: form dự án — danh sách domain alias (Ant Form.List: mỗi dòng domain + ghi chú + nút bỏ, nút thêm nét đứt) */
+.domain-alias-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.domain-alias-list:empty {
+  display: none;
+}
+.domain-alias-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.domain-alias-row > .ant-form-item {
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+.domain-alias-row > .domain-alias-domain {
+  flex: 3 1 0;
+}
+.domain-alias-row > .domain-alias-note {
+  flex: 2 1 0;
+}
+.domain-alias-remove.ant-btn {
+  flex: none;
+  color: rgba(0, 0, 0, 0.45);
+}
+.domain-alias-remove.ant-btn:hover {
+  color: #ff4d4f;
+}
+/* Trang chi tiết dự án: các domain alias, mỗi domain một dòng */
+.project-alias-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Điện thoại: mỗi domain một khung nhạt — domain một hàng, ghi chú + nút bỏ hàng dưới */
+@media (max-width: 575px) {
+  .domain-alias-row {
+    flex-wrap: wrap;
+    padding: 8px;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+  .domain-alias-row > .domain-alias-domain {
+    flex: 1 1 100%;
+  }
+}
+
+/* ProCMS: trang Tài khoản — các dòng thông tin chỉ xem (Quyền, Trạng thái…) ở cột phụ */
+.profile-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 0;
+}
+.profile-facts dt {
+  color: rgba(0, 0, 0, 0.45);
+}
+.profile-facts dd {
+  min-width: 0;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  overflow-wrap: anywhere;
+}
+
+/* Users (users.html, user-edit.html) */
+.user-initials {
+  background: #e6f7ff;
+  color: #007bff;
+  font-weight: 600;
+}
+.user-table .ant-avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+/* Round avatar: the picture fills the circle and the hover layer (preview / delete) is round too */
+.user-avatar-upload .ant-upload-list-picture-card-container,
+.user-avatar-upload .ant-upload-select-picture-card {
+  border-radius: 50%;
+}
+.user-avatar-upload .ant-upload-list-item {
+  overflow: hidden;
+  padding: 0;
+  border-radius: 50%;
+}
+.user-avatar-upload .ant-upload-list-item-info,
+.user-avatar-upload .ant-upload-list-item-info::before {
+  border-radius: 50%;
+}
+.user-avatar-upload .ant-upload-list-item-info::before {
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.user-avatar-upload .ant-upload-list-item-thumbnail,
+.user-avatar-upload .ant-upload-list-item-thumbnail img,
+.user-avatar-upload .ant-upload-list-item-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* ProCMS: bảng Trang ít cột — không cần bề rộng tối thiểu 860px của bảng sản phẩm (tablet khỏi cuộn ngang) */
+.page-table {
+  min-width: 0;
+}
+/* ProCMS: ảnh đại diện của Trang — khung ngang 1200 × 630 (ảnh chia sẻ), ảnh phủ kín khung */
+.page-image .ant-upload-list-picture-card-container,
+.page-image .ant-upload-select-picture-card {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0;
+  aspect-ratio: 1200 / 630;
+}
+.page-image .ant-upload-list-item {
+  padding: 0;
+  overflow: hidden;
+}
+.page-image .ant-upload-list-item-info::before {
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.page-image .ant-upload-list-item-thumbnail,
+.page-image .ant-upload-list-item-thumbnail img,
+.page-image .ant-upload-list-item-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Đường dẫn trang: phần đầu (https://…/page/) không đẩy ô nhập quá hẹp — cắt "…" ở đầu khi dài (rtl để cắt bên trái,
+   <bdi> giữ đúng thứ tự chữ) */
+.page-slug-base {
+  display: block;
+  max-width: min(26vw, 260px);
+  overflow: hidden;
+  direction: rtl;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ant-select-disabled.ant-select .ant-select-selector {
+  background: #f5f5f5;
+  color: rgba(0, 0, 0, 0.25);
+  cursor: not-allowed;
+}
+
+/* User groups (user-groups.html): list of groups and the permission tree */
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.85);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+}
+.group-item:hover {
+  border-color: #d9d9d9;
+  color: rgba(0, 0, 0, 0.85); /* ProCMS: mục là link thật (<a>), giữ màu chữ như nút của template khi rê chuột */
+}
+.group-item.is-selected {
+  border-color: #91d5ff;
+  background: #e6f7ff;
+}
+.group-item-icon {
+  flex: none;
+  color: rgba(0, 0, 0, 0.45);
+  line-height: 0;
+}
+.group-item-name {
+  overflow: hidden;
+  flex: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.group-item-count {
+  flex: none;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+.perm-tree {
+  margin: 0;
+  padding: 0;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  list-style: none;
+}
+.perm-item {
+  padding: 10px 14px;
+}
+.perm-item + .perm-item {
+  border-top: 1px solid #f0f0f0;
+}
+.perm-module-row .ant-checkbox-wrapper {
+  font-weight: 500;
+}
+/* Actions sit one level in, under the module, with a guide line */
+.perm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 8px 0 2px 7px;
+  padding-left: 18px;
+  border-left: 1px solid #e8e8e8;
+}
+.perm-actions .ant-checkbox-wrapper {
+  margin-left: 0;
+}
+/* ProCMS: bảng quyền (mục × Xem / Thêm / Sửa / Xóa) thay cho cây quyền của template — dễ dò theo hàng / cột */
+.perm-body {
+  transition: opacity 0.3s;
+}
+/* Tắt đăng nhập trang quản trị: mọi quyền khác vô hiệu → cả phần mờ đi, không bấm được (thêm thuộc tính inert) */
+.perm-body.is-off {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+.perm-login {
+  padding: 12px 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fafafa;
+}
+.perm-table {
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.perm-table table {
+  width: 100%;
+  table-layout: auto;
+}
+.perm-table .ant-table-thead > tr > th {
+  font-weight: 500;
+}
+.perm-table .perm-col,
+.perm-table .perm-cell {
+  width: 64px;
+  text-align: center;
+}
+.perm-table .perm-col .ant-checkbox-wrapper {
+  margin-top: 4px;
+}
+.perm-table .perm-cell .ant-checkbox-wrapper,
+.perm-table .perm-col .ant-checkbox-wrapper {
+  justify-content: center;
+}
+.perm-table .ant-table-tbody > tr.perm-section > td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  background: #fafafa;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  font-weight: 500;
+}
+.perm-table .ant-table-tbody > tr.perm-section:hover > td {
+  background: #fafafa;
+}
+.perm-row .perm-name {
+  color: rgba(0, 0, 0, 0.45);
+  transition: color 0.3s;
+}
+.perm-row.is-on .perm-name {
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+}
+.perm-none {
+  color: rgba(0, 0, 0, 0.25);
+}
+.perm-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 6px;
+}
+.perm-extra .ant-checkbox-wrapper {
+  margin-left: 0;
+}
+@media (max-width: 575px) {
+  .perm-table .perm-col,
+  .perm-table .perm-cell {
+    width: 48px;
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+  }
+}
+
+/* Orders (orders.html, order-edit.html) */
+.order-table .product-row-meta .ant-tag {
+  margin-top: 4px;
+}
+.order-tags {
+  display: inline-flex;
+  flex: none;
+  gap: 6px;
+}
+.order-tags .ant-tag {
+  margin: 0;
+}
+.order-card-tag {
+  margin: 0;
+  padding: 2px 10px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.order-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.order-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.order-line + .order-line {
+  border-top: 1px solid #f0f0f0;
+}
+.order-line:first-child {
+  padding-top: 0;
+}
+.order-line-info {
+  flex: 1;
+  min-width: 0;
+}
+.order-line-qty {
+  flex: none;
+  color: rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+}
+.order-line-total {
+  flex: none;
+  min-width: 80px;
+  color: rgba(0, 0, 0, 0.85);
+  text-align: right;
+  white-space: nowrap;
+}
+@media (max-width: 575px) {
+  .order-line {
+    flex-wrap: wrap;
+  }
+  /* Name next to the picture on the first line, price × qty and total on the second */
+  .order-line-info {
+    flex-basis: calc(100% - 64px);
+  }
+  .order-line-qty {
+    margin-left: 60px;
+  }
+  .order-line-total {
+    margin-left: auto;
+  }
+}
+.order-tracking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f6ffed;
+  color: rgba(0, 0, 0, 0.65);
+}
+.order-tracking .anticon {
+  flex: none;
+  color: #52c41a;
+  line-height: 0;
+}
+.order-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+.order-sum-row {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 12px;
+  padding: 4px 0;
+  color: rgba(0, 0, 0, 0.85);
+}
+.order-sum-sub {
+  color: rgba(0, 0, 0, 0.45);
+}
+.order-sum-total {
+  padding-top: 8px;
+}
+.order-sum-sep {
+  margin: 8px 0;
+  border-top: 1px solid #f0f0f0;
+}
+.timeline-comment {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.order-timeline {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 4px;
+  list-style: none;
+}
+.order-event {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 16px;
+}
+/* The guide line between events */
+.order-event:not(:last-child)::before {
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: #e8e8e8;
+  content: '';
+}
+.order-event-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #bfbfbf;
+}
+.order-event.is-comment .order-event-dot {
+  background: #007bff;
+}
+.order-event-text {
+  color: rgba(0, 0, 0, 0.85);
+  overflow-wrap: anywhere;
+}
+.order-event.is-comment .order-event-text {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f5f5f5;
+}
+.order-side-block {
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.65);
+}
+.order-side-label {
+  margin-bottom: 4px;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+}
+.order-side-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+.order-side-row .ant-tag {
+  margin: 0;
+}
+
+/* Revenue report chart legends */
+.chart-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 2px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+.chart-swatch-line {
+  display: inline-block;
+  width: 16px;
+  margin-right: 2px;
+  border-top: 2px dashed #fa8c16;
+  vertical-align: middle;
+}
+.chart-swatch-hatch {
+  background: repeating-linear-gradient(45deg, #007bff 0 3px, #80bdff 3px 6px);
+}
+.chart-swatch-forecast {
+  border: 1px solid #52c41a;
+  background: repeating-linear-gradient(45deg, #52c41a 0 2px, #e3f6d6 2px 5px);
+}
+.chart-meter {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #f0f0f0;
+}
+.chart-meter > span {
+  display: block;
+  float: left;
+  height: 100%;
+}
+
+/* ---------- ProCMS (ducnh.com): bổ sung cho khung trang ---------- */
+
+/* Menu tài khoản: tên + email trên cùng; link phủ kín cả dòng (padding của mục là 8px 16px, không phải 5px 12px) */
+.account-menu-user {
+  padding: 8px 16px 6px;
+  line-height: 1.4;
+}
+.account-menu-name {
+  overflow: hidden;
+  max-width: 220px;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.account-menu-email {
+  overflow: hidden;
+  max-width: 220px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.account-menu .ant-dropdown-menu-item > a {
+  margin: -8px -16px;
+  padding: 8px 16px;
+}
+.account-menu .ant-dropdown-menu-item > a:focus-visible {
+  outline: none;
+  background: #f5f5f5;
+}
+/* Tiêu đề menu cha trong sidebar nhận focus bằng bàn phím */
+.app-sidebar .sidebar .ant-menu-submenu-title:focus-visible,
+.app-sidebar .sidebar .ant-menu-item a:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: -2px;
+}
+/* antd.css 4.9.2 viết `height: 1.5715` (thiếu đơn vị) cho tiêu đề nhóm menu: trình duyệt bỏ qua, nhưng khi build,
+   Lightning CSS đổi thành 1.5715px làm tiêu đề nhóm (OVERVIEW, SYSTEM…) bẹp lại đè lên mục đầu. Trả về chiều cao tự nhiên. */
+.ant-menu-item-group-title {
+  height: auto;
+}
+/* Tooltip biểu đồ: rộng hơn mức 250px của Ant Design (tooltip theo tháng có dòng "Thu mới … · gia hạn …"), nhưng không
+   rộng quá khung biểu đồ (tooltip nằm trong khung, position: absolute) */
+.chart-tooltip.ant-tooltip {
+  max-width: min(340px, 100%);
+}
+
+/* Danh sách dự án (backend/projects/index): tab trạng thái và chỉ số là link (template dùng button), số đếm cạnh tab */
+a.product-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+a.product-view,
+a.product-view:hover {
+  color: rgba(0, 0, 0, 0.65);
+}
+a.product-view.is-active {
+  color: rgba(0, 0, 0, 0.85);
+}
+.product-view-count {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+a.product-metric,
+a.product-metric:hover {
+  color: rgba(0, 0, 0, 0.65);
+}
+a.product-metric {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+a.product-metric:hover {
+  background: #fafafa;
+}
+a.product-metric.is-active {
+  background: #e6f7ff;
+}
+a.product-metric:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+/* Link trong bảng (khách hàng, danh mục): chữ thường, rê chuột mới xanh */
+/* Danh sách dự án: dòng domain alias / server dưới tên dự án; domain khớp từ khóa đang tìm in đậm */
+.project-aliases {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal; /* ô bảng mặc định nowrap: nhiều domain thì xuống dòng trong cột, không đè cột bên */
+  overflow-wrap: anywhere;
+}
+.project-aliases-icon {
+  flex: none;
+  margin-top: 3px;
+  line-height: 0;
+}
+.project-alias {
+  display: inline-block; /* mỗi domain giữ trên một dòng nếu vừa, chỉ ngắt khi domain dài hơn cả cột */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.project-alias a {
+  color: rgba(0, 0, 0, 0.45);
+}
+.project-alias a:hover {
+  color: #007bff;
+}
+.project-domain-match {
+  color: rgba(0, 0, 0, 0.85) !important;
+  font-weight: 600;
+}
+/* Cột Hosting: tên server (lọc), IP, tag "Của khách" */
+.project-hosting {
+  min-width: 110px;
+  max-width: 180px;
+  white-space: normal;
+  overflow-wrap: break-word; /* tên dài mới ngắt, không cắt giữa chữ như "Contab o" */
+}
+.project-hosting + .project-hosting {
+  margin-top: 6px;
+}
+.project-hosting-tag {
+  margin: 0 0 0 4px;
+  font-size: 11px;
+  line-height: 18px;
+}
+.project-link {
+  color: rgba(0, 0, 0, 0.85);
+}
+.project-link:hover {
+  color: #007bff;
+}
+/* Tag dự án: chấm màu + tên (tên quá dài thì cắt "…", không đẩy rộng bảng) */
+.project-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 150px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 18px;
+}
+.project-tag-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+/* Trang Tag dự án: tag trong bảng to hơn chút, hiện đủ tên dài hơn */
+.tag-table .project-tag {
+  max-width: 280px;
+  font-size: 12px;
+}
+.tag-table .project-tag-dot {
+  width: 8px;
+  height: 8px;
+}
+@media (max-width: 575px) {
+  .tag-table .project-tag {
+    max-width: 150px;
+  }
+}
+/* Hộp thêm / sửa tag: ô chọn màu tròn (màu có sẵn + "Màu khác"), xem trước tag như ở danh sách dự án */
+.tag-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.tag-swatch:hover {
+  transform: scale(1.1);
+}
+.tag-swatch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 123, 255, 0.5);
+}
+.tag-swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #007bff;
+}
+.tag-swatch-custom {
+  border: 1px dashed #d9d9d9;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+.tag-swatch-custom[aria-checked='true'] {
+  border-color: transparent;
+  color: #fff;
+}
+.tag-swatch-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.tag-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fafafa;
+}
+.tag-preview .project-tag {
+  max-width: 260px;
+}
+/* Ô tìm trong danh sách chọn của nút lọc */
+.project-filter-search {
+  padding: 8px 8px 4px;
+}
+.project-filter {
+  min-width: 220px;
+  max-width: 360px;
+}
+.project-filter .ant-dropdown-menu {
+  box-shadow: none;
+}
+a.project-thumb {
+  transition: background 0.3s;
+}
+a.project-thumb:hover {
+  background: #cce4ff;
+  color: #007bff;
+}
+/* Phân trang bằng link (backend/partials/pagination): mũi tên đen như nút của Ant Design, không xanh như link */
+.ant-pagination-prev a.ant-pagination-item-link,
+.ant-pagination-next a.ant-pagination-item-link {
+  color: rgba(0, 0, 0, 0.85);
+}
+.ant-pagination-prev a.ant-pagination-item-link:hover,
+.ant-pagination-next a.ant-pagination-item-link:hover {
+  color: #007bff;
+}
+/* Chi tiết dự án (backend/projects/show): nhãn của khung Thông tin rộng vừa đủ "Gia hạn kế tiếp" */
+.project-descriptions .ant-descriptions-item-label {
+  width: 140px;
+}
+@media (max-width: 575px) {
+  .project-descriptions .ant-descriptions-item-label {
+    width: 110px;
+  }
+}
+
+/* Danh sách checkbox xếp bằng flex, nhãn có thể 2 dòng (form dự án: Tags, Hosting). antd 4.9 canh ô vuông kiểu chữ
+   (vertical-align: middle; top: -0.09em) — trong flex không còn tác dụng nên ô dính mép trên. Canh vào giữa dòng chữ
+   đầu: dòng cao 22px, ô 16px → lùi xuống 3px. */
+.check-list .ant-checkbox {
+  top: 0;
+  margin-top: 3px;
+}
+
+/* Khách hàng, thanh toán: bảng ít cột nên không cần rộng tối thiểu 860px như bảng sản phẩm của template (tablet khỏi
+   phải cuộn ngang) — cột tên tự giữ bề rộng tối thiểu */
+.product-table.customer-table,
+.product-table.tag-table,
+.product-table.hosting-table,
+.product-table.renewal-table,
+.product-table.payment-table {
+  min-width: 0;
+}
+
+/* Nút có icon trong góc phải tiêu đề khung (vd "Dự án mới", "Thêm khoản thu") và trong thông báo trống: icon và chữ
+   cùng một đường giữa như nút trên thanh trên cùng (.page-topbar .ant-btn) — template chỉ canh cho thanh trên cùng và
+   vài trang riêng (#products…), ở đây icon thấp hơn chữ ~2px. Nút <a> cỡ thường: Ant bỏ padding-top (đẩy nội dung lên). */
+.ant-card-extra .ant-btn,
+.ant-empty-footer .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ant-card-extra .ant-btn > .anticon,
+.ant-empty-footer .ant-btn > .anticon {
+  line-height: 0;
+}
+.ant-card-extra a.ant-btn:not(.ant-btn-sm),
+.ant-empty-footer a.ant-btn:not(.ant-btn-sm) {
+  padding-top: 4px;
+  line-height: 1.5715;
+}
+
+/* Thanh toán (backend/payments): ghi chú tối đa 2 dòng; bộ chọn khoảng ngày đang lọc viền xanh như nút lọc đang chọn */
+.payment-note {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 260px;
+  white-space: normal;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.payment-range.is-applied {
+  border-color: #91d5ff;
+  background: #e6f7ff;
+}
+/* Dải chỉ số (projects, khách hàng, thanh toán…): số tiền quá dài thì xuống dòng thay vì tràn đè sang ô bên cạnh */
+.product-metric-value {
+  overflow-wrap: anywhere;
+}
+
+/* Hosting (backend/hostings): thanh thời hạn trong bảng; danh sách chọn dự án trong form */
+.hosting-expiry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.hosting-expiry .ant-progress {
+  flex: none;
+  width: 112px;
+  margin: 0;
+}
+.hosting-meta:empty {
+  display: none;
+}
+.hosting-project-list {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+.hosting-project {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.hosting-project + .hosting-project {
+  border-top: 1px solid #f0f0f0;
+}
+.hosting-project:hover {
+  background: #fafafa;
+}
+.hosting-project:has(.ant-checkbox-input:checked) {
+  background: #e6f7ff;
+}
+.hosting-project.hidden {
+  display: none;
+}
+
+/* Nhắc gia hạn (backend/renewals): bảng chia khối theo tình trạng (tiêu đề khối có chấm màu = chấm trên tab), không tô
+   màu từng dòng; khối "Đã hủy" mờ đi vì không còn việc gì phải làm */
+.renewal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+.renewal-table .ant-table-tbody > tr.renewal-group > td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+  white-space: normal;
+}
+.renewal-table .ant-table-tbody > tr.renewal-group:first-child > td {
+  border-top: 0;
+}
+.renewal-group-title {
+  margin-right: 8px;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+}
+.renewal-group-count {
+  margin-right: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.renewal-group-sum {
+  margin-right: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+.renewal-group-sum strong {
+  color: rgba(0, 0, 0, 0.85);
+}
+.renewal-group-hint {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+@media (max-width: 767px) {
+  .renewal-group-hint {
+    display: block;
+    margin-top: 2px;
+  }
+}
+/* Khối "Chưa gia hạn" (việc mình phải làm) đóng khung vàng — màu chấm của nhóm — cho nổi bật, không phải tách bảng.
+   Bảng chừa lề 20px hai bên cho mọi nhóm (cột vẫn thẳng hàng). Trong khối, 8px ngoài cùng của lề thành viền trắng (che
+   nền khi rê chuột), khung 1px vẽ bằng box-shadow inset sát mép trong viền; vạch ngăn dòng trong khối cũng bằng bóng để
+   không lấn ra lề, và không viền dưới để khung dọc liền mạch. Điện thoại: cột đầu (hạn) ẩn, khung bám cột thứ 2. */
+.renewal-table {
+  --renewal-pad: 20px;
+  --renewal-gap: 8px;
+  --renewal-frame: #faad14;
+}
+.ant-table .renewal-table .ant-table-thead > tr > th:first-child,
+.ant-table .renewal-table .ant-table-tbody > tr > td:first-child {
+  padding-left: var(--renewal-pad);
+}
+.ant-table .renewal-table .ant-table-thead > tr > th:last-child,
+.ant-table .renewal-table .ant-table-tbody > tr > td:last-child {
+  padding-right: var(--renewal-pad);
+}
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-row-not_renewed > td,
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-group[data-group='not_renewed'] > td {
+  --fl: 0 0 transparent;
+  --fr: 0 0 transparent;
+  --ft: 0 0 transparent;
+  --line: inset 0 -1px 0 #f0f0f0;
+  border-bottom: 0;
+  box-shadow: var(--fl), var(--fr), var(--ft), var(--line);
+}
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-row-not_renewed > td:first-child,
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-group[data-group='not_renewed'] > td {
+  --fl: inset 1px 0 0 var(--renewal-frame);
+  padding-left: calc(var(--renewal-pad) - var(--renewal-gap));
+  border-left: var(--renewal-gap) solid #fff;
+}
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-row-not_renewed > td:last-child,
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-group[data-group='not_renewed'] > td {
+  --fr: inset -1px 0 0 var(--renewal-frame);
+  padding-right: calc(var(--renewal-pad) - var(--renewal-gap));
+  border-right: var(--renewal-gap) solid #fff;
+}
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-group[data-group='not_renewed'] > td {
+  --ft: inset 0 1px 0 var(--renewal-frame);
+  border-top: var(--renewal-gap) solid #fff;
+  background: #fffbe6;
+}
+.ant-table .renewal-table .ant-table-tbody > tr.renewal-box-end > td {
+  --line: inset 0 -1px 0 var(--renewal-frame);
+  border-bottom: var(--renewal-gap) solid #fff;
+}
+@media (max-width: 575px) {
+  .renewal-table {
+    --renewal-pad: 14px;
+    --renewal-gap: 6px;
+  }
+  .ant-table .renewal-table .ant-table-thead > tr > th:nth-child(2),
+  .ant-table .renewal-table .ant-table-tbody > tr > td:nth-child(2) {
+    padding-left: var(--renewal-pad);
+  }
+  .ant-table .renewal-table .ant-table-tbody > tr.renewal-row-not_renewed > td:nth-child(2) {
+    --fl: inset 1px 0 0 var(--renewal-frame);
+    padding-left: calc(var(--renewal-pad) - var(--renewal-gap));
+    border-left: var(--renewal-gap) solid #fff;
+  }
+}
+.renewal-row-cancelled > td {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+.renewal-row-cancelled:hover > td {
+  opacity: 1;
+}
+.renewal-domain {
+  color: inherit;
+}
+.renewal-domain:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
+.renewal-renew-btn {
+  color: #52c41a;
+}
+@media (max-width: 767px) {
+  /* Điện thoại / tablet nhỏ: 4 nút thao tác xếp 2 hàng cho bảng khỏi cuộn ngang */
+  .renewal-table .product-row-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    width: 76px; /* 2 nút 36px + khoảng 4px (đặt cứng: bảng tự co cột về bề rộng 1 nút nếu chỉ có max-width) */
+    margin-left: auto;
+  }
+}
+.renewal-summary {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fafafa;
+}
+/* Mẫu thông báo: xem trước như tin nhắn, danh sách biến bấm để chèn */
+.template-preview {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fafafa;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.template-vars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.template-var {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.template-var:hover {
+  background: #f5f5f5;
+}
+.template-var code {
+  color: #007bff;
+}
+.template-var span {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
