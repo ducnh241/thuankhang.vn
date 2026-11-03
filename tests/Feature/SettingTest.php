@@ -6,7 +6,6 @@ use App\Http\Controllers\Backend\SettingController;
 use App\Models\Group;
 use App\Models\Setting;
 use App\Models\User;
-use App\Support\Renewal;
 use App\Support\SiteSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -36,7 +35,7 @@ class SettingTest extends TestCase
     {
         $viewer = User::factory()->create(['group_id' => Group::factory()->withPermissions('setting')->create()->id]);
         $editor = User::factory()->create(['group_id' => Group::factory()->withPermissions('setting', 'setting/edit')->create()->id]);
-        $other = User::factory()->create(['group_id' => Group::factory()->withPermissions('project')->create()->id]);
+        $other = User::factory()->create(['group_id' => Group::factory()->withPermissions('page')->create()->id]);
 
         $this->get('/backend/setting')->assertRedirect('/backend/login');
         $this->actingAs($other)->get('/backend/setting')->assertForbidden();
@@ -62,7 +61,7 @@ class SettingTest extends TestCase
 
     public function test_save_stores_every_field_and_returns_to_the_tab(): void
     {
-        Setting::put(Renewal::KEY_TEMPLATE_HOSTING, 'Mẫu cũ');
+        Setting::put('other_module_key', 'Giá trị cũ');
         $this->actingAs($this->root())->put('/backend/setting', $this->valid([
             '_tab' => 'seo', 'seo_keywords' => [' website ', 'hosting', 'website', ''], 'code_head' => '<script>gtag()</script>',
             'site_map' => 'https://maps.app.goo.gl/abc',
@@ -76,10 +75,10 @@ class SettingTest extends TestCase
         $this->assertSame('website, hosting', $all['seo_keywords']);
         $this->assertSame('<script>gtag()</script>', $all['code_head']);
         $this->assertSame('https://maps.app.goo.gl/abc', $all['site_map']);
-        // Ô trống chưa từng lưu: không tạo dòng; khóa khác trong bảng settings (mẫu gia hạn) giữ nguyên
+        // Ô trống chưa từng lưu: không tạo dòng; khóa khác trong bảng settings giữ nguyên
         $this->assertFalse(Setting::where('key', 'social_zalo')->exists());
         $this->assertFalse(Setting::where('key', 'code_body')->exists());
-        $this->assertSame('Mẫu cũ', Setting::get(Renewal::KEY_TEMPLATE_HOSTING));
+        $this->assertSame('Giá trị cũ', Setting::get('other_module_key'));
 
         // Trang hiện lại đúng dữ liệu (từ khóa thành tag đã chọn), mở đúng tab
         $this->actingAs($this->root())->get('/backend/setting?tab=seo')->assertOk()

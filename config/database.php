@@ -67,23 +67,6 @@ return [
             ]) : [],
         ],
 
-        // DB của bản cũ (nhánh main), chỉ dùng để ĐỌC khi chạy `php artisan import:projects`
-        'legacy' => [
-            'driver' => 'mysql',
-            'host' => env('LEGACY_DB_HOST', env('DB_HOST', '127.0.0.1')),
-            'port' => env('LEGACY_DB_PORT', env('DB_PORT', '3306')),
-            'database' => env('LEGACY_DB_DATABASE', 'ducnh_db'),
-            'username' => env('LEGACY_DB_USERNAME', env('DB_USERNAME', 'root')),
-            'password' => env('LEGACY_DB_PASSWORD', env('DB_PASSWORD', '')),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-            // Phiên MySQL theo giờ VN: cột TIMESTAMP lưu UTC bên trong và tự quy đổi khi đọc/ghi
-            'timezone' => env('DB_TIMEZONE', '+07:00'),
-        ],
-
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

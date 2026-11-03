@@ -13,6 +13,6 @@ class CategoryFactory extends Factory
     {
         $name = fake()->unique()->words(2, true);
 
-        return ['type' => Category::TYPE_PROJECT, 'name' => $name, 'slug' => Str::slug($name), 'priority' => 0];
+        return ['type' => Category::TYPE_POST, 'name' => $name, 'slug' => Str::slug($name), 'priority' => 0];
     }
 }

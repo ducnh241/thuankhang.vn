@@ -106,7 +106,7 @@ class GroupManagementTest extends TestCase
     public function test_groups_page_selects_first_group_and_lists_members(): void
     {
         $root = User::factory()->superAdmin()->create();
-        $b = Group::factory()->withPermissions('project')->create(['name' => 'B nhóm']);
+        $b = Group::factory()->withPermissions('page')->create(['name' => 'B nhóm']);
         $a = Group::factory()->create(['name' => 'A nhóm']);
         User::factory()->count(2)->create(['group_id' => $b->id]);
 
@@ -129,7 +129,7 @@ class GroupManagementTest extends TestCase
     public function test_view_only_user_sees_disabled_permission_tree(): void
     {
         $viewer = User::factory()->create(['group_id' => Group::factory()->withPermissions('backend_access', 'group')->create()->id]);
-        $other = Group::factory()->withPermissions('project')->create(['name' => 'Một nhóm']);
+        $other = Group::factory()->withPermissions('page')->create(['name' => 'Một nhóm']);
 
         $html = $this->actingAs($viewer)->get("/backend/groups?id={$other->id}")->assertOk()
             ->assertSee('<span class="ant-tag">Chỉ xem</span>', false)
@@ -146,21 +146,21 @@ class GroupManagementTest extends TestCase
     public function test_permission_table_groups_modules_by_section(): void
     {
         $root = User::factory()->superAdmin()->create();
-        $group = Group::factory()->withPermissions('backend_access', 'report', 'renewal', 'renewal/template')->create();
+        $group = Group::factory()->withPermissions('backend_access', 'audit_log', 'kyc', 'kyc/review')->create();
 
         $html = $this->actingAs($root)->get("/backend/groups/{$group->id}/edit")->assertOk()
             // Đăng nhập là công tắc riêng, đang bật
             ->assertSee('<input type="checkbox" name="permission[backend_access][_]" value="1" class="switch-input" hidden', false)
             ->assertSee('aria-checked="true" class="ant-switch mt-0.5 flex-none ant-switch-checked"', false)
             // Các nhóm dòng theo config, mỗi mục một dòng
-            ->assertSeeInOrder(['Kinh doanh', 'Dự án', 'Khách hàng', 'Thanh toán', 'Báo cáo doanh thu', 'Nhắc gia hạn', 'Danh mục', 'Tag dự án', 'Website', 'Menu website', 'Hệ thống', 'Người dùng', 'Nhóm quyền'])
+            ->assertSeeInOrder(['Danh mục', 'Danh mục tin tức', 'Website', 'Trang', 'Menu website', 'Affiliate – Cấu hình', 'Cấu hình cấp bậc', 'Bán hàng', 'Sản phẩm &amp; danh mục', 'Thành viên', 'KYC', 'Tài chính', 'Rút tiền', 'Hệ thống', 'Người dùng', 'Nhóm quyền', 'Nhật ký hệ thống'], false)
             ->assertSee('data-perm-col="_"', false)->assertSee('data-perm-col="delete"', false)
             ->getContent();
-        // Báo cáo: chỉ có Xem (đang bật, dòng sáng), Thêm / Sửa / Xóa là "–"
-        $this->assertMatchesRegularExpression('#<tr class="ant-table-row perm-row is-on" data-module="report">.*?name="permission\[report\]\[_\]" value="1" checked.*?(<span class="perm-none"[^>]*>–</span>.*?){3}</tr>#s', $html);
-        // Nhắc gia hạn: việc riêng ghi dưới tên, có nhãn
-        $this->assertMatchesRegularExpression('#data-module="renewal">.*?<div class="perm-extra">.*?name="permission\[renewal\]\[template\]" value="1" checked data-action="template" />.*?<span>Sửa mẫu thông báo</span>#s', $html);
-        $this->assertMatchesRegularExpression('#<tr class="ant-table-row perm-row" data-module="project">#', $html);
+        // Nhật ký: chỉ có Xem (đang bật, dòng sáng), Thêm / Sửa / Xóa là "–"
+        $this->assertMatchesRegularExpression('#<tr class="ant-table-row perm-row is-on" data-module="audit_log">.*?name="permission\[audit_log\]\[_\]" value="1" checked.*?(<span class="perm-none"[^>]*>–</span>.*?){3}</tr>#s', $html);
+        // KYC: việc riêng ghi dưới tên, có nhãn
+        $this->assertMatchesRegularExpression('#data-module="kyc">.*?<div class="perm-extra">.*?name="permission\[kyc\]\[review\]" value="1" checked data-action="review" />.*?<span>Duyệt / từ chối</span>#s', $html);
+        $this->assertMatchesRegularExpression('#<tr class="ant-table-row perm-row" data-module="page">#', $html);
     }
 
     public function test_deleting_group_returns_to_groups_page(): void
@@ -175,13 +175,13 @@ class GroupManagementTest extends TestCase
     public function test_permissions_are_locked_while_login_is_off(): void
     {
         $root = User::factory()->superAdmin()->create();
-        $noLogin = Group::factory()->create(['permission_data' => ['project', 'project/add']]);
-        $withLogin = Group::factory()->withPermissions('backend_access', 'project')->create();
+        $noLogin = Group::factory()->create(['permission_data' => ['page', 'page/add']]);
+        $withLogin = Group::factory()->withPermissions('backend_access', 'page')->create();
 
         // Không có quyền đăng nhập: phần quyền mờ + khóa (inert), các ô vẫn giữ giá trị để bật lại là dùng được
         $this->actingAs($root)->get("/backend/groups/{$noLogin->id}/edit")->assertOk()
             ->assertSee('<div class="perm-body is-off" id="perm-body"  inert >', false)
-            ->assertSee('name="permission[project][add]" value="1" checked', false)
+            ->assertSee('name="permission[page][add]" value="1" checked', false)
             ->assertSee('Đang tắt: người trong nhóm không đăng nhập được, mọi quyền bên dưới đều không có tác dụng.');
         $this->actingAs($root)->get("/backend/groups/{$withLogin->id}/edit")->assertOk()
             ->assertSee('<div class="perm-body" id="perm-body" >', false);

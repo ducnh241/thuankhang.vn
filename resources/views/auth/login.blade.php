@@ -20,15 +20,15 @@
           <span>{{ config('app.name') }}</span>
         </div>
         <div class="max-w-md">
-          <h2 class="mb-4 text-3xl font-semibold leading-tight text-white">Hệ thống quản trị website, dự án và khách hàng.</h2>
+          <h2 class="mb-4 text-3xl font-semibold leading-tight text-white">Hệ thống quản trị bán hàng và affiliate.</h2>
           <ul class="m-0 flex list-none flex-col gap-4 p-0 text-[rgba(255,255,255,0.85)]">
             <li class="flex gap-3">
-              {{ ant_icon('project', 'mt-0.5 text-lg') }}
-              <span>Dự án, khách hàng, thanh toán và hosting quản lý tập trung ở một nơi.</span>
+              {{ ant_icon('shop', 'mt-0.5 text-lg') }}
+              <span>Sản phẩm, đơn hàng và thanh toán QR quản lý tập trung ở một nơi.</span>
             </li>
             <li class="flex gap-3">
-              {{ ant_icon('fund', 'mt-0.5 text-lg') }}
-              <span>Nhắc gia hạn và báo cáo doanh thu theo kỳ, theo dõi dòng tiền dễ dàng.</span>
+              {{ ant_icon('team', 'mt-0.5 text-lg') }}
+              <span>Cây giới thiệu F1/F2, tự động lên cấp và tính hoa hồng vào ví.</span>
             </li>
             <li class="flex gap-3">
               {{ ant_icon('safety-certificate', 'mt-0.5 text-lg') }}

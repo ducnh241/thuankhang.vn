@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\MenuRequest;
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Menu;
 use App\Models\MenuItem;
@@ -123,10 +124,12 @@ class MenuController extends Controller
     {
         $handle = $item->menu->handle;
         $ids = MenuRequest::subtreeIds($item->menu->flatTree(), $item->id);
-        DB::transaction(function () use ($ids) {
+        DB::transaction(function () use ($ids, $item) {
             // Gỡ cha–con trước rồi xóa cả nhánh (MySQL cascade trên khóa ngoại tự tham chiếu có thể bỏ sót dòng)
             MenuItem::whereIn('id', $ids)->update(['parent_id' => null]);
             MenuItem::whereIn('id', $ids)->delete();
+            // Xóa bằng query (không qua event của model) → tự ghi nhật ký
+            AuditLog::recordBulkDelete(MenuItem::class, $ids, "Xóa mục menu “{$item->label}” và các mục con");
         });
         Menu::forgetCache($handle);
         $more = count($ids) - 1;

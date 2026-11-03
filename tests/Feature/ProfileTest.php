@@ -50,8 +50,8 @@ class ProfileTest extends TestCase
 
     public function test_profile_cannot_change_group_root_or_status(): void
     {
-        $group = Group::factory()->withPermissions('project')->create(['name' => 'Kinh doanh']);
-        $other = Group::factory()->withPermissions('project', 'user', 'group')->create();
+        $group = Group::factory()->withPermissions('page')->create(['name' => 'Kinh doanh']);
+        $other = Group::factory()->withPermissions('page', 'user', 'group')->create();
         $user = User::factory()->create(['group_id' => $group->id]);
 
         $this->actingAs($user)->put('/backend/profile', [

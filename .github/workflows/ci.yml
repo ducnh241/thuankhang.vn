@@ -1,0 +1,41 @@
+# CI: chạy test (SQLite in-memory theo phpunit.xml) + build asset cho mỗi push / pull request.
+# Deploy (staging / production) chưa cấu hình: chờ chốt hạ tầng hosting.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, gd, intl
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Build asset
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Chuẩn bị .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Test
+        run: php artisan test

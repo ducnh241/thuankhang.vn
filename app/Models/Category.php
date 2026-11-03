@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,31 +13,21 @@ class Category extends Model
     use HasFactory;
 
     public const TYPE_POST = 0;
-    public const TYPE_PROJECT = 1;
+
     public const TYPE_EVENT = 2;
+
     public const TYPE_STORE = 3;
 
     /**
      * Các loại danh mục quản lý ở trang Danh mục (/backend/category?type={kind}; route thêm / sửa / xóa có {kind}).
      *   type        giá trị cột categories.type
      *   used_by     danh mục dùng cho gì (câu gợi ý dưới ô chọn loại); example: tên ví dụ trong ô nhập
-     *   path        đoạn đầu đường dẫn trang danh mục trên website (/du-an/{slug}) — dùng cho link menu; website chưa
+     *   path        đoạn đầu đường dẫn trang danh mục trên website (/tin-tuc/{slug}) — dùng cho link menu; website chưa
      *               có trang danh mục, đổi ở đây khi làm
      *   permission  module quyền (kèm /add, /edit, /delete)
      *   usage       bảng đang dùng danh mục: hiện cột đếm và chặn xóa khi còn bản ghi (kể cả đã xóa mềm); null = chưa có
      */
     public const KINDS = [
-        'project' => [
-            'type' => self::TYPE_PROJECT,
-            'label' => 'Dự án',
-            'title' => 'Danh mục dự án',
-            'description' => 'Phân loại dự án; danh mục có thể lồng nhau (cha – con).',
-            'used_by' => 'dự án',
-            'example' => 'VD: Bán hàng',
-            'path' => 'du-an',
-            'permission' => 'project_category',
-            'usage' => ['table' => 'projects', 'column' => 'cat_id', 'label' => 'Dự án', 'unit' => 'dự án', 'route' => 'backend.projects.index', 'can' => 'project'],
-        ],
         'news' => [
             'type' => self::TYPE_POST,
             'label' => 'Tin tức',
@@ -90,11 +79,6 @@ class Category extends Model
         return $kind ? '/'.self::KINDS[$kind]['path'].'/'.$this->slug : null;
     }
 
-    public function scopeProject(Builder $query): void
-    {
-        $query->where('type', self::TYPE_PROJECT);
-    }
-
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
@@ -103,11 +87,6 @@ class Category extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Category::class, 'parent_id');
-    }
-
-    public function projects(): HasMany
-    {
-        return $this->hasMany(Project::class, 'cat_id');
     }
 
     /**

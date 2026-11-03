@@ -3,20 +3,14 @@
 // Route khu vực quản trị (/backend). Được nạp qua bootstrap/app.php với middleware group 'web'.
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Backend\AuditLogController;
 use App\Http\Controllers\Backend\CategoryController;
-use App\Http\Controllers\Backend\CustomerController;
 use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\GroupController;
-use App\Http\Controllers\Backend\HostingController;
 use App\Http\Controllers\Backend\MenuController;
 use App\Http\Controllers\Backend\PageController;
-use App\Http\Controllers\Backend\PaymentController;
 use App\Http\Controllers\Backend\ProfileController;
-use App\Http\Controllers\Backend\ProjectController;
-use App\Http\Controllers\Backend\RenewalController;
-use App\Http\Controllers\Backend\ReportController;
 use App\Http\Controllers\Backend\SettingController;
-use App\Http\Controllers\Backend\TagController;
 use App\Http\Controllers\Backend\UserController;
 use App\Models\Category;
 use App\Models\Menu;
@@ -39,32 +33,6 @@ Route::prefix('backend')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-
-        // Dự án (quyền: project, project/add, project/edit, project/delete)
-        Route::get('project', [ProjectController::class, 'index'])->name('projects.index')->can('project');
-        Route::get('project/create', [ProjectController::class, 'create'])->name('projects.create')->can('project/add');
-        Route::post('project', [ProjectController::class, 'store'])->name('projects.store')->can('project/add');
-        Route::get('project/{project}', [ProjectController::class, 'show'])->name('projects.show')->can('project')->whereNumber('project');
-        Route::get('project/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit')->can('project/edit');
-        Route::put('project/{project}', [ProjectController::class, 'update'])->name('projects.update')->can('project/edit');
-        Route::delete('project/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy')->can('project/delete');
-
-        // Báo cáo doanh thu (quyền: report)
-        Route::get('report/revenue', [ReportController::class, 'revenue'])->name('reports.revenue')->can('report');
-
-        // Nhắc gia hạn (quyền: renewal, renewal/renew, renewal/template)
-        Route::get('renewal', [RenewalController::class, 'index'])->name('renewals.index')->can('renewal');
-        Route::get('renewal/template', [RenewalController::class, 'editTemplate'])->name('renewals.template')->can('renewal/template');
-        Route::put('renewal/template', [RenewalController::class, 'updateTemplate'])->name('renewals.template.update')->can('renewal/template');
-        Route::post('renewal/{project}/renew', [RenewalController::class, 'renew'])->name('renewals.renew')->can('renewal/renew');
-        Route::post('renewal/{project}/cancel', [RenewalController::class, 'cancel'])->name('renewals.cancel')->can('renewal/renew');
-
-        // Tag dự án (quyền: tag, tag/add|edit|delete) — thêm/sửa trong hộp thoại ở trang danh sách
-        Route::get('tag', [TagController::class, 'index'])->name('tags.index')->can('tag');
-        Route::post('tag', [TagController::class, 'store'])->name('tags.store')->can('tag/add');
-        Route::post('tag/bulk-destroy', [TagController::class, 'bulkDestroy'])->name('tags.bulk-destroy')->can('tag/delete');
-        Route::put('tag/{tag}', [TagController::class, 'update'])->name('tags.update')->can('tag/edit');
-        Route::delete('tag/{tag}', [TagController::class, 'destroy'])->name('tags.destroy')->can('tag/delete');
 
         // Trang nội dung website (quyền: page, page/add|edit|delete) — đường dẫn trên website /page/{slug}
         Route::get('page', [PageController::class, 'index'])->name('pages.index')->can('page');
@@ -90,32 +58,8 @@ Route::prefix('backend')->group(function () {
         Route::get('setting', [SettingController::class, 'edit'])->name('settings.edit')->can('setting');
         Route::put('setting', [SettingController::class, 'update'])->name('settings.update')->can('setting/edit');
 
-        // Hosting (quyền: hosting, hosting/add|edit|delete)
-        Route::get('hosting', [HostingController::class, 'index'])->name('hostings.index')->can('hosting');
-        Route::get('hosting/create', [HostingController::class, 'create'])->name('hostings.create')->can('hosting/add');
-        Route::post('hosting', [HostingController::class, 'store'])->name('hostings.store')->can('hosting/add');
-        Route::get('hosting/{hosting}/edit', [HostingController::class, 'edit'])->name('hostings.edit')->can('hosting/edit');
-        Route::put('hosting/{hosting}', [HostingController::class, 'update'])->name('hostings.update')->can('hosting/edit');
-        Route::delete('hosting/{hosting}', [HostingController::class, 'destroy'])->name('hostings.destroy')->can('hosting/delete');
-
-        // Khách hàng (quyền: customer, customer/add|edit|delete)
-        Route::get('customer', [CustomerController::class, 'index'])->name('customers.index')->can('customer');
-        Route::get('customer/create', [CustomerController::class, 'create'])->name('customers.create')->can('customer/add');
-        Route::post('customer', [CustomerController::class, 'store'])->name('customers.store')->can('customer/add');
-        Route::post('customer/quick-create', [CustomerController::class, 'quickStore'])->name('customers.quick-store')->can('customer/add');
-        Route::get('customer/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit')->can('customer/edit');
-        Route::put('customer/{customer}', [CustomerController::class, 'update'])->name('customers.update')->can('customer/edit');
-        Route::delete('customer/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy')->can('customer/delete');
-
-        // Thanh toán (quyền: payment, payment/add|edit|delete)
-        Route::get('payment', [PaymentController::class, 'index'])->name('payments.index')->can('payment');
-        Route::post('payment', [PaymentController::class, 'store'])->name('payments.store')->can('payment/add');
-        Route::post('payment/bulk-destroy', [PaymentController::class, 'bulkDestroy'])->name('payments.bulk-destroy')->can('payment/delete');
-        Route::put('payment/{payment}', [PaymentController::class, 'update'])->name('payments.update')->can('payment/edit');
-        Route::delete('payment/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy')->can('payment/delete');
-
         // Danh mục mọi loại trên một trang: /category?type=project&id=3 (?new: thêm mới) — Category::KINDS.
-        // Gate 'category[/add|/edit|/delete]' nhận {kind} → quyền project_category/…, news_category/…; trang chỉ hiện
+        // Gate 'category[/add|/edit|/delete]' nhận {kind} → quyền news_category/…; trang chỉ hiện
         // các loại được xem (controller kiểm). Kéo thả trên cây: POST …/move.
         Route::get('category', [CategoryController::class, 'index'])->name('categories.index');
         Route::whereIn('kind', array_keys(Category::KINDS))->group(function () {
@@ -128,7 +72,6 @@ Route::prefix('backend')->group(function () {
             Route::get('category/{kind}/create', [CategoryController::class, 'legacy'])->name('categories.create')->can('category/add', 'kind');
             Route::get('category/{kind}/{category}/edit', [CategoryController::class, 'legacy'])->name('categories.edit')->can('category/edit', 'kind');
         });
-        Route::get('project-category', fn () => redirect()->route('backend.categories.index', ['type' => 'project'])); // URL cũ
 
         // Người dùng (quyền: user, user/add, user/edit, user/delete)
         Route::get('users', [UserController::class, 'index'])->name('users.index')->can('user');
@@ -145,5 +88,8 @@ Route::prefix('backend')->group(function () {
         Route::get('groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit')->can('group/edit');
         Route::put('groups/{group}', [GroupController::class, 'update'])->name('groups.update')->can('group/edit');
         Route::delete('groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy')->can('group/delete');
+
+        // Nhật ký hệ thống (quyền: audit_log) — chỉ xem; bảng audit_logs chỉ ghi thêm
+        Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-logs.index')->can('audit_log');
     });
 });

@@ -90,7 +90,7 @@ class MenuManagementTest extends TestCase
     {
         $viewer = User::factory()->create(['group_id' => Group::factory()->withPermissions('menu')->create()->id]);
         $adder = User::factory()->create(['group_id' => Group::factory()->withPermissions('menu', 'menu/add')->create()->id]);
-        $other = User::factory()->create(['group_id' => Group::factory()->withPermissions('project')->create()->id]);
+        $other = User::factory()->create(['group_id' => Group::factory()->withPermissions('page')->create()->id]);
         $this->main();
         $about = $this->item('Giới thiệu');
         $contact = $this->item('Liên hệ');
@@ -173,22 +173,22 @@ class MenuManagementTest extends TestCase
         $news = Category::factory()->create(['name' => 'Công nghệ', 'slug' => 'cong-nghe', 'type' => Category::TYPE_POST]);
         $event = Category::factory()->create(['type' => Category::TYPE_EVENT]);
 
-        // Danh mục (ô Liên kết nhiều cấp: "Danh mục dự án" › danh mục): chỉ giữ category_id (bỏ url đang có), link theo
+        // Danh mục (ô Liên kết nhiều cấp: "Danh mục tin tức" › danh mục): chỉ giữ category_id (bỏ url đang có), link theo
         // đường dẫn của danh mục
         $this->actingAs($root)->put("/backend/menu/item/{$about->id}", $this->form(['label' => 'Dự án', 'link' => 'category:'.$category->id, 'url' => 'javascript:x']))
             ->assertSessionHasNoErrors()->assertRedirect(route('backend.menus.index', ['position' => 'main', 'id' => $about->id]));
         $about->refresh();
-        $this->assertSame([null, $category->id, null, 'category', '/du-an/ban-hang'], [$about->url, $about->category_id, $about->page_id, $about->linkType(), $about->href()]);
-        $this->assertSame('/du-an/ban-hang', Menu::tree('main')[0]['url']);
+        $this->assertSame([null, $category->id, null, 'category', '/tin-tuc/ban-hang'], [$about->url, $about->category_id, $about->page_id, $about->linkType(), $about->href()]);
+        $this->assertSame('/tin-tuc/ban-hang', Menu::tree('main')[0]['url']);
         $xp = $this->xpath($this->actingAs($root)->get("/backend/menu?position=main&id={$about->id}")
             ->assertSee('<span class="menu-link">Danh mục: Bán hàng</span>', false)->getContent());
         // Cấp ngoài: các loại link (loại có danh sách mở tiếp trong ô); cấp trong: danh mục từng loại, trang
         [$value, $shown, $tree] = $this->linkPicker($xp);
-        $this->assertSame(['category:'.$category->id, 'Danh mục dự án › Bán hàng'], [$value, $shown]);
-        $this->assertSame(['home Trang chủ', 'category:project Danh mục dự án', 'category:news Danh mục tin tức', 'page Trang', 'url Tự nhập đường dẫn…'],
+        $this->assertSame(['category:'.$category->id, 'Danh mục tin tức › Bán hàng'], [$value, $shown]);
+        $this->assertSame(['home Trang chủ', 'category:news Danh mục tin tức', 'page Trang', 'url Tự nhập đường dẫn…'],
             array_map(fn ($i) => ($i['value'] ?? $i['menu']).' '.$i['label'], $tree['items']));
-        $this->assertSame([['value' => 'category:'.$category->id, 'label' => 'Bán hàng', 'depth' => 0, 'note' => null]], $tree['menus']['category:project']['items']);
-        $this->assertSame(['category:'.$news->id], array_column($tree['menus']['category:news']['items'], 'value'));
+        $this->assertSame([['value' => 'category:'.$category->id, 'label' => 'Bán hàng', 'depth' => 0, 'note' => null]], [$tree['menus']['category:news']['items'][0]]);
+        $this->assertSame(['category:'.$category->id, 'category:'.$news->id], array_column($tree['menus']['category:news']['items'], 'value'));
         $this->assertSame(['Trang', 'Chưa có trang nào', []], [$tree['menus']['page']['title'], $tree['menus']['page']['empty'], $tree['menus']['page']['items']]);
         $this->assertSame([], $this->visibleLinkFields($xp)); // ô đường dẫn chỉ hiện khi chọn "Tự nhập…"
 
@@ -201,7 +201,7 @@ class MenuManagementTest extends TestCase
 
         // Đổi slug danh mục → link menu đổi theo (cache được làm mới); danh mục ẩn → mục không hiện trên website
         $category->update(['slug' => 'ban-hang-moi']);
-        $this->assertSame('/du-an/ban-hang-moi', Menu::tree('main')[0]['url']);
+        $this->assertSame('/tin-tuc/ban-hang-moi', Menu::tree('main')[0]['url']);
         $this->actingAs($root)->put("/backend/menu/item/{$about->id}", $this->form(['label' => 'Tin', 'link' => 'category:'.$news->id]));
         $this->assertSame(['Tin', '/tin-tuc/cong-nghe'], [Menu::tree('main')[0]['label'], Menu::tree('main')[0]['url']]);
         $news->update(['status' => false]);
@@ -226,7 +226,7 @@ class MenuManagementTest extends TestCase
         $this->assertSame(['url', 'Tự nhập đường dẫn…'], [$value, $shown]);
         $this->assertSame(['url'], $this->visibleLinkFields($xp));
         // Mỗi loại link có icon: trang chủ, danh mục, trang, tự nhập
-        $this->assertSame(['home', 'folder', 'folder', 'file-text', 'link'], array_column($tree['items'], 'icon'));
+        $this->assertSame(['home', 'folder', 'file-text', 'link'], array_column($tree['items'], 'icon'));
         $this->assertSame('link', $xp->query('//*[@data-link-picker]//*[contains(@class, "ant-select-selection-item")]//*[@role="img"]')->item(0)->getAttribute('aria-label'));
 
         // Trang chủ: lưu "/" (bỏ ô tự nhập), hiện lại là "Trang chủ"; trong cây có icon ngôi nhà

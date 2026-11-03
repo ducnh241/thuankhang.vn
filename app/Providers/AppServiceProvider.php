@@ -2,17 +2,19 @@
 
 namespace App\Providers;
 
+use App\Models\AuditLog;
 use App\Models\Category;
-use App\Models\Customer;
-use App\Models\Hosting;
-use App\Models\Payment;
-use App\Models\Project;
 use App\Models\User;
-use App\Observers\AuditObserver;
+use App\Observers\SystemAuditObserver;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,10 +30,29 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('user', fn (string $value) => User::visible()->whereKey($value)->firstOrFail());
         Paginator::defaultView('vendor.pagination.backend');
 
-        // Lịch sử thay đổi của module dự án
-        foreach ([Project::class, Payment::class, Customer::class, Hosting::class] as $model) {
-            $model::observe(AuditObserver::class);
+        $this->registerSystemAudit();
+    }
+
+    /**
+     * Nhật ký hệ thống (audit_logs): thay đổi trên mọi model quản trị (AuditLog::SUBJECTS) + đăng nhập / đăng xuất.
+     * Model mới của các step sau: thêm vào AuditLog::SUBJECTS là được ghi log.
+     */
+    protected function registerSystemAudit(): void
+    {
+        foreach (array_keys(AuditLog::SUBJECTS) as $model) {
+            $model::observe(SystemAuditObserver::class);
         }
+
+        Event::listen(Login::class, fn (Login $event) => $event->user instanceof User
+            && AuditLog::record('login', $event->user, null, $event->remember ? 'Ghi nhớ đăng nhập' : null, $event->user));
+        Event::listen(Logout::class, fn (Logout $event) => $event->user instanceof User
+            && AuditLog::record('logout', $event->user, null, null, $event->user));
+        // Người thử chưa đăng nhập: không gắn người thực hiện; chỉ ghi email đã gõ, không ghi mật khẩu.
+        // Đối tượng = tài khoản có email đó (nếu có) để lọc được "ai đang bị dò mật khẩu".
+        Event::listen(Failed::class, fn (Failed $event) => AuditLog::record(
+            'login_failed', $event->user instanceof User ? $event->user : null, null,
+            'Email: '.Str::limit((string) ($event->credentials['email'] ?? ''), 255),
+        ));
     }
 
     /**
@@ -52,7 +73,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Danh mục nhiều loại dùng chung route /backend/category/{kind}: 'category', 'category/add'… nhận kind
-        // và quy về quyền của loại đó (project_category/add, news_category/add…)
+        // và quy về quyền của loại đó (news_category/add…)
         foreach (['', '/add', '/edit', '/delete'] as $action) {
             Gate::define('category'.$action, fn (User $user, string $kind) => isset(Category::KINDS[$kind])
                 && $user->hasPermission(Category::KINDS[$kind]['permission'].$action));

@@ -32,10 +32,10 @@ class BackendLayoutTest extends TestCase
     {
         $sidebar = $this->sidebar($this->actingAs($this->root())->get('/backend')->assertOk()->getContent());
 
-        foreach (['OVERVIEW', 'MANAGEMENT', 'WEBSITE', 'SYSTEM'] as $group) {
+        foreach (['OVERVIEW', 'WEBSITE', 'SYSTEM'] as $group) {
             $this->assertStringContainsString('<div class="ant-menu-item-group-title" title="'.$group.'">'.$group.'</div>', $sidebar);
         }
-        foreach (['dashboard', 'fund', 'folder', 'project', 'tags', 'sync', 'cloud-server', 'contacts', 'credit-card', 'container', 'team'] as $icon) {
+        foreach (['dashboard', 'folder', 'file-text', 'container', 'team', 'setting', 'history'] as $icon) {
             $this->assertStringContainsString('<use href="#i-'.$icon.'"></use>', $sidebar);
         }
         // Mỗi icon dùng trong sidebar đều có trong bộ icon nhúng
@@ -70,19 +70,18 @@ class BackendLayoutTest extends TestCase
 
     public function test_sidebar_only_shows_what_the_user_may_open(): void
     {
-        $user = User::factory()->create(['group_id' => Group::factory()->withPermissions('project', 'customer')->create()->id]);
+        $user = User::factory()->create(['group_id' => Group::factory()->withPermissions('page', 'menu')->create()->id]);
 
         $sidebar = $this->sidebar($this->actingAs($user)->get('/backend')->assertOk()->getContent());
 
-        $this->assertStringContainsString(route('backend.projects.index'), $sidebar);
-        $this->assertStringContainsString(route('backend.customers.index'), $sidebar);
-        foreach (['backend.users.index', 'backend.groups.index', 'backend.reports.revenue', 'backend.menus.index', 'backend.payments.index'] as $route) {
+        $this->assertStringContainsString(route('backend.pages.index'), $sidebar);
+        $this->assertStringContainsString(route('backend.menus.index'), $sidebar);
+        foreach (['backend.users.index', 'backend.groups.index', 'backend.settings.edit', 'backend.audit-logs.index', 'backend.categories.index'] as $route) {
             $this->assertStringNotContainsString(route($route), $sidebar);
         }
         // Nhóm không còn mục nào thì ẩn luôn tiêu đề nhóm
         $this->assertStringNotContainsString('title="SYSTEM"', $sidebar);
-        $this->assertStringNotContainsString('title="WEBSITE"', $sidebar);
-        $this->assertStringContainsString('title="MANAGEMENT"', $sidebar);
+        $this->assertStringContainsString('title="WEBSITE"', $sidebar);
     }
 
     public function test_account_menu_and_mobile_header(): void
@@ -171,10 +170,10 @@ class BackendLayoutTest extends TestCase
         $this->assertMatchesRegularExpression('#<div class="ant-alert ant-alert-error ant-alert-closable" role="alert">.*?<div class="ant-alert-message">Không xóa được: còn 2 dự án.</div>.*?<button type="button" class="ant-alert-close-icon" tabindex="0" aria-label="Đóng">#s', $html);
         $this->assertStringNotContainsString('data-flash-message', $html);
 
-        // Lỗi validate thật (form khách hàng thiếu tên), quay lại Dashboard
+        // Lỗi validate thật (form người dùng thiếu tên), quay lại Dashboard
         $this->flushSession();
         $html = $this->actingAs($root)->from('/backend')->followingRedirects()
-            ->post('/backend/customer', ['name' => '', 'email' => 'khong-hop-le'])->assertOk()->getContent();
+            ->post('/backend/users', ['name' => '', 'email' => 'khong-hop-le'])->assertOk()->getContent();
         $this->assertMatchesRegularExpression('#<div class="ant-alert ant-alert-error ant-alert-with-description" role="alert">.*?<div class="ant-alert-message">Dữ liệu chưa hợp lệ</div>\s*<div class="ant-alert-description">\s*<ul class="m-0 list-disc pl-5">\s*<li>[^<]+</li><li>[^<]+</li>#s', $html);
         // Thông báo nằm sau thanh trên cùng, trước nội dung trang
         $this->assertGreaterThan(strpos($html, 'id="page-topbar"'), strpos($html, 'Dữ liệu chưa hợp lệ'));

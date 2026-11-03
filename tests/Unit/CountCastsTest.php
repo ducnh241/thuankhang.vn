@@ -2,12 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Models\Customer;
 use App\Models\Group;
-use App\Models\Hosting;
 use App\Models\Menu;
-use App\Models\Project;
-use App\Models\Tag;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,11 +15,7 @@ class CountCastsTest extends TestCase
     public function test_withcount_attributes_are_integers_even_when_driver_returns_strings(): void
     {
         foreach ([
-            [new Customer, 'projects_count'],
-            [new Hosting, 'projects_count'],
             [new Group, 'users_count'],
-            [new Tag, 'projects_count'],
-            [new Project, 'payments_count'],
             [new Menu, 'items_count'],
         ] as [$model, $attribute]) {
             $model->setRawAttributes([$attribute => '0']);

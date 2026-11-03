@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Group;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -42,11 +43,28 @@ class DashboardTest extends TestCase
             ->assertDontSee('ov-user-menu', false);
     }
 
+    public function test_dashboard_sections_follow_permissions(): void
+    {
+        $onlyAccess = User::factory()->create(['group_id' => Group::factory()->withPermissions('backend_access')->create()->id]);
+        $this->actingAs($onlyAccess)->get('/backend')->assertOk()
+            ->assertSee('chưa được cấp quyền xem mục nào')
+            ->assertDontSee('data-stat=', false)->assertDontSee('Hoạt động gần đây');
+
+        $pages = User::factory()->create(['group_id' => Group::factory()->withPermissions('backend_access', 'page')->create()->id]);
+        $this->actingAs($pages)->get('/backend')->assertOk()
+            ->assertSee('data-stat="pages"', false)->assertDontSee('data-stat="users"', false)->assertDontSee('Hoạt động gần đây');
+
+        $this->actingAs(User::factory()->superAdmin()->create())->get('/backend')->assertOk()
+            ->assertSee('data-stat="users"', false)->assertSee('data-stat="groups"', false)
+            ->assertSee('Hoạt động gần đây')->assertSee(route('backend.audit-logs.index'), false)
+            ->assertDontSee('chưa được cấp quyền xem mục nào');
+    }
+
     public function test_login_page_branding(): void
     {
         $this->get('/backend/login')->assertOk()
             ->assertSee('<title>Đăng nhập - '.config('app.name').'</title>', false)
-            ->assertSee('Hệ thống quản trị website, dự án và khách hàng.')
+            ->assertSee('Hệ thống quản trị bán hàng và affiliate.')
             ->assertSee('© '.date('Y').' '.config('app.name'), false)
             ->assertSee('src="'.config('app.logo').'"', false)
             ->assertDontSee('lucide-command', false)

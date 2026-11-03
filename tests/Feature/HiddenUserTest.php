@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Group;
-use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -87,15 +86,15 @@ class HiddenUserTest extends TestCase
         $this->assertTrue($this->hidden->fresh()->isSuperAdmin());
     }
 
-    public function test_project_history_shows_system_instead_of_hidden_user(): void
+    public function test_audit_log_shows_system_instead_of_hidden_user(): void
     {
-        $project = Project::factory()->create(['name' => 'Dự án A']);
+        $group = Group::factory()->create(['name' => 'Nhóm A']);
         $this->actingAs($this->hidden);
-        $project->update(['name' => 'Dự án A (ẩn sửa)']);
+        $group->update(['name' => 'Nhóm A (ẩn sửa)']);
         $this->actingAs($this->root);
-        $project->update(['name' => 'Dự án A (chủ sửa)']);
+        $group->update(['name' => 'Nhóm A (chủ sửa)']);
 
-        $this->actingAs($this->root)->get("/backend/project/{$project->id}")->assertOk()
+        $this->actingAs($this->root)->get('/backend/audit-log')->assertOk()
             ->assertDontSee('Hỗ Trợ Bí Mật')->assertSee('Hệ thống')->assertSee('Chủ Website');
     }
 }
