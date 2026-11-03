@@ -73,7 +73,7 @@ function setup(form) {
     $('[data-hide-when-dirty]').toggleClass('hidden', changed);
     $form.trigger('edit-form:refresh');
   };
-  $form.on('input change select:change picker:change', refresh);
+  $form.on('input change select:change picker:change number:change', refresh);
   refresh();
 
   $('#discard-changes').on('click', () => {

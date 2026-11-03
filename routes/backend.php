@@ -3,6 +3,10 @@
 // Route khu vực quản trị (/backend). Được nạp qua bootstrap/app.php với middleware group 'web'.
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Backend\Affiliate\AffiliateSettingController;
+use App\Http\Controllers\Backend\Affiliate\CommissionRateController;
+use App\Http\Controllers\Backend\Affiliate\KpiTierController;
+use App\Http\Controllers\Backend\Affiliate\LevelController;
 use App\Http\Controllers\Backend\AuditLogController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\DashboardController;
@@ -33,6 +37,18 @@ Route::prefix('backend')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+        // Cấu hình affiliate (A2–A5): mỗi trang một form, quyền affiliate_level|commission|kpi|setting (+ /edit)
+        Route::prefix('affiliate')->name('affiliate.')->group(function () {
+            Route::get('levels', [LevelController::class, 'index'])->name('levels.index')->can('affiliate_level');
+            Route::put('levels', [LevelController::class, 'update'])->name('levels.update')->can('affiliate_level/edit');
+            Route::get('commission', [CommissionRateController::class, 'index'])->name('commission.index')->can('affiliate_commission');
+            Route::post('commission', [CommissionRateController::class, 'store'])->name('commission.store')->can('affiliate_commission/edit');
+            Route::get('kpi', [KpiTierController::class, 'index'])->name('kpi.index')->can('affiliate_kpi');
+            Route::put('kpi', [KpiTierController::class, 'update'])->name('kpi.update')->can('affiliate_kpi/edit');
+            Route::get('settings', [AffiliateSettingController::class, 'edit'])->name('settings.edit')->can('affiliate_setting');
+            Route::put('settings', [AffiliateSettingController::class, 'update'])->name('settings.update')->can('affiliate_setting/edit');
+        });
 
         // Trang nội dung website (quyền: page, page/add|edit|delete) — đường dẫn trên website /page/{slug}
         Route::get('page', [PageController::class, 'index'])->name('pages.index')->can('page');

@@ -59,13 +59,18 @@ class BackendLayoutTest extends TestCase
         $sidebar = $this->sidebar($this->actingAs($root)->get('/backend/users')->assertOk()->getContent());
         $this->assertMatchesRegularExpression('#<li class="ant-menu-submenu ant-menu-submenu-inline ant-menu-submenu-open ant-menu-submenu-selected" role="menuitem">\s*<div class="ant-menu-submenu-title" role="button" tabindex="0" aria-expanded="true"[^>]*><span[^>]*aria-label="team"#', $sidebar);
         $this->assertMatchesRegularExpression('#<li class="ant-menu-item ant-menu-item-only-child ant-menu-item-selected" role="menuitem" style="padding-left: 48px">\s*<a href="'.preg_quote(route('backend.users.index'), '#').'"\s*aria-current="page"#', $sidebar);
-        $this->assertSame(0, substr_count($sidebar, 'ant-menu-sub ant-menu-inline ant-menu-hidden'));
+        $this->assertSame(1, substr_count($sidebar, 'ant-menu-sub ant-menu-inline ant-menu-hidden')); // Configuration (affiliate) đóng
         $this->assertStringContainsString('<a href="'.route('backend.categories.index').'" ><span class="mr-auto">Categories</span></a>', $sidebar);
 
-        // Ở Dashboard: menu cha Users đóng
+        // Ở Dashboard: menu cha Users và Configuration đều đóng
         $sidebar = $this->sidebar($this->actingAs($root)->get('/backend')->getContent());
-        $this->assertSame(1, substr_count($sidebar, 'ant-menu-sub ant-menu-inline ant-menu-hidden'));
+        $this->assertSame(2, substr_count($sidebar, 'ant-menu-sub ant-menu-inline ant-menu-hidden'));
         $this->assertStringNotContainsString('ant-menu-submenu-open', $sidebar);
+
+        // Ở trang cấu hình affiliate: menu cha Configuration mở, mục con được chọn
+        $sidebar = $this->sidebar($this->actingAs($root)->get('/backend/affiliate/kpi')->assertOk()->getContent());
+        $this->assertMatchesRegularExpression('#ant-menu-submenu-open ant-menu-submenu-selected" role="menuitem">\s*<div class="ant-menu-submenu-title" role="button" tabindex="0" aria-expanded="true"[^>]*><span[^>]*aria-label="fund"#', $sidebar);
+        $this->assertMatchesRegularExpression('#<a href="'.preg_quote(route('backend.affiliate.kpi.index'), '#').'"\s*aria-current="page"#', $sidebar);
     }
 
     public function test_sidebar_only_shows_what_the_user_may_open(): void

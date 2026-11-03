@@ -47,6 +47,21 @@ return [
             ],
         ],
         [
+            'label' => 'AFFILIATE',
+            'items' => [
+                [
+                    'label' => 'Configuration',
+                    'icon' => 'fund',
+                    'children' => [
+                        ['label' => 'Levels', 'route' => 'backend.affiliate.levels.index', 'can' => 'affiliate_level'],
+                        ['label' => 'Commission rates', 'route' => 'backend.affiliate.commission.index', 'can' => 'affiliate_commission'],
+                        ['label' => 'KPI tiers', 'route' => 'backend.affiliate.kpi.index', 'can' => 'affiliate_kpi'],
+                        ['label' => 'Parameters', 'route' => 'backend.affiliate.settings.edit', 'can' => 'affiliate_setting'],
+                    ],
+                ],
+            ],
+        ],
+        [
             'label' => 'WEBSITE',
             'items' => [
                 [

@@ -52,14 +52,14 @@ return [
         'label' => 'Cấu hình cấp bậc',
         'section' => 'Affiliate – Cấu hình',
         'items' => [
-            'edit' => 'Sửa',
+            'edit' => 'Sửa (thêm cấp, đổi mốc, sắp xếp, bật / tắt)',
         ],
     ],
     'affiliate_commission' => [
         'label' => 'Ma trận hoa hồng',
         'section' => 'Affiliate – Cấu hình',
         'items' => [
-            'edit' => 'Sửa',
+            'edit' => 'Lưu phiên bản tỉ lệ mới',
         ],
     ],
     'affiliate_kpi' => [

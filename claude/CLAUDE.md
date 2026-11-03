@@ -47,3 +47,6 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Step 0 (Nền tảng): xong — audit_logs + màn hình Nhật ký, 4 vai trò, khai báo quyền A2–A14, CI, .env.example.
 - Đã gỡ module ProCMS cũ: dự án, tag, gia hạn, hosting, khách hàng, thanh toán, báo cáo doanh thu (code + bảng, migration
   `2026_11_03_000002_drop_project_module_tables`). Còn lại: Trang, Menu, Danh mục tin tức, Cài đặt, Người dùng, Nhóm quyền.
+- Step 1 (Cấu hình): xong — bảng `levels`, `commission_rates` (phiên bản theo effective_from, chỉ ghi thêm), `kpi_tiers`;
+  tham số chung trong `settings` (khóa `aff_*`, đọc qua `App\Support\AffiliateSettings::get()`); màn hình A2–A5 ở
+  /backend/affiliate/*; seed `AffiliateConfigSeeder`. Tra tỉ lệ: `CommissionRate::rateFor($levelId, 'F1', $paidAt)`.

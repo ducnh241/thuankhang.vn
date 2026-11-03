@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function registerSystemAudit(): void
     {
-        foreach (array_keys(AuditLog::SUBJECTS) as $model) {
+        foreach (array_diff(array_keys(AuditLog::SUBJECTS), AuditLog::MANUAL_SUBJECTS) as $model) {
             $model::observe(SystemAuditObserver::class);
         }
 

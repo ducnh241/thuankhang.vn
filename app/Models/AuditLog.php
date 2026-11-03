@@ -36,7 +36,13 @@ class AuditLog extends Model
         Page::class => 'Trang',
         Menu::class => 'Menu',
         MenuItem::class => 'Mục menu',
+        Level::class => 'Cấp bậc',
+        CommissionRate::class => 'Tỉ lệ hoa hồng',
+        KpiTier::class => 'Bậc KPI',
     ];
+
+    /** Loại trong SUBJECTS nhưng không gắn observer: controller tự ghi một dòng tóm tắt (vd cả phiên bản tỉ lệ). */
+    public const MANUAL_SUBJECTS = [CommissionRate::class];
 
     protected $fillable = [
         'user_id', 'user_name', 'action', 'auditable_type', 'auditable_id', 'description', 'changes',

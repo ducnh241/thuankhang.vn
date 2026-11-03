@@ -4,7 +4,7 @@
 
 {{-- Nhật ký hệ thống (đặc tả Affiliate A14): chỉ xem, mới nhất trước. Dựng như trang Thanh toán: ô tìm + nút lọc (thao
      tác, loại đối tượng — list.js mở danh sách trong <template id="filter-…">) + khoảng ngày, bảng, phân trang.
-     Thay đổi cột: bấm "Chi tiết" mở bảng trước → sau ngay dưới dòng. --}}
+     Thay đổi cột: nút mở rộng đầu dòng mở bảng trước → sau ngay dưới (expandable row, table-expand.js). --}}
 @php
     use App\Models\AuditLog;
 
@@ -23,6 +23,13 @@
         is_array($value) => json_encode($value, JSON_UNESCAPED_UNICODE),
         default => \Illuminate\Support\Str::limit((string) $value, 200),
     };
+    $today = now();
+    $presets = [
+        ['label' => 'Hôm nay', 'from' => $today->toDateString(), 'to' => $today->toDateString()],
+        ['label' => '7 ngày qua', 'from' => $today->copy()->subDays(6)->toDateString(), 'to' => $today->toDateString()],
+        ['label' => 'Tháng này', 'from' => $today->copy()->startOfMonth()->toDateString(), 'to' => $today->toDateString()],
+        ['label' => 'Tháng trước', 'from' => $today->copy()->subMonthNoOverflow()->startOfMonth()->toDateString(), 'to' => $today->copy()->subMonthNoOverflow()->endOfMonth()->toDateString()],
+    ];
     $pills = [
         'action' => ['Thao tác', AuditLog::ACTIONS],
         'type' => ['Đối tượng', AuditLog::SUBJECTS],
@@ -53,14 +60,16 @@
             <button type="button" class="filter-pill" data-filter="{{ $key }}">{{ $label }}{{ ant_icon('down') }}</button>
           @endif
         @endforeach
-        <form method="GET" action="{{ route('backend.audit-logs.index') }}" class="flex flex-wrap items-center gap-2" id="audit-range">
-          @foreach (\Illuminate\Support\Arr::except($current, ['from', 'to']) as $name => $value)
-            <input type="hidden" name="{{ $name }}" value="{{ $value }}" />
-          @endforeach
-          <input type="date" name="from" value="{{ $filter['from'] }}" class="ant-input ant-input-sm" style="width: 150px" aria-label="Từ ngày" data-autosubmit />
-          <span class="{{ $muted }}">→</span>
-          <input type="date" name="to" value="{{ $filter['to'] }}" class="ant-input ant-input-sm" style="width: 150px" aria-label="Đến ngày" data-autosubmit />
-        </form>
+        {{-- RangePicker (picker.js + list.js): chọn đủ 2 ngày → tải lại với from / to; ⓧ bỏ lọc ngày --}}
+        <div @class(['ant-picker ant-picker-range ant-picker-small payment-range', 'is-applied' => $filter['from'] !== '' || $filter['to'] !== '']) id="audit-range" data-picker="range"
+          data-presets="{{ json_encode($presets, JSON_UNESCAPED_UNICODE) }}" data-url="{{ $url(['from' => null, 'to' => null]) }}">
+          <div class="ant-picker-input ant-picker-input-active"><input placeholder="Từ ngày" readonly aria-label="Từ ngày" value="{{ $filter['from'] }}" /></div>
+          <div class="ant-picker-range-separator"><span class="ant-picker-separator">{{ ant_icon('swap-right') }}</span></div>
+          <div class="ant-picker-input"><input placeholder="Đến ngày" readonly aria-label="Đến ngày" value="{{ $filter['to'] }}" /></div>
+          <div class="ant-picker-active-bar" style="left: 0px; width: 96px; position: absolute"></div>
+          <span class="ant-picker-suffix">{{ ant_icon('calendar') }}</span>
+          @if ($filter['from'] !== '' || $filter['to'] !== '')<span class="ant-picker-clear" role="button" aria-label="Bỏ lọc ngày">{{ ant_icon('close-circle') }}</span>@endif
+        </div>
         @if ($filtering)
           <a href="{{ route('backend.audit-logs.index') }}" class="ml-1 whitespace-nowrap" id="clear-filters">Xóa bộ lọc</a>
         @endif
@@ -85,6 +94,7 @@
             <table class="product-table" style="table-layout: auto">
               <thead class="ant-table-thead">
                 <tr>
+                  <th class="ant-table-cell ant-table-row-expand-icon-cell" style="width: 48px"></th>
                   <th class="ant-table-cell whitespace-nowrap" style="width: 150px">Thời gian</th>
                   <th class="ant-table-cell" style="width: 180px">Người thực hiện</th>
                   <th class="ant-table-cell" style="width: 130px">Thao tác</th>
@@ -100,6 +110,11 @@
                       $fields = array_unique([...array_keys($old ?? []), ...array_keys($new ?? [])]);
                   @endphp
                   <tr class="ant-table-row" data-row-key="{{ $log->id }}">
+                    <td class="ant-table-cell ant-table-row-expand-icon-cell">
+                      @if ($fields !== [])
+                        <button type="button" class="ant-table-row-expand-icon ant-table-row-expand-icon-collapsed" data-expand="log-{{ $log->id }}" aria-label="Mở rộng" aria-expanded="false"></button>
+                      @endif
+                    </td>
                     <td class="ant-table-cell whitespace-nowrap tabular-nums">{{ $log->created_at?->format('d/m/Y H:i:s') }}</td>
                     <td class="ant-table-cell">{{ $log->actorName() }}</td>
                     <td class="ant-table-cell"><span class="ant-tag m-0 {{ $actionTag[$log->action] ?? '' }}">{{ $log->actionLabel() }}</span></td>
@@ -108,32 +123,44 @@
                         <span class="font-medium text-[rgba(0,0,0,0.85)]">{{ $log->subjectLabel() }}</span>@if ($log->auditable_id) <span class="{{ $muted }} tabular-nums">#{{ $log->auditable_id }}</span>@endif
                       @endif
                       @if ($log->description)
-                        <div class="text-xs {{ $muted }} wrap-anywhere">{{ $log->description }}</div>
-                      @endif
-                      @if ($fields !== [])
-                        <details class="mt-1 text-xs">
-                          <summary class="cursor-pointer text-[#1890ff]">Chi tiết ({{ count($fields) }} trường)</summary>
-                          <div class="mt-1 flex flex-col gap-0.5">
-                            @foreach ($fields as $field)
-                              <div class="wrap-anywhere">
-                                <span class="{{ $muted }}">{{ $field }}:</span>
-                                @if ($log->action === 'updated')
-                                  <span class="{{ $muted }} line-through">{{ $fmt($old[$field] ?? null) }}</span> →
-                                  <span class="font-medium text-[rgba(0,0,0,0.85)]">{{ $fmt($new[$field] ?? null) }}</span>
-                                @else
-                                  <span class="text-[rgba(0,0,0,0.85)]">{{ $fmt(($new ?: $old)[$field] ?? null) }}</span>
-                                @endif
-                              </div>
-                            @endforeach
-                          </div>
-                        </details>
+                        <div class="ant-typography ant-typography-secondary text-xs wrap-anywhere">{{ $log->description }}</div>
                       @endif
                     </td>
                     <td class="ant-table-cell font-mono text-xs {{ $muted }} max-sm:hidden">{{ $log->ip_address ?? '—' }}</td>
                   </tr>
+                  @if ($fields !== [])
+                    {{-- Dòng mở rộng (table-expand.js): bảng trường thay đổi trước → sau --}}
+                    <tr class="ant-table-expanded-row ant-table-expanded-row-level-1 hidden" data-expanded-for="log-{{ $log->id }}">
+                      <td class="ant-table-cell" colspan="6">
+                        <div class="ant-table ant-table-small ant-table-bordered">
+                          <div class="ant-table-container"><div class="ant-table-content">
+                            <table style="table-layout: auto">
+                              <thead class="ant-table-thead"><tr>
+                                <th class="ant-table-cell" style="width: 200px">Trường</th>
+                                @if ($log->action === 'updated')<th class="ant-table-cell">Trước</th><th class="ant-table-cell">Sau</th>@else<th class="ant-table-cell">Giá trị</th>@endif
+                              </tr></thead>
+                              <tbody class="ant-table-tbody">
+                                @foreach ($fields as $field)
+                                  <tr class="ant-table-row">
+                                    <td class="ant-table-cell font-mono text-xs">{{ $field }}</td>
+                                    @if ($log->action === 'updated')
+                                      <td class="ant-table-cell wrap-anywhere {{ $muted }}">{{ $fmt($old[$field] ?? null) }}</td>
+                                      <td class="ant-table-cell wrap-anywhere">{{ $fmt($new[$field] ?? null) }}</td>
+                                    @else
+                                      <td class="ant-table-cell wrap-anywhere">{{ $fmt(($new ?: $old)[$field] ?? null) }}</td>
+                                    @endif
+                                  </tr>
+                                @endforeach
+                              </tbody>
+                            </table>
+                          </div></div>
+                        </div>
+                      </td>
+                    </tr>
+                  @endif
                 @empty
                   <tr class="ant-table-placeholder">
-                    <td colspan="5" class="ant-table-cell">
+                    <td colspan="6" class="ant-table-cell">
                       <div class="ant-empty ant-empty-normal">
                         <div class="ant-empty-image">{{ ant_icon('history', '', 'font-size: 40px; color: rgba(0, 0, 0, 0.25)') }}</div>
                         <p class="ant-empty-description"><strong class="block text-[rgba(0,0,0,0.85)]">{{ $filtering ? 'Không có dòng nào khớp bộ lọc' : 'Chưa có nhật ký' }}</strong>Mọi thao tác thêm / sửa / xóa trong trang quản trị và đăng nhập / đăng xuất đều được ghi lại ở đây.</p>

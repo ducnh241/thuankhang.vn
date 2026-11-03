@@ -16,7 +16,8 @@ import initSettings from './settings';
 import initTreePages from './tree-page';
 import initPageForm from './page-form';
 import initLinkPickers from './link-picker';
-import initAutoSubmit from './autosubmit';
+import initTableExpand from './table-expand';
+import initRepeaters from './repeater';
 
 /*
  * JS của giao diện admin (template ProCMS: Ant Design 4 + Tailwind + jQuery). Mỗi module tự kiểm tra trang hiện tại
@@ -41,5 +42,6 @@ $(() => {
   initTreePages();
   initPageForm();
   initLinkPickers();
-  initAutoSubmit();
+  initTableExpand();
+  initRepeaters();
 });
