@@ -20,6 +20,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ $title !== '' ? $title.' - '.$siteName : ($site['seo_title'] ?: $siteName) }}</title>
   @if ($description)<meta name="description" content="{{ \Illuminate\Support\Str::limit($description, 160) }}" />@endif
+  @hasSection('robots')<meta name="robots" content="@yield('robots')" />@endif
   <link rel="canonical" href="{{ url()->current() }}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="{{ $siteName }}" />

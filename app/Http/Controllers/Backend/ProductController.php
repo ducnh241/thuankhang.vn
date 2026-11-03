@@ -115,6 +115,19 @@ class ProductController extends Controller
         return ($toList ? redirect()->route('backend.products.index') : back())->with('success', "Đã xóa sản phẩm {$product->name}.");
     }
 
+    /** Xóa nhiều sản phẩm đã chọn ở danh sách (xóa mềm từng sản phẩm — nhật ký ghi từng dòng). */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $ids = array_values(array_filter((array) $request->input('ids', []), fn ($id) => is_string($id) && ctype_digit($id)));
+        $products = Product::whereIn('id', $ids)->get();
+        DB::transaction(fn () => $products->each->delete());
+        $back = back(fallback: route('backend.products.index'));
+
+        return $products->isEmpty()
+            ? $back->with('error', 'Chưa chọn sản phẩm nào.')
+            : $back->with('success', 'Đã xóa '.$products->count().' sản phẩm.');
+    }
+
     private function form(Product $product): View
     {
         return view('backend.products.form', [

@@ -18,7 +18,23 @@
 @section('description', (string) $product->short_description)
 @section('image', (string) $cover)
 
+@if ($preview)
+  @section('robots', 'noindex, nofollow')
+@endif
+
 @section('content')
+  @if ($preview)
+    {{-- Xem trước: sản phẩm đang ẩn, người xem có quyền sản phẩm --}}
+    <div class="border-b border-amber-200 bg-amber-50 text-sm text-amber-900" data-preview-banner>
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+        <span class="font-semibold">Đang xem trước</span>
+        <span>Sản phẩm đang ẩn với khách (tắt "Đang bán" hoặc danh mục đang ẩn) — khách mở link này sẽ báo không tìm thấy; bạn xem được vì đang đăng nhập quản trị.</span>
+        <span class="ml-auto flex gap-3">
+          @if ($preview['editUrl'])<a href="{{ $preview['editUrl'] }}" class="font-medium underline underline-offset-2">Sửa sản phẩm</a>@endif
+        </span>
+      </div>
+    </div>
+  @endif
   <div class="mx-auto max-w-7xl px-4 pt-6">
     @include('frontend.partials.breadcrumb', ['trail' => $trail, 'current' => $product->name])
 

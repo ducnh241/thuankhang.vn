@@ -55,6 +55,7 @@ Route::prefix('backend')->group(function () {
         Route::get('product', [ProductController::class, 'index'])->name('products.index')->can('product');
         Route::get('product/create', [ProductController::class, 'create'])->name('products.create')->can('product/add');
         Route::post('product', [ProductController::class, 'store'])->name('products.store')->can('product/add');
+        Route::post('product/bulk-destroy', [ProductController::class, 'bulkDestroy'])->name('products.bulk-destroy')->can('product/delete');
         Route::get('product/{product}/edit', [ProductController::class, 'edit'])->name('products.edit')->can('product/edit');
         Route::put('product/{product}', [ProductController::class, 'update'])->name('products.update')->can('product/edit');
         Route::delete('product/{product}', [ProductController::class, 'destroy'])->name('products.destroy')->can('product/delete');

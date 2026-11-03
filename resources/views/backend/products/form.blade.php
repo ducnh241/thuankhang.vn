@@ -45,6 +45,9 @@
   </div>
   <div class="page-topbar-right">
     @if ($editing)
+      {{-- Xem trước: link thật của sản phẩm, bản đã lưu (tab mới); đang ẩn vẫn mở được với người quản trị --}}
+      <a href="{{ $product->url() }}" target="_blank" rel="noopener" class="ant-btn" id="product-preview"
+        data-tooltip="Mở trang sản phẩm trên website ở tab mới (bản đã lưu)">{{ ant_icon('eye') }}<span class="max-sm:hidden">Xem trước</span></a>
       @can('product/delete')
         <button type="button" class="ant-btn ant-btn-dangerous" aria-label="Xóa sản phẩm"
           data-delete-url="{{ route('backend.products.destroy', $product) }}" data-delete-title="Xóa sản phẩm “{{ $product->name }}”?" data-delete-content="Sản phẩm ẩn khỏi cửa hàng và danh sách; đơn hàng cũ vẫn giữ thông tin.">{{ ant_icon('delete') }}<span class="max-sm:hidden">Xóa</span></button>

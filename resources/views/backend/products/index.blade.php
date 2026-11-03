@@ -3,7 +3,8 @@
 @section('title', 'Sản phẩm')
 
 {{-- Danh sách sản phẩm (A6), dựng như trang Trang: tab trạng thái (số theo bộ lọc), ô tìm + nút lọc danh mục (list.js),
-     bảng, phân trang. Bấm dòng mở trang sửa; xóa hỏi lại (delete.js) — xóa mềm. --}}
+     bảng, phân trang. Bấm dòng mở trang sửa; xóa hỏi lại (delete.js); chọn nhiều dòng để xóa hàng loạt (bulk.js) —
+     đều là xóa mềm. --}}
 @php
     use App\Http\Controllers\Backend\ProductController;
     use App\Support\Money;
@@ -78,13 +79,34 @@
       </template>
     </div>
 
+    {{-- Chọn nhiều dòng để xóa hàng loạt (bulk.js): thanh "N đã chọn" phủ lên tiêu đề bảng --}}
+    <form method="POST" action="{{ route('backend.products.bulk-destroy') }}" id="product-bulk-form" @if ($canDelete) data-bulk-form @endif>
+    @csrf
+    <div class="relative">
+    @if ($canDelete)
+      <div class="product-bulk hidden" data-bulk-bar>
+        <label class="ant-checkbox-wrapper"><span class="ant-checkbox ant-checkbox-indeterminate"><input type="checkbox" class="ant-checkbox-input" data-bulk-clear aria-label="Bỏ chọn tất cả" /><span class="ant-checkbox-inner"></span></span></label>
+        <span class="whitespace-nowrap font-medium"><span data-bulk-count>0</span> đã chọn</span>
+        <div class="ml-auto flex gap-2">
+          <button type="button" class="ant-btn ant-btn-sm ant-btn-dangerous" data-bulk-delete data-title="Xóa %d sản phẩm đã chọn?" data-content="Sản phẩm ẩn khỏi cửa hàng và danh sách; đơn hàng cũ vẫn giữ thông tin.">{{ ant_icon('delete') }}<span>Xóa</span></button>
+        </div>
+      </div>
+    @endif
     <div class="ant-table-wrapper">
       <div class="ant-table ant-table-small">
         <div class="ant-table-container">
           <div class="ant-table-content" style="overflow: auto hidden">
             <table @class(['product-table', 'min-w-0' => $products->isEmpty()]) style="table-layout: auto">
+              @if ($canDelete)<colgroup><col class="ant-table-selection-col" /></colgroup>@endif
               <thead class="ant-table-thead">
                 <tr>
+                  @if ($canDelete)
+                    <th class="ant-table-cell ant-table-selection-column">
+                      <div class="ant-table-selection">
+                        <label class="ant-checkbox-wrapper"><span class="ant-checkbox"><input type="checkbox" class="ant-checkbox-input" data-select-page aria-label="Chọn cả trang" @disabled($products->isEmpty()) /><span class="ant-checkbox-inner"></span></span></label>
+                      </div>
+                    </th>
+                  @endif
                   <th class="ant-table-cell">Sản phẩm</th>
                   <th class="ant-table-cell max-md:hidden" data-col="category">Danh mục</th>
                   <th class="ant-table-cell whitespace-nowrap" data-col="price" style="text-align: right">Giá (gồm VAT)</th>
@@ -97,6 +119,11 @@
                 @forelse ($products as $product)
                   @php $href = $canEdit ? route('backend.products.edit', $product) : null; @endphp
                   <tr data-row-key="{{ $product->id }}" @class(['ant-table-row', 'product-row' => $href]) @if ($href) data-href="{{ $href }}" @endif>
+                    @if ($canDelete)
+                      <td class="ant-table-cell ant-table-selection-column">
+                        <label class="ant-checkbox-wrapper"><span class="ant-checkbox"><input type="checkbox" class="ant-checkbox-input" name="ids[]" value="{{ $product->id }}" data-row-check aria-label="Chọn {{ $product->name }}" /><span class="ant-checkbox-inner"></span></span></label>
+                      </td>
+                    @endif
                     <td class="ant-table-cell">
                       <div class="flex items-center gap-3">
                         <span class="product-thumb">@if ($product->cover)<img src="{{ $product->cover->url() }}" alt="" loading="lazy" />@else{{ ant_icon('picture') }}@endif</span>
@@ -118,6 +145,8 @@
                     <td class="ant-table-cell" data-col="status">{!! $statusTag($product) !!}</td>
                     <td class="ant-table-cell product-actions-col max-sm:hidden" style="text-align: right">
                       <div class="product-row-actions">
+                        {{-- Xem trước: link thật của sản phẩm (tab mới); sản phẩm đang ẩn vẫn mở được vì người xem đang đăng nhập quản trị --}}
+                        <a href="{{ $product->url() }}" target="_blank" rel="noopener" class="ant-btn ant-btn-text ant-btn-icon-only" data-tooltip="Xem trước" aria-label="Xem trước {{ $product->name }}">{{ ant_icon('eye') }}</a>
                         @if ($href)
                           <a href="{{ $href }}" class="ant-btn ant-btn-text ant-btn-icon-only" data-tooltip="Sửa" aria-label="Sửa {{ $product->name }}">{{ ant_icon('edit') }}</a>
                         @endif
@@ -130,7 +159,7 @@
                   </tr>
                 @empty
                   <tr class="ant-table-placeholder">
-                    <td colspan="6" class="ant-table-cell">
+                    <td colspan="{{ $canDelete ? 7 : 6 }}" class="ant-table-cell">
                       <div class="ant-empty ant-empty-normal">
                         <div class="ant-empty-image">{{ ant_icon('shop', '', 'font-size: 40px; color: rgba(0, 0, 0, 0.25)') }}</div>
                         @if (array_filter($filter))
@@ -150,6 +179,9 @@
         </div>
       </div>
     </div>
+
+    </div>
+    </form>
 
     @if ($products->total())
       <div class="product-index-footer">

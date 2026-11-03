@@ -169,6 +169,31 @@ class ProductManagementTest extends TestCase
         $this->assertModelExists($this->category);
     }
 
+    public function test_bulk_delete(): void
+    {
+        $ops = $this->ops();
+        [$a, $b, $c] = Product::factory()->count(3)->create(['category_id' => $this->category->id])->all();
+
+        $this->actingAs($ops)->get('/backend/product')->assertOk()
+            ->assertSee('data-bulk-form', false)->assertSee('data-select-page', false)
+            ->assertSee('name="ids[]" value="'.$a->id.'" data-row-check', false);
+
+        $this->actingAs($ops)->from('/backend/product?tab=on_sale')->post('/backend/product/bulk-destroy', ['ids' => [(string) $a->id, (string) $b->id, '99999', 'x', ['y']]])
+            ->assertRedirect('/backend/product?tab=on_sale')->assertSessionHas('success', 'Đã xóa 2 sản phẩm.');
+        $this->assertSoftDeleted($a);
+        $this->assertSoftDeleted($b);
+        $this->assertNotSoftDeleted($c);
+        $this->assertSame(2, AuditLog::where('auditable_type', Product::class)->where('action', 'deleted')->where('user_id', $ops->id)->count());
+
+        $this->actingAs($ops)->post('/backend/product/bulk-destroy', [])->assertSessionHas('error', 'Chưa chọn sản phẩm nào.');
+
+        // Không có quyền xóa: không có ô chọn, gửi thẳng bị chặn
+        $editor = User::factory()->create(['group_id' => Group::factory()->withPermissions('backend_access', 'product', 'product/edit')->create()->id]);
+        $this->actingAs($editor)->get('/backend/product')->assertOk()->assertDontSee('data-bulk-form', false)->assertDontSee('data-row-check', false);
+        $this->actingAs($editor)->post('/backend/product/bulk-destroy', ['ids' => [(string) $c->id]])->assertForbidden();
+        $this->assertNotSoftDeleted($c);
+    }
+
     public function test_permissions(): void
     {
         $product = Product::factory()->create(['category_id' => $this->category->id]);
@@ -187,6 +212,46 @@ class ProductManagementTest extends TestCase
         $this->actingAs($viewer)->get(route('backend.products.edit', $product))->assertForbidden();
         $this->actingAs($viewer)->delete(route('backend.products.destroy', $product))->assertForbidden();
         $this->assertNotSoftDeleted($product);
+    }
+
+    public function test_preview_uses_real_link_and_works_for_hidden_products(): void
+    {
+        $ops = $this->ops();
+        $product = Product::factory()->create(['category_id' => $this->category->id, 'name' => 'Serum Xem Trước', 'slug' => 'serum-xem-truoc', 'price' => 550_000]);
+
+        // Nút xem trước ở danh sách và trang sửa: link thật, tab mới
+        $this->actingAs($ops)->get('/backend/product')->assertSee('href="/san-pham/serum-xem-truoc" target="_blank"', false);
+        $this->actingAs($ops)->get(route('backend.products.edit', $product))->assertSee('href="/san-pham/serum-xem-truoc" target="_blank"', false);
+
+        // Đang bán: trang bình thường, không có dải xem trước
+        $this->actingAs($ops)->get('/san-pham/serum-xem-truoc')->assertOk()->assertSee('550.000đ')
+            ->assertDontSee('data-preview-banner', false)->assertDontSee('name="robots"', false);
+
+        // Đang ẩn: khách 404; quản trị xem được ở đúng link đó, có dải xem trước + link sửa, không cho lập chỉ mục
+        $product->update(['status' => false]);
+        auth()->logout();
+        $this->get('/san-pham/serum-xem-truoc')->assertNotFound();
+        $this->actingAs($ops)->get('/san-pham/serum-xem-truoc')->assertOk()
+            ->assertSee('Serum Xem Trước')->assertSee('data-preview-banner', false)->assertSee('Sản phẩm đang ẩn với khách')
+            ->assertSee('href="'.route('backend.products.edit', $product).'"', false)
+            ->assertSee('<meta name="robots" content="noindex, nofollow" />', false);
+
+        // Danh mục ẩn: cũng chỉ quản trị xem được
+        $product->update(['status' => true]);
+        $this->category->update(['status' => false]);
+        $this->actingAs($ops)->get('/san-pham/serum-xem-truoc')->assertOk()->assertSee('data-preview-banner', false);
+        $this->category->update(['status' => true]);
+        $product->update(['status' => false]);
+
+        // Quyền: chỉ xem (product) xem được nhưng không có link sửa; không có quyền sản phẩm → 404 như khách
+        $viewer = User::factory()->create(['group_id' => Group::factory()->withPermissions('backend_access', 'product')->create()->id]);
+        $this->actingAs($viewer)->get('/san-pham/serum-xem-truoc')->assertOk()->assertDontSee('Sửa sản phẩm');
+        $cs = User::factory()->create(['group_id' => Group::where('name', 'CSKH')->value('id')]);
+        $this->actingAs($cs)->get('/san-pham/serum-xem-truoc')->assertNotFound();
+
+        // Đã xóa: 404 với mọi người
+        $product->delete();
+        $this->actingAs($ops)->get('/san-pham/serum-xem-truoc')->assertNotFound();
     }
 
     public function test_price_before_vat_rounds_down(): void
