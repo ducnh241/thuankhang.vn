@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đặc tả Affiliate Phase 1</title>
+<style>
+:root{
+  --bg:#fbfaf7;--surface:#ffffff;--ink:#1d1d1b;--muted:#5f5e5a;--line:#e3e0d8;
+  --accent:#1f5fbf;--accent-soft:#e8f0fc;--warn:#9a5b00;--warn-soft:#fff4e0;
+  --ok:#1d7a46;--ok-soft:#e6f5ec;--crit:#b3261e;--crit-soft:#fdecea;--code:#f3f1ec;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171716;--surface:#1f1f1d;--ink:#ecebe6;--muted:#a5a39b;--line:#34332f;
+    --accent:#7aa7ef;--accent-soft:#1d2a40;--warn:#f0b35a;--warn-soft:#3a2c14;
+    --ok:#6cc792;--ok-soft:#173023;--crit:#f08a82;--crit-soft:#3d1c19;--code:#2a2926;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 80px;display:grid;grid-template-columns:220px 1fr;gap:40px}
+nav{position:sticky;top:24px;align-self:start;font-size:13.5px}
+nav a{display:block;color:var(--muted);text-decoration:none;padding:4px 0;border-left:2px solid transparent;padding-left:10px}
+nav a:hover{color:var(--accent);border-left-color:var(--accent)}
+nav .t{font-weight:600;color:var(--ink);margin-bottom:8px;padding-left:10px}
+main{min-width:0}
+h1{font-size:28px;line-height:1.25;margin:0 0 6px}
+h2{font-size:21px;margin:48px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-size:16.5px;margin:28px 0 8px}
+h4{font-size:15px;margin:18px 0 6px}
+p{margin:8px 0}
+.meta{color:var(--muted);font-size:13.5px}
+.lead{font-size:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:18px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--surface)}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--code);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;line-height:1.5}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.t-ok{background:var(--ok-soft);color:var(--ok)}
+.t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-acc{background:var(--accent-soft);color:var(--accent)}
+.t-crit{background:var(--crit-soft);color:var(--crit)}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.note.crit{border-color:var(--crit);background:var(--crit-soft)}
+.note.info{border-color:var(--accent);background:var(--accent-soft)}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0}
+.step h3{margin-top:0}
+.step .dep{font-size:13px;color:var(--muted)}
+ul,ol{padding-left:22px;margin:6px 0}
+li{margin:3px 0}
+figure{margin:16px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+svg text{font-family:inherit}
+@media (max-width:820px){.wrap{grid-template-columns:1fr;gap:8px}nav{position:static;border-bottom:1px solid var(--line);padding-bottom:12px}}
+@media print{nav{display:none}.wrap{display:block}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <div class="t">Mục lục</div>
+  <a href="#s1">1. Tổng quan &amp; phạm vi</a>
+  <a href="#s2">2. Quy tắc nghiệp vụ đã chốt</a>
+  <a href="#s3">3. Kiến trúc tổng thể</a>
+  <a href="#s4">4. Mô hình dữ liệu</a>
+  <a href="#s5">5. Lộ trình triển khai theo step</a>
+  <a href="#s6">6. Module Admin</a>
+  <a href="#s7">7. Module Storefront</a>
+  <a href="#s8">8. Thanh toán &amp; tính hoa hồng</a>
+  <a href="#s9">9. Edge case &amp; chống gian lận</a>
+  <a href="#s10">10. Câu hỏi còn mở</a>
+</nav>
+<main>
+<h1>Đặc tả triển khai hệ thống Affiliate – Phase 1</h1>
+<div class="meta">Cập nhật 02/11/2026 · Nguồn: file “[Anh Trung] Hỏi đáp dự án Affiliate.xlsx” và các trao đổi xác nhận · Trạng thái: bản nháp để review</div>
+
+<div class="lead">Phase 1 dựng một website bán hàng có cây giới thiệu 2 tầng. Thành viên tự động lên cấp theo tổng tiền tự mua cộng dồn, nhận hoa hồng F1/F2 vào ví ngay khi đơn được thanh toán qua QR động, và rút tiền sau khi KYC. Mọi tỉ lệ, mốc cấp và tham số đều cấu hình trong Admin. Đổi trả và cách tính thưởng KPI nhóm được hoãn sang Phase 2.</div>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1">1. Tổng quan &amp; phạm vi</h2>
+<h3>1.1 Trong phạm vi Phase 1</h3>
+<ul>
+  <li><b>Storefront:</b> listing sản phẩm, đăng ký có mã giới thiệu, giỏ hàng, checkout (giao hàng hoặc nhận tại VP tỉnh), thanh toán QR động, khu vực thành viên (cấp bậc, link giới thiệu, F1/F2, ví, rút tiền, KYC).</li>
+  <li><b>Admin:</b> cấu hình cấp bậc, hoa hồng, KPI (chỉ lưu), tham số chung; quản lý sản phẩm, VP tỉnh/kho, đơn hàng, đối soát giao dịch ngân hàng, thành viên &amp; cây giới thiệu, duyệt KYC, sổ hoa hồng, duyệt rút tiền, phân quyền, nhật ký.</li>
+  <li><b>Engine:</b> xác nhận thanh toán tự động qua webhook ngân hàng, tính hoa hồng F1/F2, tự động nâng cấp, ví.</li>
+</ul>
+<h3>1.2 Ngoài phạm vi (Phase 2 hoặc chờ xác nhận)</h3>
+<table>
+<tr><th>Hạng mục</th><th>Lý do hoãn</th><th>Phase 1 chuẩn bị gì</th></tr>
+<tr><td>Đổi trả, hoàn tiền, thu hồi hoa hồng, ví âm</td><td>Anh xác nhận tạm bỏ qua</td><td>Thiết kế sổ hoa hồng dạng ledger (chỉ ghi thêm) để sau này thêm bút toán đảo được</td></tr>
+<tr><td>Tính thưởng KPI tháng (mặt trời + nhị phân, “nhóm nhỏ”)</td><td>Chờ khách giải thích logic</td><td>Màn hình cấu hình bậc KPI (lưu tham số), dữ liệu đơn đủ để tính lùi</td></tr>
+<tr><td>Thanh toán tiền hàng cho VP tỉnh khi khách nhận tại kho VP</td><td>Chưa rõ, hoãn lại</td><td>Đơn ghi nhận kho nhận hàng; có báo cáo đơn theo từng VP để kế toán tự xử lý ngoài hệ thống</td></tr>
+<tr><td>Quản lý tồn kho từng kho</td><td>VP/đại lý tự quản lý</td><td>Không làm</td></tr>
+</table>
+
+<h3>1.3 Thuật ngữ</h3>
+<table>
+<tr><th>Thuật ngữ</th><th>Nghĩa trong hệ thống</th></tr>
+<tr><td>Thành viên</td><td>Mọi tài khoản đã đăng ký. Ai mua hàng cũng phải có tài khoản.</td></tr>
+<tr><td>Người giới thiệu (F0 của mình)</td><td>Tài khoản có link/mã mà thành viên dùng khi đăng ký. Gắn cố định.</td></tr>
+<tr><td>F1 / F2</td><td>Với người hưởng X: F1 là người X giới thiệu trực tiếp; F2 là người do F1 của X giới thiệu.</td></tr>
+<tr><td>Kích hoạt</td><td>Tài khoản đã có ít nhất 1 đơn thanh toán thành công. Chỉ tài khoản đã kích hoạt mới được nhận hoa hồng.</td></tr>
+<tr><td>Doanh số cá nhân cộng dồn</td><td>Tổng tiền các đơn thanh toán thành công do chính thành viên mua. Dùng để xét cấp.</td></tr>
+<tr><td>Cơ sở tính hoa hồng</td><td>Giá trị hàng sau khi trừ VAT và trừ phí doanh nghiệp (mặc định 5%). Không gồm phí ship.</td></tr>
+<tr><td>VP tỉnh</td><td>Cấp cao nhất; đồng thời là điểm nhận hàng (kho) để khách chọn khi checkout.</td></tr>
+<tr><td>Ví</td><td>Số dư hoa hồng của thành viên, rút được khi đủ mức tối thiểu và đã KYC.</td></tr>
+</table>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2">2. Quy tắc nghiệp vụ đã chốt</h2>
+<p>Các quy tắc dưới đây là đầu vào bắt buộc cho dev. Giá trị trong ngoặc là mặc định, admin sửa được trong cấu hình.</p>
+
+<h3>2.1 Cấp bậc</h3>
+<table>
+<tr><th>Thứ tự</th><th>Cấp</th><th>Mốc doanh số cá nhân cộng dồn</th><th>Ghi chú</th></tr>
+<tr><td>0</td><td>Chưa kích hoạt</td><td class="n">0</td><td>Đã đăng ký, chưa có đơn thanh toán. Không nhận hoa hồng.</td></tr>
+<tr><td>1</td><td>Nhân viên</td><td class="n">&gt; 0 <span class="tag t-warn">cần xác nhận</span></td><td>Có đơn đầu tiên là lên. Được nhận hoa hồng theo tỉ lệ cấu hình.</td></tr>
+<tr><td>2</td><td>Cộng tác viên</td><td class="n">3.000.000</td><td>Hoa hồng F1 mặc định 10%</td></tr>
+<tr><td>3</td><td>Cửa hàng</td><td class="n">10.000.000</td><td></td></tr>
+<tr><td>4</td><td>Đại lý</td><td class="n">15.000.000</td><td>Hoa hồng F1 mặc định 20%</td></tr>
+<tr><td>5</td><td>VP tỉnh cấp 1</td><td class="n">150.000.000</td><td>Admin gán VP với 1 kho/điểm nhận hàng</td></tr>
+<tr><td>6</td><td>VP tỉnh cấp 2</td><td class="n">300.000.000</td><td>Tên gọi 2 mức VP <span class="tag t-warn">cần xác nhận</span></td></tr>
+</table>
+<ul>
+  <li>Lên cấp <b>tự động</b> ngay khi đơn thanh toán thành công làm doanh số cộng dồn vượt mốc. Có thể nhảy nhiều cấp trong một đơn.</li>
+  <li><b>Không bao giờ hạ cấp</b> trong Phase 1.</li>
+  <li>Khách tự chọn sản phẩm bất kỳ, không có “gói” cố định.</li>
+  <li>Tự mua không được hoa hồng, không được giảm giá trên ID của mình. Đơn tự mua vẫn sinh hoa hồng cho người giới thiệu (F1) và người trên đó (F2).</li>
+</ul>
+
+<h3>2.2 Hoa hồng</h3>
+<ul>
+  <li>2 tầng: <b>F1 (trực tiếp)</b> và <b>F2 (gián tiếp)</b>. Không có tầng 3.</li>
+  <li>Tỉ lệ = theo <b>cấp của người hưởng</b> tại thời điểm đơn được thanh toán. Ma trận cấp × tầng cấu hình trong Admin.</li>
+  <li>Áp dụng cho <b>mọi đơn</b>, kể cả mua lại.</li>
+  <li>Người hưởng phải ở trạng thái <b>đã kích hoạt</b> và tài khoản không bị khóa; nếu không, dòng hoa hồng đó không được ghi nhận (lưu log lý do).</li>
+  <li>Hoa hồng vào ví <b>ngay</b> khi đơn được xác nhận thanh toán.</li>
+  <li>Thuế TNCN tính riêng: khấu trừ khi rút tiền theo tỉ lệ cấu hình <span class="tag t-warn">chờ kế toán chốt</span>.</li>
+</ul>
+
+<h3>2.3 Người giới thiệu</h3>
+<ul>
+  <li>Xác định theo link/mã khi <b>đăng ký</b>, gắn cố định. Các lần mua sau không phụ thuộc link click.</li>
+  <li>Đăng ký không có mã → gắn vào tài khoản gốc của công ty (cấu hình) <span class="tag t-warn">cần xác nhận</span>.</li>
+</ul>
+
+<h3>2.4 Thanh toán &amp; nhận hàng</h3>
+<ul>
+  <li>QR động (VietQR) với số tiền chính xác và nội dung = mã đơn. Tiền về tài khoản công ty.</li>
+  <li>Hệ thống tự xác nhận qua webhook ngân hàng; trường hợp không khớp đưa vào hàng chờ xử lý tay.</li>
+  <li>Nhận hàng: giao tận nơi (khách trả phí ship) hoặc tự lấy tại VP tỉnh do khách chọn lúc đặt. Hàng tại VP là hàng của VP; VP không hưởng thêm gì từ việc này.</li>
+</ul>
+
+<h3>2.5 KYC &amp; rút tiền</h3>
+<ul>
+  <li>KYC chỉ bắt buộc khi rút tiền. Hồ sơ: số CCCD, ảnh 2 mặt, họ tên, ngày sinh, ngân hàng, số tài khoản, tên chủ tài khoản.</li>
+  <li>1 CCCD = 1 tài khoản = 1 số tài khoản ngân hàng. Tên chủ tài khoản phải trùng họ tên KYC.</li>
+  <li>Rút tối thiểu 500.000đ. Hoa hồng F1/F2 rút được ngay; các khoản khác (KPI, Phase 2) trả ngày 10 tháng sau.</li>
+</ul>
+
+<h3>2.6 KPI tháng (chỉ cấu hình ở Phase 1)</h3>
+<table>
+<tr><th>Doanh số nhóm trong tháng</th><th>Thưởng (tính trên toàn bộ doanh số)</th></tr>
+<tr><td>10 – 100 triệu</td><td class="n">3%</td></tr>
+<tr><td>Trên 100 triệu</td><td class="n">5%</td></tr>
+<tr><td>Trên 500 triệu</td><td class="n">7%</td></tr>
+<tr><td>Trên 1 tỷ</td><td class="n">9%</td></tr>
+</table>
+<p>Điều kiện: tối thiểu 5 F1. Chốt theo tháng dương lịch, trả ngày 10 tháng sau. Cách xác định “doanh số nhóm nhỏ” chờ xác nhận nên Phase 1 chưa chạy tính.</p>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3">3. Kiến trúc tổng thể</h2>
+<p>Hệ thống gồm 2 giao diện dùng chung một backend. Engine hoa hồng chỉ chạy khi có sự kiện “đơn đã thanh toán”, nên mọi tính toán đều xuất phát từ một điểm duy nhất.</p>
+<figure>
+<svg viewBox="0 0 760 360" role="img" aria-label="Kiến trúc: storefront và admin dùng chung backend, engine chạy từ sự kiện thanh toán">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--muted)">
+  <rect x="20" y="20" width="200" height="60" rx="8"/>
+  <rect x="20" y="110" width="200" height="60" rx="8"/>
+  <rect x="270" y="20" width="220" height="280" rx="10" style="stroke:var(--accent)"/>
+  <rect x="540" y="20" width="200" height="60" rx="8"/>
+  <rect x="540" y="110" width="200" height="60" rx="8"/>
+  <rect x="540" y="200" width="200" height="60" rx="8"/>
+  <rect x="20" y="230" width="200" height="70" rx="8"/>
+  <path d="M220 50H268" marker-end="url(#ar)"/>
+  <path d="M220 140H268" marker-end="url(#ar)"/>
+  <path d="M540 50H492" marker-end="url(#ar)"/>
+  <path d="M492 140H538" marker-end="url(#ar)"/>
+  <path d="M492 230H538" marker-end="url(#ar)"/>
+  <path d="M270 265H222" marker-end="url(#ar)"/>
+</g>
+<g font-size="13" fill="var(--ink)">
+  <text x="120" y="47" text-anchor="middle" font-weight="600">Storefront</text>
+  <text x="120" y="66" text-anchor="middle" font-size="11.5" fill="var(--muted)">Khách hàng, thành viên</text>
+  <text x="120" y="137" text-anchor="middle" font-weight="600">Admin CMS</text>
+  <text x="120" y="156" text-anchor="middle" font-size="11.5" fill="var(--muted)">Vận hành, kế toán</text>
+  <text x="380" y="46" text-anchor="middle" font-weight="600">Backend API</text>
+  <text x="290" y="78" font-size="12">• Tài khoản &amp; cây giới thiệu</text>
+  <text x="290" y="100" font-size="12">• Sản phẩm, giỏ hàng, đơn hàng</text>
+  <text x="290" y="122" font-size="12">• Thanh toán &amp; đối soát</text>
+  <text x="290" y="144" font-size="12">• Engine lên cấp</text>
+  <text x="290" y="166" font-size="12">• Engine hoa hồng (F1/F2)</text>
+  <text x="290" y="188" font-size="12">• Ví &amp; rút tiền</text>
+  <text x="290" y="210" font-size="12">• KYC</text>
+  <text x="290" y="232" font-size="12">• Cấu hình &amp; nhật ký</text>
+  <text x="290" y="272" font-size="11.5" fill="var(--muted)">Hàng đợi job (webhook, tính hoa hồng)</text>
+  <text x="640" y="47" text-anchor="middle" font-weight="600">Cổng webhook ngân hàng</text>
+  <text x="640" y="66" text-anchor="middle" font-size="11.5" fill="var(--muted)">SePay / PayOS / Casso</text>
+  <text x="640" y="137" text-anchor="middle" font-weight="600">Sinh VietQR</text>
+  <text x="640" y="156" text-anchor="middle" font-size="11.5" fill="var(--muted)">Số tiền + mã đơn</text>
+  <text x="640" y="227" text-anchor="middle" font-weight="600">Lưu trữ file</text>
+  <text x="640" y="246" text-anchor="middle" font-size="11.5" fill="var(--muted)">Ảnh SP, ảnh CCCD (mã hoá)</text>
+  <text x="120" y="258" text-anchor="middle" font-weight="600">Database</text>
+  <text x="120" y="278" text-anchor="middle" font-size="11.5" fill="var(--muted)">MySQL / PostgreSQL</text>
+</g>
+</svg>
+<figcaption>Webhook ngân hàng là nguồn duy nhất kích hoạt trạng thái “Đã thanh toán” (ngoài thao tác xác nhận tay có kiểm soát trong Admin).</figcaption>
+</figure>
+<p><b>Nguyên tắc kỹ thuật:</b></p>
+<ul>
+  <li>Mọi số tiền lưu kiểu số nguyên (đồng), làm tròn xuống ở bước cuối.</li>
+  <li>Sổ hoa hồng và giao dịch ví là bảng <b>chỉ ghi thêm</b> (append-only); số dư ví = tổng bút toán.</li>
+  <li>Đơn lưu <b>snapshot</b> tỉ lệ và cấp tại thời điểm tính, để đổi cấu hình không làm thay đổi đơn cũ.</li>
+  <li>Xử lý webhook <b>idempotent</b> theo mã giao dịch ngân hàng; tính hoa hồng idempotent theo <code>order_id</code>.</li>
+</ul>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4">4. Mô hình dữ liệu</h2>
+<div class="scroll">
+<table>
+<tr><th>Bảng</th><th>Trường chính</th><th>Ghi chú</th></tr>
+<tr><td><code>users</code></td><td>id, phone, email, password_hash, full_name, referral_code (unique), referrer_id, level_id, cumulative_amount, activated_at, status (active/locked), created_at</td><td><code>referrer_id</code> không đổi sau khi tạo (chỉ admin sửa, có log)</td></tr>
+<tr><td><code>levels</code></td><td>id, name, sort_order, threshold_amount, is_vp, active</td><td>Cấu hình cấp bậc</td></tr>
+<tr><td><code>commission_rates</code></td><td>id, level_id, tier (F1/F2), rate_percent, effective_from</td><td>Ma trận cấp × tầng; giữ lịch sử theo effective_from</td></tr>
+<tr><td><code>kpi_tiers</code></td><td>id, min_amount, max_amount, rate_percent, min_f1</td><td>Chỉ lưu, Phase 2 dùng</td></tr>
+<tr><td><code>settings</code></td><td>key, value, updated_by, updated_at</td><td>Phí DN, VAT mặc định, min rút, TNCN, hạn thanh toán, cookie ref, TK nhận tiền, TK gốc…</td></tr>
+<tr><td><code>level_history</code></td><td>user_id, from_level, to_level, order_id, cumulative_after, created_at</td><td>Vết lên cấp</td></tr>
+<tr><td><code>categories</code>, <code>products</code>, <code>product_images</code></td><td>name, slug, price (đã gồm VAT), vat_rate, status, sort…</td><td>VAT theo từng sản phẩm</td></tr>
+<tr><td><code>pickup_points</code></td><td>id, name, province, address, phone, owner_user_id, active</td><td>Kho/VP tỉnh để khách chọn</td></tr>
+<tr><td><code>orders</code></td><td>id, code, buyer_id, status, goods_amount, vat_amount, shipping_fee, total_amount, delivery_type (ship/pickup), pickup_point_id, address…, expires_at, paid_at</td><td>Trạng thái: Chờ thanh toán → Đã thanh toán → Đang xử lý → Hoàn tất; hoặc Hết hạn / Huỷ</td></tr>
+<tr><td><code>order_items</code></td><td>order_id, product_id, qty, unit_price, vat_rate, line_amount</td><td>Snapshot giá</td></tr>
+<tr><td><code>bank_transactions</code></td><td>id, provider_txn_id (unique), amount, content, account, received_at, matched_order_id, match_status</td><td>Mọi giao dịch nhận được, kể cả không khớp</td></tr>
+<tr><td><code>commission_ledger</code></td><td>id, order_id, beneficiary_id, tier, level_snapshot, rate_snapshot, base_amount, amount, status, skip_reason, created_at</td><td>Unique (order_id, tier)</td></tr>
+<tr><td><code>wallet_transactions</code></td><td>id, user_id, type (commission/withdraw/withdraw_fee/tax/adjust), amount (+/−), ref_id, balance_after, created_at</td><td>Số dư ví = tổng amount</td></tr>
+<tr><td><code>withdrawals</code></td><td>id, user_id, amount, tax_amount, net_amount, bank snapshot, status, approved_by, paid_at, note</td><td>Chờ duyệt → Đã duyệt → Đã chuyển / Từ chối</td></tr>
+<tr><td><code>kyc_profiles</code></td><td>user_id, id_number (unique), full_name, dob, id_front, id_back, bank_name, bank_account (unique), account_holder, status, reviewed_by, reject_reason</td><td>Ảnh mã hoá, chỉ admin có quyền xem</td></tr>
+<tr><td><code>admin_users</code>, <code>roles</code>, <code>audit_logs</code></td><td>actor, action, entity, before, after, created_at</td><td>Log mọi thay đổi cấu hình, xác nhận tay, sửa người giới thiệu</td></tr>
+</table>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5">5. Lộ trình triển khai theo step</h2>
+<p>Mỗi step là một mốc có thể nghiệm thu độc lập. Thứ tự dưới đây đi theo phụ thuộc: cấu hình và tài khoản trước, tiền và hoa hồng sau.</p>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Thứ tự step triển khai">
+<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+<g fill="none" stroke="var(--muted)" stroke-width="1.2">
+  <rect x="10" y="20" width="130" height="44" rx="8"/><rect x="160" y="20" width="130" height="44" rx="8"/><rect x="310" y="20" width="130" height="44" rx="8"/><rect x="460" y="20" width="130" height="44" rx="8"/><rect x="610" y="20" width="140" height="44" rx="8"/>
+  <rect x="10" y="110" width="130" height="44" rx="8"/><rect x="160" y="110" width="130" height="44" rx="8" style="stroke:var(--accent);stroke-width:2"/><rect x="310" y="110" width="130" height="44" rx="8" style="stroke:var(--accent);stroke-width:2"/><rect x="460" y="110" width="130" height="44" rx="8" style="stroke:var(--accent);stroke-width:2"/><rect x="610" y="110" width="140" height="44" rx="8"/>
+  <rect x="160" y="190" width="130" height="44" rx="8"/><rect x="310" y="190" width="130" height="44" rx="8"/>
+  <path d="M140 42H158" marker-end="url(#ar2)"/><path d="M290 42H308" marker-end="url(#ar2)"/><path d="M440 42H458" marker-end="url(#ar2)"/><path d="M590 42H608" marker-end="url(#ar2)"/>
+  <path d="M680 64V86H75V108" marker-end="url(#ar2)"/>
+  <path d="M140 132H158" marker-end="url(#ar2)"/><path d="M290 132H308" marker-end="url(#ar2)"/><path d="M440 132H458" marker-end="url(#ar2)"/><path d="M590 132H608" marker-end="url(#ar2)"/>
+  <path d="M680 154V172H225V188" marker-end="url(#ar2)"/><path d="M290 212H308" marker-end="url(#ar2)"/>
+</g>
+<g font-size="12" fill="var(--ink)" text-anchor="middle">
+  <text x="75" y="39" font-weight="600">Step 0</text><text x="75" y="55">Nền tảng</text>
+  <text x="225" y="39" font-weight="600">Step 1</text><text x="225" y="55">Cấu hình</text>
+  <text x="375" y="39" font-weight="600">Step 2</text><text x="375" y="55">Sản phẩm</text>
+  <text x="525" y="39" font-weight="600">Step 3</text><text x="525" y="55">Tài khoản &amp; ref</text>
+  <text x="680" y="39" font-weight="600">Step 4</text><text x="680" y="55">VP tỉnh / kho</text>
+  <text x="75" y="129" font-weight="600">Step 5</text><text x="75" y="145">Giỏ &amp; checkout</text>
+  <text x="225" y="129" font-weight="600">Step 6</text><text x="225" y="145">QR &amp; đối soát</text>
+  <text x="375" y="129" font-weight="600">Step 7</text><text x="375" y="145">Engine lên cấp</text>
+  <text x="525" y="129" font-weight="600">Step 8</text><text x="525" y="145">Hoa hồng &amp; ví</text>
+  <text x="680" y="129" font-weight="600">Step 9</text><text x="680" y="145">KYC &amp; rút tiền</text>
+  <text x="225" y="209" font-weight="600">Step 10</text><text x="225" y="225">Dashboard &amp; báo cáo</text>
+  <text x="375" y="209" font-weight="600">Step 11</text><text x="375" y="225">UAT &amp; go-live</text>
+</g>
+</svg>
+<figcaption>Viền xanh: 3 step lõi về tiền (Step 6–8), cần test kỹ nhất.</figcaption>
+</figure>
+
+<div class="step"><h3>Step 0 – Nền tảng</h3>
+<ul><li>Khởi tạo repo, môi trường dev/staging/prod, CI/CD, DB migration.</li>
+<li>Đăng nhập Admin, phân quyền theo vai trò (Super admin, Vận hành, Kế toán, CSKH), bảng <code>audit_logs</code>.</li>
+<li>Bộ nhận diện thương hiệu, tên miền <span class="tag t-warn">đang chờ khách gửi</span>.</li></ul>
+<p><b>Nghiệm thu:</b> admin đăng nhập được, phân quyền chặn đúng menu, mọi thao tác ghi log.</p></div>
+
+<div class="step"><h3>Step 1 – Cấu hình (Admin)</h3><div class="dep">Phụ thuộc: Step 0</div>
+<ul><li>Màn hình Cấp bậc, Ma trận hoa hồng, Bậc KPI, Tham số chung (xem mục 6.2–6.5).</li>
+<li>Seed dữ liệu mặc định theo mục 2.</li></ul>
+<p><b>Nghiệm thu:</b> sửa tỉ lệ ghi lịch sử theo <code>effective_from</code>; mốc cấp phải tăng dần theo thứ tự, nhập sai bị chặn.</p></div>
+
+<div class="step"><h3>Step 2 – Sản phẩm</h3><div class="dep">Phụ thuộc: Step 0</div>
+<ul><li>Admin: CRUD danh mục, sản phẩm (giá đã gồm VAT, VAT %, ảnh, mô tả, trạng thái).</li>
+<li>Storefront: trang chủ, danh mục, tìm kiếm, chi tiết sản phẩm.</li></ul>
+<p><b>Nghiệm thu:</b> sản phẩm ẩn không hiển thị; giá hiển thị đúng định dạng VNĐ.</p></div>
+
+<div class="step"><h3>Step 3 – Tài khoản &amp; mã giới thiệu</h3><div class="dep">Phụ thuộc: Step 1</div>
+<ul><li>Link giới thiệu <code>/?ref=CODE</code> → lưu mã vào cookie (mặc định 30 ngày).</li>
+<li>Đăng ký: SĐT (OTP tuỳ chọn), mật khẩu, họ tên, ô “Mã người giới thiệu” tự điền từ cookie, sửa được trước khi bấm đăng ký. Kiểm tra mã tồn tại và đang hoạt động.</li>
+<li>Sinh <code>referral_code</code> duy nhất cho mỗi tài khoản. Cấp mặc định: Chưa kích hoạt.</li>
+<li>Admin: danh sách thành viên, xem cây F1/F2, khoá/mở tài khoản, sửa người giới thiệu (bắt buộc ghi lý do).</li></ul>
+<p><b>Nghiệm thu:</b> đăng ký qua link A → <code>referrer_id</code> = A; không tự giới thiệu chính mình; mã không tồn tại báo lỗi.</p></div>
+
+<div class="step"><h3>Step 4 – VP tỉnh / điểm nhận hàng</h3><div class="dep">Phụ thuộc: Step 3</div>
+<ul><li>Admin: CRUD điểm nhận hàng (tên, tỉnh, địa chỉ, SĐT, giờ mở cửa, tài khoản VP sở hữu, bật/tắt).</li>
+<li>Giới hạn số VP mỗi tỉnh theo cấu hình.</li></ul>
+<p><b>Nghiệm thu:</b> chỉ điểm đang bật mới hiện ở checkout.</p></div>
+
+<div class="step"><h3>Step 5 – Giỏ hàng &amp; checkout</h3><div class="dep">Phụ thuộc: Step 2, 3, 4</div>
+<ul><li>Giỏ hàng (bắt buộc đăng nhập khi checkout).</li>
+<li>Chọn hình thức nhận: Giao hàng (nhập địa chỉ, phí ship) hoặc Nhận tại VP tỉnh (chọn tỉnh → điểm).</li>
+<li>Tạo đơn trạng thái <b>Chờ thanh toán</b>, sinh mã đơn, đặt <code>expires_at</code> (mặc định 24 giờ).</li></ul>
+<p><b>Nghiệm thu:</b> tổng tiền = tiền hàng + ship; nhận tại VP thì ship = 0.</p></div>
+
+<div class="step"><h3>Step 6 – Thanh toán QR &amp; đối soát</h3><div class="dep">Phụ thuộc: Step 5</div>
+<ul><li>Sinh VietQR động: ngân hàng + số TK công ty + số tiền = <code>total_amount</code> + nội dung = mã đơn.</li>
+<li>Trang thanh toán: QR, thông tin chuyển khoản dự phòng, đếm ngược, tự cập nhật trạng thái (polling 5 giây hoặc websocket).</li>
+<li>Endpoint webhook nhận giao dịch, kiểm tra chữ ký/secret, lưu <code>bank_transactions</code>, khớp đơn (mục 8.2).</li>
+<li>Admin: màn hình Giao dịch ngân hàng, xử lý tay giao dịch không khớp.</li>
+<li>Job huỷ đơn quá hạn.</li></ul>
+<p><b>Nghiệm thu:</b> chuyển đúng tiền + đúng nội dung → đơn “Đã thanh toán” trong &lt; 1 phút; webhook gửi lặp không tạo thanh toán đôi; sai số tiền vào hàng chờ xử lý tay.</p></div>
+
+<div class="step"><h3>Step 7 – Engine lên cấp</h3><div class="dep">Phụ thuộc: Step 6</div>
+<ul><li>Lắng nghe sự kiện <code>order.paid</code>: cộng <code>cumulative_amount</code>, đặt <code>activated_at</code> nếu là đơn đầu, xét cấp mới, ghi <code>level_history</code>, gửi thông báo.</li></ul>
+<p><b>Nghiệm thu:</b> mua 2tr rồi 1,5tr → lên CTV ở đơn thứ 2; một đơn 16tr từ 0 → nhảy thẳng Đại lý; không có đường hạ cấp.</p></div>
+
+<div class="step"><h3>Step 8 – Engine hoa hồng &amp; ví</h3><div class="dep">Phụ thuộc: Step 6, 7</div>
+<ul><li>Tính F1/F2 theo mục 8.3, ghi <code>commission_ledger</code> + <code>wallet_transactions</code> trong một transaction DB.</li>
+<li>Admin: Sổ hoa hồng (lọc theo đơn, người hưởng, tháng), xuất Excel.</li>
+<li>Storefront: lịch sử hoa hồng, số dư ví.</li></ul>
+<p><b>Nghiệm thu:</b> đúng ví dụ ở mục 8.4; chạy lại job cho cùng đơn không cộng đôi; người hưởng chưa kích hoạt bị bỏ qua có lý do.</p></div>
+
+<div class="step"><h3>Step 9 – KYC &amp; rút tiền</h3><div class="dep">Phụ thuộc: Step 8</div>
+<ul><li>Storefront: form KYC, form rút tiền (chỉ mở khi KYC đã duyệt và số dư ≥ mức tối thiểu).</li>
+<li>Admin: duyệt/từ chối KYC (kèm lý do); duyệt rút tiền → kế toán chuyển khoản → đánh dấu “Đã chuyển” kèm mã giao dịch.</li>
+<li>Khi tạo lệnh rút: trừ ví ngay (tạm giữ); từ chối → hoàn lại ví.</li></ul>
+<p><b>Nghiệm thu:</b> CCCD hoặc số TK đã dùng bị chặn; tên chủ TK khác tên KYC bị chặn; số dư không âm sau mọi thao tác.</p></div>
+
+<div class="step"><h3>Step 10 – Dashboard &amp; báo cáo</h3><div class="dep">Phụ thuộc: Step 8, 9</div>
+<ul><li>Admin: dashboard tổng quan, báo cáo doanh thu, hoa hồng phải trả theo tháng, đơn theo từng VP tỉnh (phục vụ đối soát tay với VP).</li>
+<li>Storefront: dashboard thành viên (mục 7).</li></ul></div>
+
+<div class="step"><h3>Step 11 – UAT &amp; go-live</h3>
+<ul><li>Chạy bộ kịch bản test mục 9 trên staging với tài khoản ngân hàng thật, số tiền nhỏ.</li>
+<li>Kiểm tra pháp lý trước khi mở đăng ký đại trà (mục 10).</li></ul></div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6">6. Module Admin</h2>
+<h3>6.1 Danh sách màn hình</h3>
+<div class="scroll">
+<table>
+<tr><th>Mã</th><th>Màn hình</th><th>Chức năng chính</th><th>Vai trò</th><th>Step</th></tr>
+<tr><td>A1</td><td>Dashboard</td><td>Doanh thu hôm nay/tháng, số đơn chờ thanh toán, giao dịch cần xử lý tay, KYC chờ duyệt, lệnh rút chờ duyệt, hoa hồng phải trả</td><td>Tất cả</td><td>10</td></tr>
+<tr><td>A2</td><td>Cấu hình cấp bậc</td><td>Thêm/sửa/sắp xếp cấp, mốc tiền, đánh dấu cấp VP</td><td>Super admin</td><td>1</td></tr>
+<tr><td>A3</td><td>Cấu hình hoa hồng</td><td>Ma trận cấp × F1/F2 (%), ngày hiệu lực</td><td>Super admin</td><td>1</td></tr>
+<tr><td>A4</td><td>Cấu hình KPI</td><td>Bậc doanh số, %, số F1 tối thiểu (chỉ lưu)</td><td>Super admin</td><td>1</td></tr>
+<tr><td>A5</td><td>Tham số chung</td><td>Xem bảng 6.5</td><td>Super admin</td><td>1</td></tr>
+<tr><td>A6</td><td>Sản phẩm &amp; danh mục</td><td>CRUD, ảnh, giá, VAT, ẩn/hiện</td><td>Vận hành</td><td>2</td></tr>
+<tr><td>A7</td><td>VP tỉnh / điểm nhận</td><td>CRUD, gán tài khoản VP, bật/tắt</td><td>Vận hành</td><td>4</td></tr>
+<tr><td>A8</td><td>Đơn hàng</td><td>Lọc theo trạng thái/ngày/VP; chi tiết; cập nhật Đang xử lý / Hoàn tất; huỷ đơn chưa thanh toán</td><td>Vận hành, CSKH</td><td>5–6</td></tr>
+<tr><td>A9</td><td>Giao dịch ngân hàng</td><td>Danh sách giao dịch, trạng thái khớp; gán tay vào đơn (bắt buộc lý do, log)</td><td>Kế toán</td><td>6</td></tr>
+<tr><td>A10</td><td>Thành viên</td><td>Tìm kiếm, cấp, doanh số cộng dồn, cây F1/F2, khoá/mở, sửa người giới thiệu</td><td>Vận hành, CSKH</td><td>3</td></tr>
+<tr><td>A11</td><td>KYC</td><td>Hàng chờ duyệt, xem ảnh, duyệt/từ chối kèm lý do</td><td>Vận hành</td><td>9</td></tr>
+<tr><td>A12</td><td>Sổ hoa hồng</td><td>Từng dòng F1/F2 theo đơn, lý do bỏ qua, xuất Excel</td><td>Kế toán</td><td>8</td></tr>
+<tr><td>A13</td><td>Rút tiền</td><td>Duyệt/từ chối, đánh dấu đã chuyển, xuất danh sách chuyển khoản</td><td>Kế toán</td><td>9</td></tr>
+<tr><td>A14</td><td>Phân quyền &amp; nhật ký</td><td>Tài khoản admin, vai trò, audit log</td><td>Super admin</td><td>0</td></tr>
+</table>
+</div>
+
+<h3>6.2 A2 – Cấu hình cấp bậc</h3>
+<table>
+<tr><th>Trường</th><th>Kiểu</th><th>Ràng buộc</th></tr>
+<tr><td>Tên cấp</td><td>Text</td><td>Bắt buộc, duy nhất</td></tr>
+<tr><td>Thứ tự</td><td>Số</td><td>Duy nhất, tăng dần</td></tr>
+<tr><td>Mốc doanh số cộng dồn (đ)</td><td>Số nguyên</td><td>Cấp sau &gt; cấp trước</td></tr>
+<tr><td>Là cấp VP tỉnh</td><td>Bật/tắt</td><td>Cho phép gán điểm nhận hàng</td></tr>
+<tr><td>Trạng thái</td><td>Bật/tắt</td><td>Không cho tắt cấp đang có thành viên</td></tr>
+</table>
+<p>Sửa mốc không làm hạ cấp ai. Nếu hạ mốc, thành viên đủ điều kiện mới sẽ được nâng cấp ở đơn tiếp theo (hoặc qua nút “Rà soát lại cấp” chạy một lần).</p>
+
+<h3>6.3 A3 – Ma trận hoa hồng</h3>
+<table>
+<tr><th>Cấp người hưởng</th><th>F1 (%)</th><th>F2 (%)</th></tr>
+<tr><td>Nhân viên</td><td class="n">cấu hình</td><td class="n">cấu hình</td></tr>
+<tr><td>Cộng tác viên</td><td class="n">10</td><td class="n">cấu hình</td></tr>
+<tr><td>Cửa hàng</td><td class="n">cấu hình</td><td class="n">cấu hình</td></tr>
+<tr><td>Đại lý</td><td class="n">20</td><td class="n">cấu hình</td></tr>
+<tr><td>VP tỉnh cấp 1 / cấp 2</td><td class="n">cấu hình</td><td class="n">cấu hình</td></tr>
+</table>
+<p>Mỗi lần lưu tạo phiên bản mới với ngày giờ hiệu lực; đơn thanh toán sau thời điểm đó mới dùng tỉ lệ mới. Cảnh báo khi F1 + F2 vượt ngưỡng an toàn (cấu hình, ví dụ 30%).</p>
+
+<h3>6.4 A4 – Cấu hình KPI</h3>
+<p>Bảng bậc (từ, đến, %), số F1 tối thiểu, ngày chi trả. Có nhãn “Chưa áp dụng – Phase 2”.</p>
+
+<h3>6.5 A5 – Tham số chung</h3>
+<table>
+<tr><th>Tham số</th><th>Mặc định</th></tr>
+<tr><td>Phí doanh nghiệp trừ khi tính hoa hồng</td><td class="n">5%</td></tr>
+<tr><td>VAT mặc định cho sản phẩm mới</td><td class="n">cấu hình</td></tr>
+<tr><td>Số tiền rút tối thiểu</td><td class="n">500.000đ</td></tr>
+<tr><td>Thuế TNCN khấu trừ khi rút</td><td class="n">chờ kế toán</td></tr>
+<tr><td>Hạn thanh toán đơn</td><td class="n">24 giờ</td></tr>
+<tr><td>Thời gian lưu mã giới thiệu (cookie)</td><td class="n">30 ngày</td></tr>
+<tr><td>Tài khoản ngân hàng nhận tiền (ngân hàng, số TK, tên)</td><td>TK công ty</td></tr>
+<tr><td>Tài khoản gốc cho người đăng ký không có mã</td><td>cần xác nhận</td></tr>
+<tr><td>Số VP tối đa mỗi tỉnh</td><td class="n">cấu hình</td></tr>
+<tr><td>Ngày trả KPI</td><td class="n">10</td></tr>
+</table>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7">7. Module Storefront</h2>
+<div class="scroll">
+<table>
+<tr><th>Mã</th><th>Trang</th><th>Nội dung &amp; hành vi</th><th>Step</th></tr>
+<tr><td>S1</td><td>Trang chủ, danh mục, tìm kiếm</td><td>Banner, sản phẩm nổi bật, lọc theo danh mục, sắp xếp giá. Bắt <code>?ref=</code> trên mọi trang</td><td>2–3</td></tr>
+<tr><td>S2</td><td>Chi tiết sản phẩm</td><td>Ảnh, giá, mô tả, thêm vào giỏ. Thành viên đã kích hoạt thấy nút “Sao chép link giới thiệu sản phẩm này”</td><td>2</td></tr>
+<tr><td>S3</td><td>Đăng ký / đăng nhập</td><td>Ô mã người giới thiệu tự điền, hiện tên người giới thiệu để xác nhận</td><td>3</td></tr>
+<tr><td>S4</td><td>Giỏ hàng</td><td>Sửa số lượng, xoá, tổng tạm tính</td><td>5</td></tr>
+<tr><td>S5</td><td>Checkout</td><td>Chọn Giao hàng (địa chỉ, phí ship) hoặc Nhận tại VP (tỉnh → điểm, hiện địa chỉ, giờ mở cửa). Tóm tắt đơn</td><td>5</td></tr>
+<tr><td>S6</td><td>Thanh toán QR</td><td>Mã QR, STK, số tiền, nội dung chuyển khoản (nút sao chép), đếm ngược, tự chuyển sang “Thanh toán thành công”</td><td>6</td></tr>
+<tr><td>S7</td><td>Đơn hàng của tôi</td><td>Danh sách, trạng thái, mở lại QR nếu còn hạn</td><td>5–6</td></tr>
+<tr><td>S8</td><td>Bảng điều khiển affiliate</td><td>Cấp hiện tại, thanh tiến độ tới cấp tiếp theo (còn thiếu bao nhiêu), link + QR giới thiệu, số F1/F2, doanh số F1/F2 tháng này, hoa hồng tháng này</td><td>10</td></tr>
+<tr><td>S9</td><td>Hoa hồng &amp; ví</td><td>Số dư, lịch sử từng dòng (đơn, F1/F2, cơ sở, %, số tiền), nút Rút tiền</td><td>8–9</td></tr>
+<tr><td>S10</td><td>KYC</td><td>Form + trạng thái (Chưa nộp / Chờ duyệt / Đã duyệt / Bị từ chối + lý do)</td><td>9</td></tr>
+</table>
+</div>
+<div class="note info">Thông tin F1/F2 hiển thị cho thành viên chỉ gồm tên rút gọn, ngày tham gia, cấp và doanh số; không hiển thị SĐT, địa chỉ hay dữ liệu KYC.</div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8">8. Thanh toán &amp; tính hoa hồng</h2>
+<h3>8.1 Luồng từ đặt hàng đến hoa hồng vào ví</h3>
+<figure>
+<svg viewBox="0 0 760 300" role="img" aria-label="Luồng đơn hàng đến hoa hồng">
+<defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+<g fill="none" stroke="var(--muted)" stroke-width="1.2">
+  <rect x="10" y="30" width="130" height="50" rx="8"/><rect x="160" y="30" width="130" height="50" rx="8"/><rect x="310" y="30" width="130" height="50" rx="8"/>
+  <polygon points="520,15 590,55 520,95 450,55"/>
+  <rect x="610" y="30" width="140" height="50" rx="8" style="stroke:var(--accent);stroke-width:2"/>
+  <rect x="450" y="140" width="140" height="50" rx="8" style="stroke:var(--warn)"/>
+  <rect x="610" y="140" width="140" height="50" rx="8"/>
+  <rect x="610" y="230" width="140" height="50" rx="8"/>
+  <rect x="430" y="230" width="160" height="50" rx="8"/>
+  <path d="M140 55H158" marker-end="url(#ar3)"/><path d="M290 55H308" marker-end="url(#ar3)"/><path d="M440 55H448" marker-end="url(#ar3)"/><path d="M590 55H608" marker-end="url(#ar3)"/>
+  <path d="M520 95V138" marker-end="url(#ar3)"/>
+  <path d="M590 165H608" marker-end="url(#ar3)" stroke-dasharray="4 3"/>
+  <path d="M680 80V138" marker-end="url(#ar3)"/>
+  <path d="M680 190V228" marker-end="url(#ar3)"/>
+  <path d="M610 255H592" marker-end="url(#ar3)"/>
+</g>
+<g font-size="12" fill="var(--ink)" text-anchor="middle">
+  <text x="75" y="52" font-weight="600">Tạo đơn</text><text x="75" y="68" font-size="11">Chờ thanh toán</text>
+  <text x="225" y="52" font-weight="600">Hiện VietQR</text><text x="225" y="68" font-size="11">tiền + mã đơn</text>
+  <text x="375" y="52" font-weight="600">Webhook</text><text x="375" y="68" font-size="11">ngân hàng</text>
+  <text x="520" y="52" font-weight="600">Khớp?</text><text x="520" y="67" font-size="11">mã + số tiền</text>
+  <text x="680" y="52" font-weight="600">Đã thanh toán</text><text x="680" y="68" font-size="11">phát order.paid</text>
+  <text x="520" y="162" font-weight="600">Hàng chờ xử lý tay</text><text x="520" y="178" font-size="11">kế toán gán đơn</text>
+  <text x="680" y="162" font-weight="600">Engine lên cấp</text><text x="680" y="178" font-size="11">người mua</text>
+  <text x="680" y="252" font-weight="600">Engine hoa hồng</text><text x="680" y="268" font-size="11">F1, F2</text>
+  <text x="510" y="252" font-weight="600">Ví người hưởng</text><text x="510" y="268" font-size="11">cộng ngay</text>
+  <text x="600" y="48" font-size="11" fill="var(--muted)" text-anchor="start"> </text>
+  <text x="530" y="118" font-size="11" fill="var(--muted)" text-anchor="start">không</text>
+  <text x="598" y="155" font-size="11" fill="var(--muted)">gán</text>
+</g>
+</svg>
+<figcaption>Engine hoa hồng dùng cấp của người hưởng tại thời điểm chạy; lên cấp của người mua không ảnh hưởng hoa hồng của chính đơn đó.</figcaption>
+</figure>
+
+<h3>8.2 Quy tắc khớp giao dịch ngân hàng</h3>
+<table>
+<tr><th>Tình huống</th><th>Xử lý</th></tr>
+<tr><td>Nội dung chứa mã đơn hợp lệ, số tiền = tổng đơn, đơn đang Chờ thanh toán</td><td>Tự động chuyển Đã thanh toán, phát <code>order.paid</code></td></tr>
+<tr><td>Đúng mã, sai số tiền (thiếu/thừa)</td><td>Hàng chờ xử lý tay; không tự xác nhận</td></tr>
+<tr><td>Đúng mã nhưng đơn đã Hết hạn</td><td>Hàng chờ xử lý tay; kế toán có thể mở lại đơn và xác nhận</td></tr>
+<tr><td>Không có mã đơn</td><td>Hàng chờ xử lý tay</td></tr>
+<tr><td>Webhook gửi lại cùng <code>provider_txn_id</code></td><td>Bỏ qua (idempotent)</td></tr>
+<tr><td>Đơn đã thanh toán nhận thêm giao dịch</td><td>Hàng chờ xử lý tay (khả năng chuyển trùng)</td></tr>
+</table>
+<p>Mã đơn nên ngắn, không dấu, dễ nhận diện trong nội dung chuyển khoản, ví dụ <code>AF</code> + 8 ký tự số/chữ in hoa.</p>
+
+<h3>8.3 Công thức</h3>
+<pre>Giá trước VAT       = Σ (đơn giá × SL) / (1 + VAT% của từng dòng)
+Cơ sở hoa hồng      = Giá trước VAT × (1 − Phí DN%)          // phí ship không tính
+Hoa hồng F1         = floor(Cơ sở × Tỉ lệ F1[cấp người giới thiệu của người mua])
+Hoa hồng F2         = floor(Cơ sở × Tỉ lệ F2[cấp người giới thiệu của F1])
+Doanh số xét cấp    += Tiền hàng đã gồm VAT (không gồm ship)    // cần xác nhận</pre>
+<div class="note">Hai giả định cần anh xác nhận: (1) phí 5% tính trên giá trước VAT; (2) doanh số xét cấp tính theo tiền hàng đã gồm VAT, không gồm ship.</div>
+
+<h4>Thuật toán khi nhận <code>order.paid</code></h4>
+<pre>BEGIN TRANSACTION
+  order = lock(orders, id)                  // chặn chạy song song
+  if exists(commission_ledger where order_id) → COMMIT; return   // idempotent
+
+  buyer = users[order.buyer_id]
+  base  = tính cơ sở như trên
+
+  f1 = buyer.referrer
+  if f1 và f1.activated và f1.status = active:
+      ghi ledger(F1, f1, cấp f1, tỉ lệ, base, tiền) ; cộng ví f1
+  else ghi ledger(F1, …, status = skipped, skip_reason)
+
+  f2 = f1?.referrer
+  (tương tự với F2)
+
+  // lên cấp người mua — sau khi tính hoa hồng
+  buyer.cumulative += order.goods_amount
+  if buyer.activated_at null → buyer.activated_at = now
+  newLevel = cấp cao nhất có threshold ≤ buyer.cumulative
+  if newLevel > buyer.level → cập nhật + level_history + thông báo
+COMMIT</pre>
+
+<h3>8.4 Ví dụ số</h3>
+<p>Cây: <b>A</b> → giới thiệu <b>B</b> (Đại lý) → giới thiệu <b>C</b> (Cộng tác viên) → giới thiệu <b>D</b> (mới đăng ký). Giả sử cấu hình F2 của Đại lý là 5% (chỉ để minh hoạ).</p>
+<p>D đặt đơn hàng 5.500.000đ (VAT 10%), giao tận nơi, ship 30.000đ, tổng chuyển khoản 5.530.000đ.</p>
+<table>
+<tr><th>Bước</th><th>Phép tính</th><th class="n">Kết quả</th></tr>
+<tr><td>Giá trước VAT</td><td>5.500.000 / 1,1</td><td class="n">5.000.000</td></tr>
+<tr><td>Cơ sở hoa hồng</td><td>5.000.000 × 95%</td><td class="n">4.750.000</td></tr>
+<tr><td>F1 → C (CTV, 10%)</td><td>4.750.000 × 10%</td><td class="n">475.000</td></tr>
+<tr><td>F2 → B (Đại lý, F2 = 5% ví dụ)</td><td>4.750.000 × 5%</td><td class="n">237.500</td></tr>
+<tr><td>A</td><td>Cách D 3 tầng</td><td class="n">0</td></tr>
+<tr><td>D lên cấp</td><td>Cộng dồn 0 → 5.500.000 (≥ 3tr)</td><td class="n">Cộng tác viên</td></tr>
+</table>
+
+<h3>8.5 Rút tiền</h3>
+<pre>Điều kiện: KYC = Đã duyệt, số dư ≥ min rút, không có lệnh rút đang chờ
+Khi tạo lệnh: ví −amount (tạm giữ)
+Thuế TNCN  = amount × TNCN%   (nếu cấu hình &gt; 0)
+Thực nhận  = amount − Thuế TNCN
+Duyệt → kế toán chuyển khoản → nhập mã giao dịch → Đã chuyển
+Từ chối → ví +amount, ghi lý do</pre>
+
+<!-- ============ 9 ============ -->
+<h2 id="s9">9. Edge case &amp; chống gian lận</h2>
+<h3>9.1 Edge case cần test</h3>
+<table>
+<tr><th>#</th><th>Tình huống</th><th>Kết quả mong đợi</th></tr>
+<tr><td>1</td><td>Người giới thiệu chưa kích hoạt khi F1 mua</td><td>Không ghi hoa hồng, ledger = skipped “chưa kích hoạt”. Không tính bù khi họ kích hoạt sau</td></tr>
+<tr><td>2</td><td>Người giới thiệu bị khoá</td><td>Skipped “tài khoản khoá”</td></tr>
+<tr><td>3</td><td>Người mua không có F2 (F1 là tài khoản gốc)</td><td>Chỉ ghi F1 (hoặc không ghi gì nếu F1 là tài khoản gốc công ty)</td></tr>
+<tr><td>4</td><td>Admin đổi tỉ lệ khi đơn đang chờ thanh toán</td><td>Dùng tỉ lệ có hiệu lực tại thời điểm thanh toán</td></tr>
+<tr><td>5</td><td>Người hưởng lên cấp đúng lúc có đơn F1</td><td>Lock theo đơn; cấp đọc tại thời điểm xử lý đơn</td></tr>
+<tr><td>6</td><td>Một đơn đưa người mua vượt nhiều mốc</td><td>Nhảy thẳng cấp cao nhất đạt được, ghi 1 dòng level_history</td></tr>
+<tr><td>7</td><td>Hai webhook cùng lúc cho một đơn</td><td>Chỉ một lần chuyển Đã thanh toán, một bộ hoa hồng</td></tr>
+<tr><td>8</td><td>Làm tròn lẻ đồng</td><td>Làm tròn xuống từng dòng</td></tr>
+<tr><td>9</td><td>Admin sửa người giới thiệu</td><td>Chỉ áp dụng cho đơn thanh toán sau đó; ghi audit log</td></tr>
+<tr><td>10</td><td>Đơn nhận tại VP tỉnh đã tắt sau khi đặt</td><td>Đơn vẫn giữ điểm đã chọn; CSKH liên hệ khách</td></tr>
+</table>
+
+<h3>9.2 Chống gian lận</h3>
+<table>
+<tr><th>Rủi ro</th><th>Biện pháp Phase 1</th></tr>
+<tr><td>Một người mở nhiều tài khoản để tự làm F1 của mình</td><td>1 CCCD + 1 số TK ngân hàng cho mỗi tài khoản rút tiền; cảnh báo khi trùng SĐT/địa chỉ giao hàng/thiết bị giữa người mua và người giới thiệu</td></tr>
+<tr><td>Dùng tài khoản người nhà</td><td>Báo cáo “cặp F1 có cùng địa chỉ nhận hàng” để admin rà soát</td></tr>
+<tr><td>Xác nhận tay sai/gian lận</td><td>Chỉ vai trò Kế toán được gán tay, bắt buộc lý do, log đầy đủ; dashboard đếm số lần xác nhận tay</td></tr>
+<tr><td>Mua rồi hoàn để lên cấp</td><td>Phase 1 không có hoàn tiền trong hệ thống; xử lý ở Phase 2</td></tr>
+<tr><td>Lộ dữ liệu CCCD</td><td>Mã hoá ảnh, URL ký có hạn, chỉ vai trò được phép xem, log mỗi lần xem</td></tr>
+</table>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10">10. Câu hỏi còn mở</h2>
+<table>
+<tr><th>#</th><th>Câu hỏi</th><th>Ảnh hưởng</th><th>Trạng thái</th></tr>
+<tr><td>1</td><td>Công ty thanh toán tiền hàng cho VP tỉnh thế nào khi khách nhận tại kho VP?</td><td>Đối soát, kế toán</td><td><span class="tag t-warn">Hoãn</span></td></tr>
+<tr><td>2</td><td>Logic KPI “mặt trời + nhị phân”, định nghĩa “nhóm nhỏ”, độ sâu tính doanh số</td><td>Engine KPI Phase 2</td><td><span class="tag t-warn">Chờ khách</span></td></tr>
+<tr><td>3</td><td>Phí 5% tính trên giá trước VAT? Doanh số xét cấp tính gồm VAT, không gồm ship?</td><td>Công thức mục 8.3</td><td><span class="tag t-acc">Cần xác nhận</span></td></tr>
+<tr><td>4</td><td>Mốc của cấp Nhân viên; tên 2 mức VP tỉnh</td><td>Seed cấu hình</td><td><span class="tag t-acc">Cần xác nhận</span></td></tr>
+<tr><td>5</td><td>Đăng ký không có mã giới thiệu thì gắn vào đâu?</td><td>Cây giới thiệu</td><td><span class="tag t-acc">Cần xác nhận</span></td></tr>
+<tr><td>6</td><td>Tỉ lệ khấu trừ thuế TNCN khi chi hoa hồng</td><td>Rút tiền</td><td><span class="tag t-acc">Hỏi kế toán</span></td></tr>
+<tr><td>7</td><td>Logo, tên brand, tên miền</td><td>Step 0</td><td><span class="tag t-acc">Chờ khách gửi</span></td></tr>
+<tr><td>8</td><td>Rà soát pháp lý mô hình theo Nghị định 137/2026/NĐ-CP về kinh doanh theo phương thức đa cấp</td><td>Go-live</td><td><span class="tag t-crit">Trước khi mở đăng ký</span></td></tr>
+</table>
+<div class="note crit">Mô hình có mua theo mốc để lên cấp, hoa hồng 2 tầng và thưởng theo doanh số nhóm. Đây là các dấu hiệu thường dùng để xác định kinh doanh theo phương thức đa cấp. Nên có ý kiến luật sư trước khi go-live.</div>
+</main>
+</div>
+</body>
+</html>
