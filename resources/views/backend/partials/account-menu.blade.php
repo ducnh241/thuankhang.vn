@@ -1,4 +1,4 @@
-{{-- Menu tài khoản (dropdown Ant Design) mở từ avatar đầu sidebar, kể cả trong drawer mobile: resources/admin/js/layout.js
+{{-- Menu tài khoản (dropdown Ant Design) mở từ avatar đầu sidebar, kể cả trong drawer mobile: resources/backend/js/layout.js
      chép nội dung <template> này ra popup. Đăng xuất gửi form POST #logout-form (có CSRF). --}}
 @php $user = auth()->user(); @endphp
 <template id="account-menu">

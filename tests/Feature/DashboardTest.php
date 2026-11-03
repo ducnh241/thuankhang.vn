@@ -36,9 +36,9 @@ class DashboardTest extends TestCase
             ->assertSee('Xem website')
             ->assertSee('<form id="logout-form" method="POST" action="'.route('backend.logout').'" class="hidden">', false)
             // Asset mới, không còn markup / asset của giao diện cũ
-            ->assertSee('assets/admin/build/assets/app-', false)
-            ->assertSee('assets/admin/img/favicon.svg', false)
-            ->assertDontSee('assets/backend/', false)
+            ->assertSee('assets/backend/build/assets/app-', false)
+            ->assertSee('assets/backend/img/favicon.svg', false)
+            ->assertDontSee('assets/frontend/build', false) // trang quản trị không nạp CSS / JS website
             ->assertDontSee('data-sidebar=', false)
             ->assertDontSee('ov-user-menu', false);
     }

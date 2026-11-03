@@ -1,5 +1,5 @@
 {{-- Hộp xác nhận xóa (template src/partials/delete-confirm.html) + form gửi đi. Nút có data-delete-url mở hộp này
-     (resources/admin/js/delete.js); bấm "Xóa" gửi DELETE tới url đó. Tuỳ chọn: data-delete-title (câu hỏi),
+     (resources/backend/js/delete.js); bấm "Xóa" gửi DELETE tới url đó. Tuỳ chọn: data-delete-title (câu hỏi),
      data-delete-content (dòng giải thích). --}}
 <template id="delete-confirm">
   <div class="ant-modal-root">

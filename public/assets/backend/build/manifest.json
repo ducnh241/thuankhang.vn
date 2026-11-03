@@ -1,0 +1,29 @@
+{
+  "resources/backend/css/app.css": {
+    "file": "assets/app-9Qi4JVFU.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/backend/css/app.css",
+    "isEntry": true
+  },
+  "resources/backend/js/app.js": {
+    "file": "assets/app-BHUfhsOy.js",
+    "name": "app",
+    "src": "resources/backend/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/backend/js/editor.js"
+    ]
+  },
+  "resources/backend/js/editor.js": {
+    "file": "assets/editor-DFWcfq9a.js",
+    "name": "editor",
+    "src": "resources/backend/js/editor.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/backend/js/app.js"
+    ]
+  }
+}

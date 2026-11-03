@@ -1,5 +1,5 @@
 {{-- Trang đăng nhập theo template ProCMS (login.html). Form gửi POST /backend/login; ô trống / email sai định dạng
-     được kiểm tra ở trình duyệt (resources/admin/js/forms.js), lỗi đăng nhập do server trả về hiện ở khung báo lỗi. --}}
+     được kiểm tra ở trình duyệt (resources/backend/js/forms.js), lỗi đăng nhập do server trả về hiện ở khung báo lỗi. --}}
 @php
     $remember = (bool) old('remember');
     $error = $errors->first();

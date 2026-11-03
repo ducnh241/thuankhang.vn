@@ -1,6 +1,6 @@
 {{-- Sidebar theo template ProCMS (src/partials/sidebar.html): nền tối, trên cùng là avatar (mở menu tài khoản) + tên app,
      bên dưới là menu lấy từ config('backend.menu') đã lọc theo quyền. Mục đang mở được đánh dấu ngay từ server
-     (ant-menu-item-selected + aria-current), menu cha có mục con đang mở thì mở sẵn. Trên mobile resources/admin/js/layout.js
+     (ant-menu-item-selected + aria-current), menu cha có mục con đang mở thì mở sẵn. Trên mobile resources/backend/js/layout.js
      chép phần ruột sidebar vào drawer. --}}
 @php
     $user = auth()->user();

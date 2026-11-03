@@ -1,4 +1,4 @@
-{{-- Bộ icon SVG (Ant Design icons, MIT) của template ProCMS, src/partials/sprite.html. Dùng: <svg width="1em" height="1em" fill="currentColor"><use href="#i-ten-icon"></use></svg>; JS dùng icon() trong resources/admin/js/core.js --}}
+{{-- Bộ icon SVG (Ant Design icons, MIT) của template ProCMS, src/partials/sprite.html. Dùng: <svg width="1em" height="1em" fill="currentColor"><use href="#i-ten-icon"></use></svg>; JS dùng icon() trong resources/backend/js/core.js --}}
 <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg">
   <symbol id="i-caret-down" viewBox="0 0 1024 1024">
     <path

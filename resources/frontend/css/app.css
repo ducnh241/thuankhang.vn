@@ -1,6 +1,6 @@
 /*
- * Giao diện website (cửa hàng): Tailwind CSS v4 đầy đủ (có preflight), chỉ quét view frontend + JS của site.
- * Build chung với admin (vite.config.js) vào public/assets/admin/build.
+ * Giao diện website (cửa hàng): Tailwind CSS v4 đầy đủ (có preflight), chỉ quét view frontend + JS của website.
+ * Build riêng (vite.frontend.config.js) vào public/assets/frontend/build — không dính CSS / JS của admin.
  */
 @import 'tailwindcss' source(none);
 

@@ -33,9 +33,9 @@ class LoginTest extends TestCase
             ->assertSee('ant-input-password-icon', false)
             ->assertSee('id="i-mail"', false) // bộ icon SVG nhúng trong trang
             // Asset mới build bằng Vite, không còn file của giao diện cũ
-            ->assertSee('assets/admin/build/assets/app-', false)
-            ->assertSee('assets/admin/img/favicon.svg', false)
-            ->assertDontSee('assets/backend/', false)
+            ->assertSee('assets/backend/build/assets/app-', false)
+            ->assertSee('assets/backend/img/favicon.svg', false)
+            ->assertDontSee('assets/frontend/build', false) // trang quản trị không nạp CSS / JS website
             // Không mang theo phần demo của template
             ->assertDontSee('admin123')
             ->assertDontSee('Demo account')
@@ -45,8 +45,7 @@ class LoginTest extends TestCase
         $this->assertMatchesRegularExpression('/id="login_email"[^>]*autofocus/', $html);
         $this->assertDoesNotMatchRegularExpression('/id="login_password"[^>]*autofocus/', $html);
         $this->assertStringNotContainsString('ant-checkbox-wrapper-checked', $html);
-        $this->assertFileExists(public_path('assets/admin/build/manifest.json'));
-        $this->assertDirectoryDoesNotExist(public_path('assets/backend'));
+        $this->assertFileExists(public_path('assets/backend/build/manifest.json'));
     }
 
     public function test_failed_login_shows_error_alert_and_keeps_email_and_remember_but_not_password(): void

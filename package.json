@@ -3,8 +3,12 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "build": "vite build && vite build --config vite.frontend.config.js",
+        "build:backend": "vite build",
+        "build:frontend": "vite build --config vite.frontend.config.js",
+        "dev": "concurrently -n backend,frontend -c blue,green \"vite\" \"vite --config vite.frontend.config.js\"",
+        "dev:backend": "vite",
+        "dev:frontend": "vite --config vite.frontend.config.js"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

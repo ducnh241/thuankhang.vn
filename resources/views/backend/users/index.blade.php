@@ -3,7 +3,7 @@
 @section('title', 'Người dùng')
 
 {{-- Theo template ProCMS users.html: tab trạng thái, ô tìm + nút lọc nhóm quyền + sắp xếp, bảng ant-table (avatar, email,
-     nhóm, trạng thái), phân trang. Lọc / tìm / phân trang ở server (link thật); resources/admin/js/list.js mở danh sách
+     nhóm, trạng thái), phân trang. Lọc / tìm / phân trang ở server (link thật); resources/backend/js/list.js mở danh sách
      chọn của các nút lọc và cho bấm cả dòng để mở trang sửa; delete.js hỏi lại trước khi xóa. --}}
 @php
     $muted = 'text-[rgba(0,0,0,0.45)]';

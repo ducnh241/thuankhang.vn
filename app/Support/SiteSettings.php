@@ -65,7 +65,7 @@ class SiteSettings
 
     /**
      * Link nhúng của bản đồ Google: từ mã <iframe>, link nhúng, hay link Google Maps thường (nhúng kiểu "q", không
-     * cần API key). Không phải link Google Maps → null. Khớp mapUrl() ở resources/admin/js/settings.js.
+     * cần API key). Không phải link Google Maps → null. Khớp mapUrl() ở resources/backend/js/settings.js.
      */
     public static function mapEmbedUrl(?string $value): ?string
     {

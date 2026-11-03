@@ -143,6 +143,17 @@ class StorefrontTest extends TestCase
         $this->get('/san-pham/khong-co')->assertNotFound();
     }
 
+    public function test_frontend_and_backend_load_their_own_assets(): void
+    {
+        // Website: chỉ build frontend (vite.frontend.config.js); trang quản trị: chỉ build admin
+        $this->get('/')->assertOk()
+            ->assertSee('assets/frontend/build/assets/app-', false)->assertDontSee('assets/backend/build', false);
+        $this->get('/backend/login')->assertOk()
+            ->assertSee('assets/backend/build/assets/app-', false)->assertDontSee('assets/frontend/build', false);
+        $this->assertFileExists(public_path('assets/frontend/build/manifest.json'));
+        $this->assertArrayNotHasKey('resources/frontend/css/app.css', json_decode(file_get_contents(public_path('assets/backend/build/manifest.json')), true));
+    }
+
     public function test_referral_code_is_remembered_on_any_page(): void
     {
         AffiliateSettings::save(['ref_cookie_days' => 7]);

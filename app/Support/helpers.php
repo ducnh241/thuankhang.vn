@@ -18,7 +18,7 @@ if (! function_exists('asset_v')) {
 if (! function_exists('ant_icon')) {
     /**
      * Icon Ant Design của giao diện admin, tham chiếu bộ icon nhúng trong trang (backend.partials.sprite),
-     * cùng markup với icon() trong resources/admin/js/core.js. Tên có hậu tố -tt là icon 2 màu.
+     * cùng markup với icon() trong resources/backend/js/core.js. Tên có hậu tố -tt là icon 2 màu.
      */
     function ant_icon(string $name, string $class = '', string $style = ''): HtmlString
     {
@@ -34,7 +34,7 @@ if (! function_exists('ant_icon')) {
 
 if (! function_exists('ant_input_number')) {
     /**
-     * Ô số kiểu InputNumber của Ant Design 4 (nút tăng / giảm hiện khi rê chuột; xử lý ở resources/admin/js/controls.js).
+     * Ô số kiểu InputNumber của Ant Design 4 (nút tăng / giảm hiện khi rê chuột; xử lý ở resources/backend/js/controls.js).
      * $options: id, min, max, step (mặc định 1), size ('sm' | 'lg'), label (aria-label), placeholder, readonly, class.
      */
     function ant_input_number(string $name, string|int|null $value, array $options = []): HtmlString

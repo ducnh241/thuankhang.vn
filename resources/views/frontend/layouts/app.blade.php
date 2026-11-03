@@ -30,7 +30,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  @vite(['resources/site/css/app.css', 'resources/site/js/app.js'], 'assets/admin/build')
+  {{-- Build riêng của website (vite.frontend.config.js), không dùng CSS / JS admin. Đối tượng Vite riêng: không đổi
+       hot file / thư mục build của Vite dùng chung (admin) --}}
+  {{ (new \Illuminate\Foundation\Vite)->useHotFile(public_path('hot-frontend'))->useBuildDirectory('assets/frontend/build')->withEntryPoints(['resources/frontend/css/app.css', 'resources/frontend/js/app.js']) }}
   {!! $site['code_head'] !!}
 </head>
 <body class="flex min-h-screen flex-col">

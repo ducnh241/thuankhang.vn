@@ -5,7 +5,7 @@
     $size = $size ?? 'default';
     $sizeClass = ['sm' => ' ant-avatar-sm', 'lg' => ' ant-avatar-lg'][$size] ?? '';
     $style = $size === 'xl' ? ' style="width: 64px; height: 64px; line-height: 64px; font-size: 22px"' : '';
-    $src = $user->avatarUrl() ?: (($placeholder ?? false) ? asset('assets/admin/img/avatar.svg') : null);
+    $src = $user->avatarUrl() ?: (($placeholder ?? false) ? asset('assets/backend/img/avatar.svg') : null);
 @endphp
 @if ($src)
 <span class="ant-avatar ant-avatar-circle ant-avatar-image{{ $sizeClass }}"{!! $style !!}><img src="{{ $src }}" alt="" /></span>

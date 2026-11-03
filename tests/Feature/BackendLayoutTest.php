@@ -96,8 +96,8 @@ class BackendLayoutTest extends TestCase
 
         // Avatar đầu sidebar mở menu tài khoản; chưa có ảnh thì dùng ảnh người mặc định như template
         $this->assertStringContainsString('<button type="button" class="sidebar-user-button" aria-haspopup="menu" aria-expanded="false" aria-label="Menu tài khoản" title="Nguyễn Đức · '.$root->email.'">', $html);
-        $this->assertStringContainsString('<span class="ant-avatar ant-avatar-circle ant-avatar-image"><img src="'.asset('assets/admin/img/avatar.svg').'" alt="" /></span>', $html);
-        $this->assertFileExists(public_path('assets/admin/img/avatar.svg'));
+        $this->assertStringContainsString('<span class="ant-avatar ant-avatar-circle ant-avatar-image"><img src="'.asset('assets/backend/img/avatar.svg').'" alt="" /></span>', $html);
+        $this->assertFileExists(public_path('assets/backend/img/avatar.svg'));
         // Không nạp font Inter từ Google (template thực tế hiển thị bằng font hệ thống)
         $this->assertStringNotContainsString('fonts.googleapis.com', $html);
 
