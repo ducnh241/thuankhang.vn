@@ -39,6 +39,8 @@ class AuditLog extends Model
         Level::class => 'Cấp bậc',
         CommissionRate::class => 'Tỉ lệ hoa hồng',
         KpiTier::class => 'Bậc KPI',
+        Product::class => 'Sản phẩm',
+        ProductImage::class => 'Ảnh sản phẩm',
     ];
 
     /** Loại trong SUBJECTS nhưng không gắn observer: controller tự ghi một dòng tóm tắt (vd cả phiên bản tỉ lệ). */

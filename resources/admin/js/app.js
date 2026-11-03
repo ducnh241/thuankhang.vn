@@ -15,6 +15,7 @@ import initGroupForm from './group-form';
 import initSettings from './settings';
 import initTreePages from './tree-page';
 import initPageForm from './page-form';
+import initProductForm from './product-form';
 import initLinkPickers from './link-picker';
 import initTableExpand from './table-expand';
 import initRepeaters from './repeater';
@@ -41,6 +42,7 @@ $(() => {
   initSettings();
   initTreePages();
   initPageForm();
+  initProductForm();
   initLinkPickers();
   initTableExpand();
   initRepeaters();

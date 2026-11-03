@@ -5,7 +5,10 @@ namespace Database\Seeders;
 use App\Models\Menu;
 use Illuminate\Database\Seeder;
 
-/** Menu chính của trang chủ (handle "main") với các mục vốn được viết cứng trong trang giới thiệu. */
+/**
+ * Menu chính của cửa hàng (handle "main") lúc mới cài: Trang chủ + mỗi danh mục sản phẩm gốc đang hiện một mục.
+ * Thanh danh mục trên website đã lấy thẳng từ cây danh mục; menu chính dành cho link thêm (Giới thiệu, Liên hệ…).
+ */
 class MenuSeeder extends Seeder
 {
     public function run(): void
@@ -16,11 +19,8 @@ class MenuSeeder extends Seeder
         }
 
         $menu->saveTree([
-            ['label' => 'Giới thiệu', 'url' => '#about', 'children' => []],
-            ['label' => 'Chuyên môn', 'url' => '#expertise', 'children' => []],
-            ['label' => 'Hành trình', 'url' => '#journey', 'children' => []],
-            ['label' => 'Chạy bộ', 'url' => '#running', 'children' => []],
-            ['label' => 'Liên hệ', 'url' => '#contact', 'children' => []],
+            ['label' => 'Trang chủ', 'url' => '/', 'children' => []],
+            ['label' => 'Tìm sản phẩm', 'url' => '/tim-kiem', 'children' => []],
         ]);
     }
 }

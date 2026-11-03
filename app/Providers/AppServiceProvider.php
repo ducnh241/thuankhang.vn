@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\User;
 use App\Observers\SystemAuditObserver;
+use App\Support\Catalog;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -13,6 +14,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -20,7 +22,16 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Cây danh mục website: nạp một lần mỗi request — giữ trên chính request (test gọi nhiều request trên cùng một app,
+        // scoped instance không được làm mới giữa các request đó)
+        $this->app->bind(Catalog::class, function ($app) {
+            $attributes = $app['request']->attributes;
+            if (! $attributes->has(Catalog::class)) {
+                $attributes->set(Catalog::class, new Catalog);
+            }
+
+            return $attributes->get(Catalog::class);
+        });
     }
 
     public function boot(): void
@@ -31,6 +42,13 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('vendor.pagination.backend');
 
         $this->registerSystemAudit();
+
+        // Website: tên / liên hệ / mạng xã hội (Cài đặt website), menu chính / chân trang, danh mục gốc — đưa vào các view
+        // trang (layout nhận lại từ trang con; nội dung trang chạy trước layout nên không gắn vào layout được). Tính một lần
+        // mỗi request (Catalog scoped), không gắn vào partial (thẻ sản phẩm lặp nhiều lần).
+        View::composer(['frontend.home', 'frontend.category', 'frontend.search', 'frontend.product', 'frontend.layouts.app'], function ($view) {
+            $view->with(app(Catalog::class)->layoutData());
+        });
     }
 
     /**

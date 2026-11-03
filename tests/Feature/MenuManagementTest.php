@@ -185,7 +185,7 @@ class MenuManagementTest extends TestCase
         // Cấp ngoài: các loại link (loại có danh sách mở tiếp trong ô); cấp trong: danh mục từng loại, trang
         [$value, $shown, $tree] = $this->linkPicker($xp);
         $this->assertSame(['category:'.$category->id, 'Danh mục tin tức › Bán hàng'], [$value, $shown]);
-        $this->assertSame(['home Trang chủ', 'category:news Danh mục tin tức', 'page Trang', 'url Tự nhập đường dẫn…'],
+        $this->assertSame(['home Trang chủ', 'category:product Danh mục sản phẩm', 'category:news Danh mục tin tức', 'page Trang', 'url Tự nhập đường dẫn…'],
             array_map(fn ($i) => ($i['value'] ?? $i['menu']).' '.$i['label'], $tree['items']));
         $this->assertSame([['value' => 'category:'.$category->id, 'label' => 'Bán hàng', 'depth' => 0, 'note' => null]], [$tree['menus']['category:news']['items'][0]]);
         $this->assertSame(['category:'.$category->id, 'category:'.$news->id], array_column($tree['menus']['category:news']['items'], 'value'));
@@ -226,7 +226,7 @@ class MenuManagementTest extends TestCase
         $this->assertSame(['url', 'Tự nhập đường dẫn…'], [$value, $shown]);
         $this->assertSame(['url'], $this->visibleLinkFields($xp));
         // Mỗi loại link có icon: trang chủ, danh mục, trang, tự nhập
-        $this->assertSame(['home', 'folder', 'file-text', 'link'], array_column($tree['items'], 'icon'));
+        $this->assertSame(['home', 'folder', 'folder', 'file-text', 'link'], array_column($tree['items'], 'icon'));
         $this->assertSame('link', $xp->query('//*[@data-link-picker]//*[contains(@class, "ant-select-selection-item")]//*[@role="img"]')->item(0)->getAttribute('aria-label'));
 
         // Trang chủ: lưu "/" (bỏ ô tự nhập), hiện lại là "Trang chủ"; trong cây có icon ngôi nhà
@@ -358,7 +358,7 @@ class MenuManagementTest extends TestCase
 
         $this->assertSame([['label' => 'Giới thiệu', 'url' => '#about', 'children' => []]], Menu::tree('main'));
         $html = $this->get('/')->assertOk()->getContent();
-        $this->assertStringContainsString('<li><a href="#about">Giới thiệu</a></li>', $html);
+        $this->assertMatchesRegularExpression('#<a href="\#about" class="[^"]*">Giới thiệu</a>#', $html);
         $this->assertStringNotContainsString('Dịch vụ', $html);
         $this->assertStringNotContainsString('mailto:hi@example.com', $html);
     }
@@ -375,12 +375,11 @@ class MenuManagementTest extends TestCase
         ]);
 
         $html = $this->get('/')->assertOk()->getContent();
-        $this->assertStringContainsString('<li><a href="/gioi-thieu?a=1&amp;b=2">Giới thiệu &lt;b&gt;x&lt;/b&gt;</a></li>', $html);
-        $this->assertStringContainsString('<li><a href="https://blog.example.com" target="_blank" rel="noopener">Blog</a></li>', $html);
-        $this->assertStringContainsString('<li><a href="#">Không link</a></li>', $html);
-        $this->assertStringNotContainsString('Mục con', $html);
+        $this->assertMatchesRegularExpression('#<a href="/gioi-thieu\?a=1&amp;b=2" class="[^"]*">Giới thiệu &lt;b&gt;x&lt;/b&gt;</a>#', $html);
+        $this->assertMatchesRegularExpression('#<a href="https://blog.example.com" class="[^"]*" target="_blank" rel="noopener">Blog</a>#', $html);
+        $this->assertMatchesRegularExpression('#<a href="\#" class="[^"]*">Không link</a>#', $html);
+        $this->assertStringNotContainsString('Mục con', $html); // website chỉ hiện mục cấp 1
         $this->assertStringNotContainsString('<b>x</b>', $html);
-        $this->assertStringNotContainsString('<li><a href="#about">', $html); // liên kết mặc định không còn (nút hero vẫn trỏ #about)
     }
 
     public function test_frontend_guards_links_even_if_validation_were_bypassed(): void
@@ -391,21 +390,24 @@ class MenuManagementTest extends TestCase
             ['label' => 'Ngoài', 'url' => '//evil.example', 'children' => []],
             ['label' => 'Trong', 'url' => '/trang', 'children' => []],
         ]);
+        Menu::create(['name' => 'Menu chân trang', 'handle' => 'footer'])->saveTree([
+            ['label' => 'Chân xấu', 'url' => ' data:text/html,x', 'children' => []],
+        ]);
 
         $html = $this->get('/')->assertOk()->getContent();
-        $this->assertStringContainsString('<li><a href="#">Xấu</a></li>', $html);
-        $this->assertStringContainsString('<li><a href="//evil.example" target="_blank" rel="noopener">Ngoài</a></li>', $html);
-        $this->assertStringContainsString('<li><a href="/trang">Trong</a></li>', $html);
+        $this->assertMatchesRegularExpression('#<a href="\#" class="[^"]*">Xấu</a>#', $html);
+        $this->assertMatchesRegularExpression('#<a href="//evil.example" class="[^"]*" target="_blank" rel="noopener">Ngoài</a>#', $html);
+        $this->assertMatchesRegularExpression('#<a href="/trang" class="[^"]*">Trong</a>#', $html);
+        $this->assertMatchesRegularExpression('#<a href="\#" class="[^"]*">Chân xấu</a>#', $html);
         $this->assertStringNotContainsString('alert(1)', $html);
+        $this->assertStringNotContainsString('data:text', $html);
 
-        // Menu main còn nhưng hết mục → thanh nav trống (không quay về liên kết mặc định); chưa có menu main → mặc định
+        // Hết mục / chưa có menu main → không có mục menu nào (thanh danh mục vẫn còn)
         $menu->saveTree([]);
-        $html = $this->get('/')->assertOk()->getContent();
-        $this->assertStringContainsString('<ul class="nav-links">', $html);
-        $this->assertStringNotContainsString('<li><a href="#about">', $html);
+        $this->get('/')->assertOk()->assertDontSee('data-menu-item', false);
         $menu->delete();
         Menu::forgetCache('main');
-        $this->get('/')->assertOk()->assertSee('<li><a href="#about">Giới thiệu</a></li>', false);
+        $this->get('/')->assertOk()->assertDontSee('data-menu-item', false);
     }
 
     public function test_seeder_creates_main_menu_once(): void
@@ -415,8 +417,8 @@ class MenuManagementTest extends TestCase
 
         $menu = Menu::where('handle', 'main')->firstOrFail();
         $this->assertSame(1, Menu::count());
-        $this->assertSame(['Giới thiệu', 'Chuyên môn', 'Hành trình', 'Chạy bộ', 'Liên hệ'], $menu->items->pluck('label')->all());
-        $this->get('/')->assertOk()->assertSeeInOrder(['href="#about"', 'href="#expertise"', 'href="#journey"', 'href="#running"', 'href="#contact"'], false);
+        $this->assertSame(['Trang chủ', 'Tìm sản phẩm'], $menu->items->pluck('label')->all());
+        $this->get('/')->assertOk()->assertSeeInOrder(['data-menu-item', 'href="/"', 'data-menu-item', 'href="/tim-kiem"'], false);
     }
 
     public function test_odd_input_never_crashes_and_old_urls(): void

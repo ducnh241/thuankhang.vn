@@ -185,7 +185,7 @@ class CategoryManagementTest extends TestCase
         $hidden = Category::factory()->create(['name' => 'Cha B', 'priority' => 2, 'status' => false]);
 
         // Không có id: mở danh mục đầu tiên của cây
-        $html = $this->actingAs($root)->get($this->page())->assertOk()->getContent();
+        $html = $this->actingAs($root)->get($this->page('type=news'))->assertOk()->getContent();
         $this->assertStringContainsString('<h1 class="page-topbar-title">Cha A</h1>', $html);
         $this->assertMatchesRegularExpression('#data-id="'.$parent->id.'" data-depth="0" data-parent="" role="treeitem" aria-level="1"\s+aria-selected="true"\s+aria-expanded="true"#', $html);
         $this->assertMatchesRegularExpression('#data-id="'.$child->id.'" data-depth="1" data-parent="'.$parent->id.'" role="treeitem" aria-level="2"\s+aria-selected="false"\s*>#', $html);
@@ -209,7 +209,7 @@ class CategoryManagementTest extends TestCase
         $tree = Category::tree(Category::TYPE_POST);
         $this->assertCount(2, $tree);
         $this->assertSame([$a->id, $b->id], $tree->pluck('id')->sort()->values()->all());
-        $this->actingAs($this->root())->get($this->page())->assertOk()->assertSee('>A<', false)->assertSee('>B<', false);
+        $this->actingAs($this->root())->get($this->page('type=news'))->assertOk()->assertSee('>A<', false)->assertSee('>B<', false);
     }
 
     // ---- Kéo thả ----
@@ -348,7 +348,8 @@ class CategoryManagementTest extends TestCase
     public function test_unknown_kind_odd_query_and_old_urls(): void
     {
         $root = $this->root();
-        $category = Category::factory()->create(['name' => 'Bán hàng']);
+        // Loại không hợp lệ / tham số lạ → mở loại đầu tiên (danh mục sản phẩm)
+        $category = Category::factory()->create(['name' => 'Bán hàng', 'type' => Category::TYPE_PRODUCT]);
 
         $this->actingAs($root)->get('/backend/category/event')->assertNotFound();
         $this->actingAs($root)->get('/backend/category/store/create')->assertNotFound();
@@ -358,6 +359,6 @@ class CategoryManagementTest extends TestCase
         // URL cũ chuyển sang trang gộp
         $this->actingAs($root)->get('/backend/category/news')->assertRedirect(route('backend.categories.index', ['type' => 'news']));
         $this->actingAs($root)->get('/backend/category/news/create')->assertRedirect(route('backend.categories.index', ['type' => 'news', 'new' => 1]));
-        $this->actingAs($root)->get("/backend/category/news/{$category->id}/edit")->assertRedirect(route('backend.categories.index', ['type' => 'news', 'id' => $category->id]));
+        $this->actingAs($root)->get("/backend/category/product/{$category->id}/edit")->assertRedirect(route('backend.categories.index', ['type' => 'product', 'id' => $category->id]));
     }
 }

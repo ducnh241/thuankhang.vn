@@ -1,0 +1,64 @@
+/*
+ * Giao diện website (cửa hàng): Tailwind CSS v4 đầy đủ (có preflight), chỉ quét view frontend + JS của site.
+ * Build chung với admin (vite.config.js) vào public/assets/admin/build.
+ */
+@import 'tailwindcss' source(none);
+
+@source '../../views/frontend';
+@source '../js';
+
+@theme {
+  --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+}
+
+/* Nội dung soạn trong trang quản trị (mô tả sản phẩm) — đã lọc qua App\Support\RichText */
+.rich-text {
+  @apply text-[15px] leading-7 text-slate-700;
+}
+.rich-text > * + * {
+  @apply mt-3;
+}
+.rich-text h2 {
+  @apply mt-6 text-lg font-semibold text-slate-900;
+}
+.rich-text h3 {
+  @apply mt-5 text-base font-semibold text-slate-900;
+}
+.rich-text ul {
+  @apply list-disc pl-6;
+}
+.rich-text ol {
+  @apply list-decimal pl-6;
+}
+.rich-text a {
+  @apply text-brand-700 underline underline-offset-2;
+}
+.rich-text img {
+  @apply h-auto max-w-full rounded-lg;
+}
+.rich-text blockquote {
+  @apply border-l-4 border-brand-100 pl-4 italic text-slate-600;
+}
+.rich-text table {
+  @apply w-full border-collapse text-sm;
+}
+.rich-text td,
+.rich-text th {
+  @apply border border-slate-200 px-3 py-2;
+}

@@ -18,6 +18,9 @@ class Category extends Model
 
     public const TYPE_STORE = 3;
 
+    /** Danh mục sản phẩm của shop affiliate (đặc tả Step 2 / A6). Giá trị 1 bỏ trống: từng là danh mục dự án (đã gỡ). */
+    public const TYPE_PRODUCT = 4;
+
     /**
      * Các loại danh mục quản lý ở trang Danh mục (/backend/category?type={kind}; route thêm / sửa / xóa có {kind}).
      *   type        giá trị cột categories.type
@@ -28,6 +31,19 @@ class Category extends Model
      *   usage       bảng đang dùng danh mục: hiện cột đếm và chặn xóa khi còn bản ghi (kể cả đã xóa mềm); null = chưa có
      */
     public const KINDS = [
+        // Đứng đầu: mở trang Danh mục không chọn loại thì vào danh mục sản phẩm. Quyền chung với sản phẩm (A6 "Sản phẩm
+        // & danh mục"); còn sản phẩm (kể cả đã xóa mềm) thì không xóa được danh mục.
+        'product' => [
+            'type' => self::TYPE_PRODUCT,
+            'label' => 'Sản phẩm',
+            'title' => 'Danh mục sản phẩm',
+            'description' => 'Phân loại sản phẩm trên cửa hàng: lọc theo danh mục ở trang chủ / tìm kiếm; có thể lồng nhau (cha – con).',
+            'used_by' => 'sản phẩm',
+            'example' => 'VD: Thực phẩm chức năng',
+            'path' => 'danh-muc',
+            'permission' => 'product',
+            'usage' => ['table' => 'products', 'column' => 'category_id', 'label' => 'Sản phẩm', 'unit' => 'sản phẩm', 'route' => 'backend.products.index', 'can' => 'product'],
+        ],
         'news' => [
             'type' => self::TYPE_POST,
             'label' => 'Tin tức',

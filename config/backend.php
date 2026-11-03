@@ -41,8 +41,20 @@ return [
                     'label' => 'Categories',
                     'route' => 'backend.categories.index',
                     'active' => 'backend.categories.*',
-                    'can' => ['news_category'],
+                    'can' => ['product', 'news_category'],
                     'icon' => 'folder',
+                ],
+            ],
+        ],
+        [
+            'label' => 'SHOP',
+            'items' => [
+                [
+                    'label' => 'Products',
+                    'route' => 'backend.products.index',
+                    'active' => 'backend.products.*',
+                    'can' => 'product',
+                    'icon' => 'shop',
                 ],
             ],
         ],

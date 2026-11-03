@@ -2939,3 +2939,24 @@ a.project-thumb:hover {
   overflow-wrap: anywhere;
 }
 
+
+/* Ảnh sản phẩm (backend/products/form): ảnh đầu tiên là ảnh đại diện — có nhãn, không có nút ★ */
+.product-gallery-cover {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  margin: 0;
+  display: none;
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.product-gallery [data-gallery-item]:first-child .product-gallery-cover {
+  display: inline-block;
+}
+.product-gallery [data-gallery-item]:first-child [data-gallery-cover],
+.product-gallery [data-gallery-item][data-new] [data-gallery-cover] {
+  display: none;
+}

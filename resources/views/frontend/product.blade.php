@@ -1,0 +1,94 @@
+@extends('frontend.layouts.app')
+
+{{-- Chi tiết sản phẩm (S2): ảnh (bấm ảnh nhỏ đổi ảnh chính), giá đã gồm VAT, mô tả ngắn, liên hệ đặt hàng, mô tả chi tiết
+     (đã lọc HTML), sản phẩm cùng danh mục. Giỏ hàng / nút "Thêm vào giỏ" làm ở Step 5; nút "Sao chép link giới thiệu sản
+     phẩm" cho thành viên đã kích hoạt làm ở Step 3. --}}
+@php
+    use App\Support\Money;
+    use App\Support\Percent;
+    use App\Support\RichText;
+
+    $images = $product->images;
+    $cover = $images->first()?->url();
+    $hotline = $site['site_hotline'] ?? '';
+    $description = RichText::clean($product->description);
+@endphp
+
+@section('title', $product->name)
+@section('description', (string) $product->short_description)
+@section('image', (string) $cover)
+
+@section('content')
+  <div class="mx-auto max-w-7xl px-4 pt-6">
+    @include('frontend.partials.breadcrumb', ['trail' => $trail, 'current' => $product->name])
+
+    <div class="mt-6 grid gap-8 lg:grid-cols-2">
+      {{-- Ảnh --}}
+      <div>
+        <div class="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          @if ($cover)
+            <img src="{{ $cover }}" alt="{{ $product->name }}" class="size-full object-cover" data-gallery-main />
+          @else
+            <div class="flex size-full items-center justify-center text-slate-300">Chưa có ảnh</div>
+          @endif
+        </div>
+        @if ($images->count() > 1)
+          <div class="mt-3 grid grid-cols-5 gap-3">
+            @foreach ($images as $image)
+              <button type="button" class="overflow-hidden rounded-xl border-2 border-transparent bg-white aria-[current=true]:border-brand-500" data-gallery-thumb
+                data-src="{{ $image->url() }}" data-alt="{{ $product->name }}" aria-current="{{ $loop->first ? 'true' : 'false' }}" aria-label="Xem ảnh {{ $loop->iteration }}">
+                <img src="{{ $image->url() }}" alt="" loading="lazy" class="aspect-square w-full object-cover" />
+              </button>
+            @endforeach
+          </div>
+        @endif
+      </div>
+
+      {{-- Thông tin --}}
+      <div>
+        <h1 class="text-2xl leading-snug font-bold text-slate-900 md:text-3xl">{{ $product->name }}</h1>
+        <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+          @if ($product->sku)<span>Mã: <span class="font-medium text-slate-700">{{ $product->sku }}</span></span>@endif
+          @if ($product->category)<span>Danh mục: <a href="{{ $product->category->url() }}" class="font-medium text-brand-700 hover:underline">{{ $product->category->name }}</a></span>@endif
+        </div>
+
+        <div class="mt-5 rounded-2xl bg-brand-50 p-5">
+          <div class="text-3xl font-bold text-brand-700">{{ Money::format($product->price) }}đ</div>
+          <div class="mt-1 text-xs text-slate-500">Giá đã gồm VAT {{ Percent::format($product->vat_rate) }}%, chưa gồm phí giao hàng</div>
+        </div>
+
+        @if ($product->short_description)
+          <p class="mt-5 text-[15px] leading-7 text-slate-700">{{ $product->short_description }}</p>
+        @endif
+
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+          @if ($hotline)
+            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $hotline) }}" class="flex-1 rounded-full bg-brand-600 px-6 py-3 text-center text-sm font-semibold text-white shadow hover:bg-brand-700">Gọi đặt hàng: {{ $hotline }}</a>
+          @endif
+        </div>
+        <ul class="mt-6 space-y-2 text-sm text-slate-600">
+          <li class="flex gap-2"><span class="text-brand-600">✓</span>Thanh toán chuyển khoản qua mã QR</li>
+          <li class="flex gap-2"><span class="text-brand-600">✓</span>Giao tận nơi hoặc nhận tại văn phòng tỉnh gần bạn</li>
+        </ul>
+      </div>
+    </div>
+
+    @if ($description !== '')
+      <section class="mt-12 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+        <h2 class="text-lg font-bold text-slate-900">Mô tả sản phẩm</h2>
+        <div class="rich-text mt-4">{!! $description !!}</div>
+      </section>
+    @endif
+
+    @if ($related->isNotEmpty())
+      <section class="mt-12">
+        <h2 class="text-xl font-bold text-slate-900">Sản phẩm cùng danh mục</h2>
+        <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          @foreach ($related as $item)
+            @include('frontend.partials.product-card', ['product' => $item])
+          @endforeach
+        </div>
+      </section>
+    @endif
+  </div>
+@endsection

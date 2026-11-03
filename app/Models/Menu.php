@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -76,6 +77,18 @@ class Menu extends Model
         }
     }
 
+    /**
+     * Link mục menu để in ra website: trống hoặc giao thức nguy hiểm (javascript:, data:, vbscript:) → "#", kể cả khi dữ
+     * liệu lọt qua validate. Trả [href, có phải link ngoài (mở tab mới)].
+     */
+    public static function safeLink(?string $url): array
+    {
+        $url = trim((string) $url);
+        $url = $url === '' || preg_match('/^\s*(javascript|data|vbscript):/i', $url) ? '#' : $url;
+
+        return [$url, (bool) preg_match('#^(https?:)?//#i', $url)];
+    }
+
     private static function cacheKey(string $handle): string
     {
         return 'menu.tree.'.$handle;
@@ -127,9 +140,9 @@ class Menu extends Model
      * Mục theo thứ tự cây (cha rồi tới con, theo position), mỗi mục thêm `depth`. Mục không đi tới được từ gốc (dữ liệu
      * lỗi) vẫn hiện ở cấp gốc để còn sửa / xóa được.
      *
-     * @return \Illuminate\Support\Collection<int, MenuItem>
+     * @return Collection<int, MenuItem>
      */
-    public function flatTree(): \Illuminate\Support\Collection
+    public function flatTree(): Collection
     {
         $all = $this->items()->with(['category', 'page'])->get();
         $byParent = $all->groupBy(fn (MenuItem $i) => (int) $i->parent_id);

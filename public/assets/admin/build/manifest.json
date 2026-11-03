@@ -1,6 +1,6 @@
 {
   "resources/admin/css/app.css": {
-    "file": "assets/app-CiRrS5w2.css",
+    "file": "assets/app-9Qi4JVFU.css",
     "name": "app",
     "names": [
       "app.css"
@@ -9,7 +9,7 @@
     "isEntry": true
   },
   "resources/admin/js/app.js": {
-    "file": "assets/app-DJZ2lXHt.js",
+    "file": "assets/app-8jV6QMfq.js",
     "name": "app",
     "src": "resources/admin/js/app.js",
     "isEntry": true,
@@ -18,12 +18,27 @@
     ]
   },
   "resources/admin/js/editor.js": {
-    "file": "assets/editor-pugUYChT.js",
+    "file": "assets/editor-BSp2A-uc.js",
     "name": "editor",
     "src": "resources/admin/js/editor.js",
     "isDynamicEntry": true,
     "imports": [
       "resources/admin/js/app.js"
     ]
+  },
+  "resources/site/css/app.css": {
+    "file": "assets/app-BJmW4nB5.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/site/css/app.css",
+    "isEntry": true
+  },
+  "resources/site/js/app.js": {
+    "file": "assets/app-D8dcP16f.js",
+    "name": "app",
+    "src": "resources/site/js/app.js",
+    "isEntry": true
   }
 }

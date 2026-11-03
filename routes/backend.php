@@ -13,6 +13,7 @@ use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\GroupController;
 use App\Http\Controllers\Backend\MenuController;
 use App\Http\Controllers\Backend\PageController;
+use App\Http\Controllers\Backend\ProductController;
 use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\SettingController;
 use App\Http\Controllers\Backend\UserController;
@@ -49,6 +50,14 @@ Route::prefix('backend')->group(function () {
             Route::get('settings', [AffiliateSettingController::class, 'edit'])->name('settings.edit')->can('affiliate_setting');
             Route::put('settings', [AffiliateSettingController::class, 'update'])->name('settings.update')->can('affiliate_setting/edit');
         });
+
+        // Sản phẩm (quyền: product, product/add|edit|delete — chung với danh mục sản phẩm). Xóa = xóa mềm.
+        Route::get('product', [ProductController::class, 'index'])->name('products.index')->can('product');
+        Route::get('product/create', [ProductController::class, 'create'])->name('products.create')->can('product/add');
+        Route::post('product', [ProductController::class, 'store'])->name('products.store')->can('product/add');
+        Route::get('product/{product}/edit', [ProductController::class, 'edit'])->name('products.edit')->can('product/edit');
+        Route::put('product/{product}', [ProductController::class, 'update'])->name('products.update')->can('product/edit');
+        Route::delete('product/{product}', [ProductController::class, 'destroy'])->name('products.destroy')->can('product/delete');
 
         // Trang nội dung website (quyền: page, page/add|edit|delete) — đường dẫn trên website /page/{slug}
         Route::get('page', [PageController::class, 'index'])->name('pages.index')->can('page');
