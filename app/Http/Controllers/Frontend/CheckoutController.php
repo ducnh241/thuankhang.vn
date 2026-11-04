@@ -16,7 +16,7 @@ use Illuminate\View\View;
 
 /**
  * Checkout (S5, Step 5): bắt buộc đăng nhập thành viên. Chọn giao tận nơi (khách trả phí ship — Tham số chung) hoặc nhận
- * tại VP tỉnh (ship = 0). Tạo đơn "Chờ thanh toán", mã AF + 8 ký tự, hạn thanh toán theo Tham số chung; giá lấy giá hiện
+ * tại VP tỉnh (ship = 0). Tạo đơn "Chờ thanh toán", mã = tiền tố (Tham số chung) + 8 ký tự, hạn thanh toán theo Tham số chung; giá lấy giá hiện
  * tại của sản phẩm và lưu snapshot vào order_items.
  */
 class CheckoutController extends Controller

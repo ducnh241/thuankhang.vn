@@ -64,7 +64,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   cấp VP, giới hạn điểm đang bật mỗi tỉnh theo `max_vp_per_province`. Checkout dùng `PickupPoint::available()`.
 - Step 5 (Giỏ hàng & checkout): xong — giỏ trong session (`App\Support\Cart`, /gio-hang, khách chưa đăng nhập vẫn thêm
   được), /thanh-toan bắt đăng nhập thành viên: giao tận nơi (phí ship = tham số `shipping_fee`) hoặc nhận tại VP tỉnh
-  (ship 0, chỉ `PickupPoint::available()`). Bảng `orders` + `order_items` (snapshot tên / giá / VAT), mã `AF` + 8 ký tự,
+  (ship 0, chỉ `PickupPoint::available()`). Bảng `orders` + `order_items` (snapshot tên / giá / VAT), mã = tiền tố `order_code_prefix` (mặc định `TK`) + 8 ký tự,
   trạng thái `pending_payment` → `paid` → `processing` → `completed` (+ `expired`, `cancelled`), hạn thanh toán theo
   `payment_expiry_hours` (đơn chờ quá hạn hiển thị "Hết hạn"; job chuyển hẳn làm ở Step 6). Thành viên: /don-hang (đơn của
   tôi, thông tin chuyển khoản từ tham số ngân hàng). Admin /backend/order (A8): lọc trạng thái / điểm / hình thức / thời

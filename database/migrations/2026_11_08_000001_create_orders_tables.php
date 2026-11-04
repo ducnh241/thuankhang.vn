@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 12)->unique()->comment('AF + 8 ký tự — nội dung chuyển khoản');
+            $table->string('code', 12)->unique()->comment('Tiền tố (tham số order_code_prefix) + 8 ký tự — nội dung chuyển khoản');
             $table->foreignId('member_id')->constrained('members')->restrictOnDelete()->comment('Người mua');
             $table->string('status', 20)->default('pending_payment')->index();
             $table->unsignedBigInteger('goods_amount')->comment('Tiền hàng đã gồm VAT');

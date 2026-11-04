@@ -346,7 +346,7 @@ class AffiliateConfigTest extends TestCase
 
         $valid = [
             'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10',
-            'default_vat_percent' => '8', 'shipping_fee' => '35.000', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
+            'default_vat_percent' => '8', 'shipping_fee' => '35.000', 'order_code_prefix' => ' thk ', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
             'bank_code' => ' vcb ', 'bank_account' => '0123456789', 'bank_account_name' => 'cong ty  thuan khang',
             'root_referral_code' => 'goc01', 'max_vp_per_province' => '',
         ];
@@ -359,6 +359,7 @@ class AffiliateConfigTest extends TestCase
             AffiliateSettings::get('root_referral_code'), AffiliateSettings::get('max_vp_per_province'),
         ]);
         $this->assertSame('5.50', Setting::get('aff_business_fee_percent'));
+        $this->assertSame('THK', AffiliateSettings::get('order_code_prefix'));
         // Không đổi thì không ghi lại (nhật ký chỉ có chỗ thay đổi)
         $logs = AuditLog::where('auditable_type', Setting::class)->count();
         $this->actingAs($root)->put('/backend/affiliate/settings', $valid)->assertSessionHasNoErrors();
@@ -367,6 +368,7 @@ class AffiliateConfigTest extends TestCase
         foreach ([
             'business_fee_percent' => '101', 'min_withdraw' => '500.000,5', 'payment_expiry_hours' => '0', 'ref_cookie_days' => 'abc',
             'bank_account' => '0123-456', 'root_referral_code' => 'mã gốc!', 'max_vp_per_province' => '0',
+            'order_code_prefix' => 'ABCDE',
         ] as $field => $value) {
             $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, $field => $value])->assertSessionHasErrors($field);
         }

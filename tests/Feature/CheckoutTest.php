@@ -94,7 +94,9 @@ class CheckoutTest extends TestCase
         $order = Order::sole();
         $response->assertRedirect(route('member.orders.show', $order))->assertSessionHas('success');
 
-        $this->assertMatchesRegularExpression('/^AF[2-9A-HJKMNP-Z]{8}$/', $order->code);
+        $this->assertMatchesRegularExpression('/^TK[2-9A-HJKMNP-Z]{8}$/', $order->code);
+        AffiliateSettings::save(['order_code_prefix' => 'THK']);
+        $this->assertMatchesRegularExpression('/^THK[2-9A-HJKMNP-Z]{8}$/', Order::generateCode());
         $this->assertSame([Order::STATUS_PENDING, $member->id, 2270000, 30000, 2300000], [$order->status, $order->member_id, $order->goods_amount, $order->shipping_fee, $order->total_amount]);
         $this->assertSame(160000 + 10000, $order->vat_amount); // 2.160.000 gồm 8% → 160.000; 110.000 gồm 10% → 10.000
         $this->assertSame(['0912345678', 'ha-noi', '12 Láng Hạ, Hà Nội', null], [$order->recipient_phone, $order->province, $order->shippingAddress(), $order->pickup_point_id]);

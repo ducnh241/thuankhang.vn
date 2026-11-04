@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AffiliateSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -160,11 +161,12 @@ class Order extends Model
         return trim($this->address.', '.(PickupPoint::provinces()[$this->province] ?? $this->province), ', ');
     }
 
-    /** Sinh mã đơn chưa dùng: AF + 8 ký tự. */
+    /** Sinh mã đơn chưa dùng: tiền tố (Tham số chung, mặc định TK) + 8 ký tự. */
     public static function generateCode(): string
     {
+        $prefix = (string) (AffiliateSettings::get('order_code_prefix') ?: 'TK');
         do {
-            $code = 'AF';
+            $code = $prefix;
             for ($i = 0; $i < 8; $i++) {
                 $code .= self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)];
             }
