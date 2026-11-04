@@ -56,15 +56,38 @@ if (lookup) {
   });
 }
 
+// Sao chép: Clipboard API (chỉ có trên HTTPS / localhost); không có thì chép qua ô ẩn + execCommand — không hiện hộp thoại
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // trình duyệt từ chối quyền: thử cách dự phòng
+    }
+  }
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+  document.body.append(area);
+  area.select();
+  area.setSelectionRange(0, text.length);
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch {
+    ok = false;
+  }
+  area.remove();
+  return ok;
+}
+
 document.addEventListener('click', async e => {
   const button = e.target.closest('[data-copy]');
   if (!button) return;
-  try {
-    await navigator.clipboard.writeText(button.dataset.copy);
-    const label = button.textContent;
-    button.textContent = 'Đã chép';
-    setTimeout(() => (button.textContent = label), 1500);
-  } catch {
-    window.prompt('Sao chép:', button.dataset.copy);
-  }
+  const label = button.dataset.label || (button.dataset.label = button.textContent);
+  button.textContent = (await copyText(button.dataset.copy)) ? 'Đã chép' : 'Không chép được';
+  clearTimeout(button.copyTimer);
+  button.copyTimer = setTimeout(() => (button.textContent = label), 1500);
 });
