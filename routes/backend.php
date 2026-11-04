@@ -61,9 +61,11 @@ Route::prefix('backend')->group(function () {
         Route::post('member/{member}/activate', [MemberController::class, 'activate'])->name('members.activate')->can('member/activate');
         Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');
 
-        // Đơn hàng (A8; quyền: order, order/status, order/cancel). URL theo mã đơn.
+        // Đơn hàng (A8; quyền: order, order/confirm_payment, order/status, order/cancel). URL theo mã đơn.
         Route::get('order', [OrderController::class, 'index'])->name('orders.index')->can('order');
         Route::get('order/{order}', [OrderController::class, 'show'])->name('orders.show')->can('order');
+        Route::post('order/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirm-payment')->can('order/confirm_payment');
+        Route::post('order/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.reject-payment')->can('order/confirm_payment');
         Route::post('order/{order}/status', [OrderController::class, 'status'])->name('orders.status')->can('order/status');
         Route::post('order/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->can('order/cancel');
 

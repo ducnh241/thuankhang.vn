@@ -2,8 +2,8 @@
 
 @section('title', 'Đơn hàng')
 
-{{-- Đơn hàng (A8), dựng như danh sách Thành viên: tab trạng thái (số theo bộ lọc; đơn chờ thanh toán quá hạn tính vào
-     "Hết hạn"), ô tìm (mã đơn / người nhận / thành viên / SĐT) + nút lọc điểm nhận hàng, hình thức, thời gian (list.js). --}}
+{{-- Đơn hàng (A8), dựng như danh sách Thành viên: tab trạng thái (số theo bộ lọc; đơn mới quá hạn tính vào "Đã hủy"),
+     ô tìm (mã đơn / mã giao dịch / người nhận / thành viên / SĐT) + nút lọc điểm nhận hàng, hình thức, thời gian (list.js). --}}
 @php
     use App\Models\Order;
     use App\Models\PickupPoint;
@@ -36,7 +36,7 @@
         @endforeach
         <span class="ant-input-affix-wrapper">
           <span class="ant-input-prefix">{{ ant_icon('search') }}</span>
-          <input type="text" name="q" value="{{ $filter['q'] }}" class="ant-input" id="order-search" placeholder="Tìm theo mã đơn, tên / SĐT người nhận hoặc thành viên" aria-label="Tìm đơn hàng" />
+          <input type="text" name="q" value="{{ $filter['q'] }}" class="ant-input" id="order-search" placeholder="Tìm theo mã đơn, mã giao dịch, tên / SĐT người nhận hoặc thành viên" aria-label="Tìm đơn hàng" />
           @if ($filter['q'] !== '')
             <span class="ant-input-suffix"><a href="{{ $url(['q' => null]) }}" class="ant-input-clear-icon" aria-label="Xóa từ khóa">{{ ant_icon('close-circle') }}</a></span>
           @endif
@@ -117,7 +117,7 @@
                       <div class="text-xs {{ $muted }}">{{ $order->isPickup() ? $order->pickupPoint?->name : ($provinces[$order->province] ?? $order->province) }}</div>
                     </td>
                     <td class="ant-table-cell tabular-nums font-medium" style="text-align: right">{{ Money::format($order->total_amount) }} đ</td>
-                    <td class="ant-table-cell"><span class="ant-tag ant-tag-{{ Order::STATUS_COLORS[$status] }} m-0">{{ Order::STATUSES[$status] }}</span></td>
+                    <td class="ant-table-cell"><span class="ant-tag ant-tag-{{ Order::STATUS_COLORS[$status] }} m-0">{{ $order->statusLabel() }}</span></td>
                     <td class="ant-table-cell tabular-nums whitespace-nowrap max-sm:hidden">{{ $order->created_at?->format('d/m/Y H:i') }}</td>
                   </tr>
                 @empty

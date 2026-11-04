@@ -16,7 +16,6 @@
     @else
       <div class="mt-6 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
         @foreach ($orders as $order)
-          @php $status = $order->displayStatus(); @endphp
           <a href="{{ route('member.orders.show', $order) }}" class="flex flex-wrap items-center gap-x-6 gap-y-2 p-4 hover:bg-slate-50" data-order="{{ $order->code }}">
             <div class="min-w-36">
               <div class="font-mono font-semibold text-slate-900">{{ $order->code }}</div>
@@ -24,7 +23,7 @@
             </div>
             <div class="text-sm text-slate-600">{{ Order::DELIVERIES[$order->delivery_type] }}</div>
             <div class="ml-auto font-semibold text-slate-900">{{ Money::format($order->total_amount) }}đ</div>
-            @include('frontend.orders.status', ['status' => $status])
+            @include('frontend.orders.status', ['order' => $order])
           </a>
         @endforeach
       </div>

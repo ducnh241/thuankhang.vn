@@ -98,7 +98,8 @@ return [
         'label' => 'Đơn hàng',
         'section' => 'Bán hàng',
         'items' => [
-            'status' => 'Cập nhật Đang xử lý / Hoàn tất',
+            'confirm_payment' => 'Xác nhận đã thanh toán / chưa nhận được tiền',
+            'status' => 'Cập nhật Đang giao / Hoàn tất',
             'cancel' => 'Huỷ đơn chưa thanh toán',
         ],
     ],

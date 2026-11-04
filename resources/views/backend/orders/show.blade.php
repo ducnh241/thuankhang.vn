@@ -1,7 +1,8 @@
 @extends('layouts.backend')
 
-{{-- Chi tiết đơn (A8): sản phẩm (snapshot lúc đặt) + tiền, nhận hàng, lịch sử; cột phụ: thành viên đặt, chuyển trạng thái
-     (order/status: Đã thanh toán → Đang xử lý → Hoàn tất), hủy đơn chưa thanh toán (order/cancel, bắt buộc lý do). --}}
+{{-- Chi tiết đơn (A8): sản phẩm (snapshot lúc đặt) + tiền, thanh toán, nhận hàng, lịch sử; cột phụ: thành viên đặt, xác nhận
+     đã thanh toán / chưa nhận được tiền (order/confirm_payment), chuyển Đang giao → Hoàn tất (order/status), hủy đơn chưa
+     thanh toán (order/cancel, bắt buộc lý do). Nhiều form trên trang: lỗi phân biệt bằng trường ẩn _form. --}}
 @php
     use App\Models\Order;
     use App\Support\Money;
@@ -10,10 +11,16 @@
     $muted = 'text-[rgba(0,0,0,0.45)]';
     $status = $order->displayStatus();
     $next = $order->nextStatus();
-    $hasError = fn (string $field) => $errors->has($field) ? ' ant-form-item-has-error ant-form-item-with-help' : '';
+    $me = auth()->user();
+    $form = old('_form');
+    $hasError = fn (string $name, string $field) => $form === $name && $errors->has($field) ? ' ant-form-item-has-error ant-form-item-with-help' : '';
+    $fieldError = fn (string $name, string $field) => $form === $name ? ant_form_error($errors->first($field)) : '';
+    $old = fn (string $name, string $field, $default = '') => $form === $name && is_string(old($field)) ? old($field) : $default;
     $timeline = array_filter([
-        'Đặt hàng' => $order->created_at, 'Hạn thanh toán' => $order->status === Order::STATUS_PENDING ? $order->expires_at : null,
-        'Thanh toán' => $order->paid_at, 'Bắt đầu xử lý' => $order->processing_at, 'Hoàn tất' => $order->completed_at, 'Hủy' => $order->cancelled_at,
+        'Đặt hàng' => $order->created_at, 'Hạn thanh toán' => $order->status === Order::STATUS_NEW ? $order->expires_at : null,
+        'Khách báo đã chuyển khoản' => $order->confirm_requested_at, 'Xác nhận thanh toán' => $order->paid_at,
+        $order->isPickup() ? 'Hàng về VP, chờ khách nhận' : 'Bắt đầu giao' => $order->processing_at, 'Hoàn tất' => $order->completed_at,
+        'Hủy' => $order->cancelled_at,
     ]);
 @endphp
 
@@ -25,7 +32,7 @@
     <a href="{{ route('backend.orders.index') }}" class="page-topbar-crumb" title="Về danh sách đơn hàng">Đơn hàng</a>
     <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
     <h1 class="page-topbar-title font-mono">{{ $order->code }}</h1>
-    <span class="ant-tag ant-tag-{{ Order::STATUS_COLORS[$status] }} m-0" id="order-status">{{ Order::STATUSES[$status] }}</span>
+    <span class="ant-tag ant-tag-{{ Order::STATUS_COLORS[$status] }} m-0" id="order-status">{{ $order->statusLabel() }}</span>
   </div>
   <div class="page-topbar-right"></div>
 @endsection
@@ -78,6 +85,28 @@
       </div>
     </div>
 
+    @if ($order->paid_at || $order->status === Order::STATUS_CANCELLED || $order->isOverdue())
+      <div class="ant-card ant-card-bordered" data-card="payment">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">{{ $order->paid_at ? 'Thanh toán' : 'Hủy đơn' }}</div></div></div>
+        <div class="ant-card-body">
+          <dl class="profile-facts m-0">
+            @if ($order->paid_at)
+              <dt>Mã giao dịch</dt><dd class="font-mono">{{ $order->payment_reference ?? '—' }}</dd>
+              <dt>Số tiền thực nhận</dt>
+              <dd class="tabular-nums">{{ $order->paid_amount !== null ? Money::format($order->paid_amount).' đ' : '—' }}
+                @if ($order->paid_amount > $order->total_amount)<span class="ant-tag ant-tag-gold m-0 ml-1">Thừa {{ Money::format($order->paid_amount - $order->total_amount) }} đ</span>@endif
+              </dd>
+              <dt>Xác nhận</dt><dd>{{ $order->paid_at->format('d/m/Y H:i') }} · {{ $order->confirmer?->name ?? 'Hệ thống' }}</dd>
+              @if ($order->payment_note)<dt>Ghi chú</dt><dd>{{ $order->payment_note }}</dd>@endif
+            @else
+              <dt>Nguồn hủy</dt><dd>{{ Order::CANCEL_SOURCES[$order->isOverdue() ? Order::CANCEL_EXPIRED : $order->cancel_source] ?? '—' }}</dd>
+              <dt>Lý do</dt><dd>{{ $order->cancelReasonText() ?: '—' }}</dd>
+            @endif
+          </dl>
+        </div>
+      </div>
+    @endif
+
     <div class="ant-card ant-card-bordered" data-card="delivery">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Nhận hàng — {{ Order::DELIVERIES[$order->delivery_type] ?? $order->delivery_type }}</div></div></div>
       <div class="ant-card-body">
@@ -103,9 +132,6 @@
             <dt>Địa chỉ giao</dt><dd>{{ $order->shippingAddress() }}</dd>
           @endif
           <dt>Ghi chú</dt><dd>{{ $order->note ?: '—' }}</dd>
-          @if ($order->cancel_reason)
-            <dt>Lý do hủy</dt><dd>{{ $order->cancel_reason }}</dd>
-          @endif
         </dl>
       </div>
     </div>
@@ -144,44 +170,114 @@
       </div>
     </div>
 
-    @if ($next)
-      @can('order/status')
-        <div class="ant-card ant-card-bordered" data-card="status">
-          <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Cập nhật trạng thái</div></div></div>
-          <div class="ant-card-body">
-            <form method="POST" action="{{ route('backend.orders.status', $order) }}" id="status-form">
-              @csrf
-              <input type="hidden" name="to" value="{{ $next }}" />
-              <p class="mt-0 mb-3 {{ $muted }}">{{ $next === Order::STATUS_PROCESSING ? 'Đã nhận tiền. Chuyển sang “Đang xử lý” khi bắt đầu soạn / giao hàng.' : 'Chuyển sang “Hoàn tất” khi khách đã nhận hàng.' }}</p>
-              <button type="submit" class="ant-btn ant-btn-primary">{{ ant_icon('check-circle') }}<span>Chuyển sang “{{ Order::STATUSES[$next] }}”</span></button>
-            </form>
-          </div>
-        </div>
-      @endcan
-    @endif
+    {{-- Xác nhận thanh toán (Kế toán): đối chiếu sao kê rồi nhập mã giao dịch + số tiền thực nhận --}}
+    @if ($order->canConfirmPayment() && $me->can('order/confirm_payment'))
+      <div class="ant-card ant-card-bordered" data-card="confirm-payment">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Xác nhận thanh toán</div></div></div>
+        <div class="ant-card-body">
+          <form method="POST" action="{{ route('backend.orders.confirm-payment', $order) }}" class="ant-form ant-form-vertical" novalidate id="confirm-payment-form">
+            @csrf
+            <input type="hidden" name="_form" value="confirm" />
+            @if ($status === Order::STATUS_CANCELLED)
+              <div class="ant-alert ant-alert-warning mb-3"><div class="ant-alert-content"><div class="ant-alert-message">Đơn đã hủy. Chỉ xác nhận khi tiền về muộn — đơn sẽ được khôi phục thành “Đã thanh toán”.</div></div></div>
+            @elseif ($status === Order::STATUS_AWAITING)
+              <p class="mt-0 mb-3 {{ $muted }}">Khách báo đã chuyển lúc {{ $order->confirm_requested_at?->format('H:i d/m/Y') }}. Đối chiếu sao kê: số tiền {{ Money::format($order->total_amount) }} đ, nội dung <span class="font-mono">{{ $order->code }}</span>.</p>
+            @else
+              <p class="mt-0 mb-3 {{ $muted }}">Đối chiếu sao kê: số tiền {{ Money::format($order->total_amount) }} đ, nội dung <span class="font-mono">{{ $order->code }}</span>.</p>
+            @endif
+            <div class="ant-row ant-form-item{{ $hasError('confirm', 'payment_reference') }}">
+              <div class="ant-col ant-form-item-label"><label for="payment_reference" class="ant-form-item-required" title="Mã giao dịch">Mã giao dịch ngân hàng</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <input type="text" id="payment_reference" name="payment_reference" value="{{ $old('confirm', 'payment_reference') }}" maxlength="100" class="ant-input [&:not(:placeholder-shown)]:uppercase" placeholder="VD: FT24315ABC123" />
+                </div></div>
+                {{ $fieldError('confirm', 'payment_reference') }}
+              </div>
+            </div>
+            <div class="ant-row ant-form-item{{ $hasError('confirm', 'paid_amount') }}">
+              <div class="ant-col ant-form-item-label"><label for="paid_amount" class="ant-form-item-required" title="Số tiền thực nhận">Số tiền thực nhận (đ)</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <input type="text" id="paid_amount" name="paid_amount" inputmode="numeric" value="{{ $old('confirm', 'paid_amount', Money::format($order->total_amount)) }}" class="ant-input tabular-nums" />
+                </div></div>
+                {{ $fieldError('confirm', 'paid_amount') }}
+              </div>
+            </div>
+            <div class="ant-row ant-form-item{{ $hasError('confirm', 'payment_note') }}">
+              <div class="ant-col ant-form-item-label"><label for="payment_note" @class(['ant-form-item-required' => $status === Order::STATUS_CANCELLED]) title="Ghi chú">Ghi chú</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <textarea id="payment_note" name="payment_note" rows="2" maxlength="300" class="ant-input">{{ $old('confirm', 'payment_note') }}</textarea>
+                </div></div>
+                {{ $fieldError('confirm', 'payment_note') }}
+              </div>
+            </div>
+            <button type="submit" class="ant-btn ant-btn-primary">{{ ant_icon('check-circle') }}<span>Xác nhận đã thanh toán</span></button>
+            <div class="mt-2 text-xs {{ $muted }}">Không hoàn tác được. Mỗi mã giao dịch chỉ dùng cho một đơn.</div>
+          </form>
 
-    @if ($order->isCancellable())
-      @can('order/cancel')
-        <div class="ant-card ant-card-bordered" data-card="cancel">
-          <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Hủy đơn</div></div></div>
-          <div class="ant-card-body">
-            <form method="POST" action="{{ route('backend.orders.cancel', $order) }}" class="ant-form ant-form-vertical" novalidate id="cancel-form">
+          @if ($status === Order::STATUS_AWAITING)
+            <form method="POST" action="{{ route('backend.orders.reject-payment', $order) }}" class="ant-form ant-form-vertical mt-4 border-t border-[#f0f0f0] pt-4" novalidate id="reject-payment-form">
               @csrf
-              <p class="mt-0 mb-3 {{ $muted }}">Chỉ hủy được đơn chưa thanh toán. Lý do hiện cho thành viên ở trang đơn hàng. Không hoàn tác được.</p>
-              <div class="ant-row ant-form-item{{ $hasError('reason') }}">
-                <div class="ant-col ant-form-item-label"><label for="cancel_reason" class="ant-form-item-required" title="Lý do">Lý do</label></div>
+              <input type="hidden" name="_form" value="reject" />
+              <p class="mt-0 mb-3 {{ $muted }}">Chưa thấy tiền về: trả đơn về “Đơn mới”, hạn thanh toán tính lại từ bây giờ.</p>
+              <div class="ant-row ant-form-item{{ $hasError('reject', 'reason') }}">
+                <div class="ant-col ant-form-item-label"><label for="reject_reason" class="ant-form-item-required" title="Lý do">Lý do</label></div>
                 <div class="ant-col ant-form-item-control">
                   <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                    <textarea id="cancel_reason" name="reason" rows="2" maxlength="300" class="ant-input" placeholder="VD: Khách yêu cầu hủy qua hotline">{{ is_string(old('reason')) ? old('reason') : '' }}</textarea>
+                    <textarea id="reject_reason" name="reason" rows="2" maxlength="300" class="ant-input" placeholder="VD: Sao kê đến 15:00 chưa có giao dịch">{{ $old('reject', 'reason') }}</textarea>
                   </div></div>
-                  {{ ant_form_error($errors->first('reason')) }}
+                  {{ $fieldError('reject', 'reason') }}
                 </div>
               </div>
-              <button type="submit" class="ant-btn ant-btn-dangerous">{{ ant_icon('close-circle') }}<span>Hủy đơn</span></button>
+              <button type="submit" class="ant-btn">{{ ant_icon('reload') }}<span>Chưa nhận được tiền</span></button>
             </form>
-          </div>
+          @endif
         </div>
-      @endcan
+      </div>
+    @endif
+
+    @if ($next && $me->can('order/status'))
+      <div class="ant-card ant-card-bordered" data-card="status">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Cập nhật trạng thái</div></div></div>
+        <div class="ant-card-body">
+          <form method="POST" action="{{ route('backend.orders.status', $order) }}" id="status-form">
+            @csrf
+            <input type="hidden" name="to" value="{{ $next }}" />
+            <p class="mt-0 mb-3 {{ $muted }}">
+              @if ($next === Order::STATUS_PROCESSING)
+                {{ $order->isPickup() ? 'Hàng đã chuyển tới VP: chuyển sang “Chờ nhận tại VP”.' : 'Bắt đầu soạn / giao hàng: chuyển sang “Đang giao”.' }}
+              @else
+                Khách đã nhận hàng: chuyển sang “Hoàn tất”.
+              @endif
+            </p>
+            <button type="submit" class="ant-btn ant-btn-primary">{{ ant_icon('check-circle') }}<span>Chuyển sang “{{ Order::labelFor($next, $order->delivery_type) }}”</span></button>
+          </form>
+        </div>
+      </div>
+    @endif
+
+    @if ($order->isCancellable() && $me->can('order/cancel'))
+      <div class="ant-card ant-card-bordered" data-card="cancel">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Hủy đơn</div></div></div>
+        <div class="ant-card-body">
+          <form method="POST" action="{{ route('backend.orders.cancel', $order) }}" class="ant-form ant-form-vertical" novalidate id="cancel-form">
+            @csrf
+            <input type="hidden" name="_form" value="cancel" />
+            <p class="mt-0 mb-3 {{ $muted }}">Chỉ hủy được đơn chưa thanh toán. Lý do hiện cho thành viên ở trang đơn hàng.</p>
+            <div class="ant-row ant-form-item{{ $hasError('cancel', 'reason') }}">
+              <div class="ant-col ant-form-item-label"><label for="cancel_reason" class="ant-form-item-required" title="Lý do">Lý do</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <textarea id="cancel_reason" name="reason" rows="2" maxlength="300" class="ant-input" placeholder="VD: Khách yêu cầu hủy qua hotline">{{ $old('cancel', 'reason') }}</textarea>
+                </div></div>
+                {{ $fieldError('cancel', 'reason') }}
+              </div>
+            </div>
+            <button type="submit" class="ant-btn ant-btn-dangerous">{{ ant_icon('close-circle') }}<span>Hủy đơn</span></button>
+          </form>
+        </div>
+      </div>
     @endif
   </div>
 </div>

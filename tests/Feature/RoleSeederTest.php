@@ -43,6 +43,7 @@ class RoleSeederTest extends TestCase
         $this->assertTrue($accountant->can('commission/export'));
         $this->assertTrue($accountant->can('order'));
         $this->assertFalse($accountant->can('order/cancel'));
+        $this->assertTrue($accountant->can('order/confirm_payment'));
         $this->assertFalse($accountant->can('kyc/view_document'));
 
         $cs = $this->member('CSKH');

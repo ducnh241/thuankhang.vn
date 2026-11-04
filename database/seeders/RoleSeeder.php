@@ -25,10 +25,10 @@ class RoleSeeder extends Seeder
             'kyc', 'kyc/view_document', 'kyc/review',
         ],
 
-        // A9 Giao dịch ngân hàng (chỉ Kế toán được gán tay — mục 9.2), A12 Sổ hoa hồng, A13 Rút tiền; xem đơn để đối soát
+        // A9 Giao dịch ngân hàng (chỉ Kế toán được gán tay — mục 9.2), A12 Sổ hoa hồng, A13 Rút tiền; xem đơn + xác nhận thanh toán
         'Kế toán' => [
             'backend_access',
-            'order',
+            'order', 'order/confirm_payment',
             'bank_transaction', 'bank_transaction/match',
             'commission', 'commission/export',
             'withdrawal', 'withdrawal/approve', 'withdrawal/paid', 'withdrawal/export',

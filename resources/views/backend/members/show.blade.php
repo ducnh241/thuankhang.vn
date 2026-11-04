@@ -69,7 +69,7 @@
                     <td class="ant-table-cell"><a href="{{ route('backend.orders.show', $order) }}" class="font-mono">{{ $order->code }}</a></td>
                     <td class="ant-table-cell tabular-nums {{ $muted }}">{{ $order->created_at?->format('d/m/Y H:i') }}</td>
                     <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Money::format($order->total_amount) }} đ</td>
-                    <td class="ant-table-cell"><span class="ant-tag ant-tag-{{ \App\Models\Order::STATUS_COLORS[$orderStatus] }} m-0">{{ \App\Models\Order::STATUSES[$orderStatus] }}</span></td>
+                    <td class="ant-table-cell"><span class="ant-tag ant-tag-{{ \App\Models\Order::STATUS_COLORS[$orderStatus] }} m-0">{{ $order->statusLabel() }}</span></td>
                   </tr>
                 @empty
                   <tr class="ant-table-placeholder"><td colspan="4" class="ant-table-cell"><div class="ant-empty ant-empty-small"><p class="ant-empty-description">Chưa có đơn hàng.</p></div></td></tr>

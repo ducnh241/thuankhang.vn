@@ -10,14 +10,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Đơn hàng (Step 5). Tạo ở checkout với trạng thái "Chờ thanh toán" và hạn thanh toán; webhook ngân hàng (Step 6) chuyển
- * "Đã thanh toán" và kích hoạt engine lên cấp / hoa hồng (Step 7–8). Vận hành chuyển "Đang xử lý" → "Hoàn tất".
+ * Đơn hàng. Luồng trạng thái (xem claude/CLAUDE.md — "Trạng thái đơn hàng"):
+ *   new (hiện QR) → awaiting_confirmation (khách bấm "Tôi đã chuyển khoản") → paid (Kế toán xác nhận / webhook Step 6)
+ *   → processing (đang giao / chờ nhận tại VP) → completed;  new | awaiting_confirmation → cancelled (khách / admin / quá hạn).
+ * "Đã thanh toán" là mốc kích hoạt, lên cấp, hoa hồng (Step 7–8) và không quay lại được (Phase 1 không hoàn tiền).
  */
 class Order extends Model
 {
     use HasFactory;
 
-    public const STATUS_PENDING = 'pending_payment';
+    public const STATUS_NEW = 'new';
+
+    public const STATUS_AWAITING = 'awaiting_confirmation';
 
     public const STATUS_PAID = 'paid';
 
@@ -25,24 +29,30 @@ class Order extends Model
 
     public const STATUS_COMPLETED = 'completed';
 
-    public const STATUS_EXPIRED = 'expired';
-
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUSES = [
-        self::STATUS_PENDING => 'Chờ thanh toán',
+        self::STATUS_NEW => 'Đơn mới',
+        self::STATUS_AWAITING => 'Chờ xác nhận thanh toán',
         self::STATUS_PAID => 'Đã thanh toán',
-        self::STATUS_PROCESSING => 'Đang xử lý',
+        self::STATUS_PROCESSING => 'Đang giao',
         self::STATUS_COMPLETED => 'Hoàn tất',
-        self::STATUS_EXPIRED => 'Hết hạn',
         self::STATUS_CANCELLED => 'Đã hủy',
     ];
 
     /** Màu Tag (Ant Design) theo trạng thái. */
     public const STATUS_COLORS = [
-        self::STATUS_PENDING => 'orange', self::STATUS_PAID => 'blue', self::STATUS_PROCESSING => 'geekblue',
-        self::STATUS_COMPLETED => 'green', self::STATUS_EXPIRED => 'default', self::STATUS_CANCELLED => 'red',
+        self::STATUS_NEW => 'orange', self::STATUS_AWAITING => 'gold', self::STATUS_PAID => 'blue',
+        self::STATUS_PROCESSING => 'geekblue', self::STATUS_COMPLETED => 'green', self::STATUS_CANCELLED => 'red',
     ];
+
+    public const CANCEL_CUSTOMER = 'customer';
+
+    public const CANCEL_ADMIN = 'admin';
+
+    public const CANCEL_EXPIRED = 'expired';
+
+    public const CANCEL_SOURCES = [self::CANCEL_CUSTOMER => 'Khách tự hủy', self::CANCEL_ADMIN => 'Quản trị hủy', self::CANCEL_EXPIRED => 'Quá hạn thanh toán'];
 
     public const DELIVERY_SHIP = 'ship';
 
@@ -59,7 +69,7 @@ class Order extends Model
     ];
 
     protected $attributes = [
-        'status' => self::STATUS_PENDING,
+        'status' => self::STATUS_NEW,
         'shipping_fee' => 0,
     ];
 
@@ -75,6 +85,8 @@ class Order extends Model
             'processing_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'confirm_requested_at' => 'datetime',
+            'paid_amount' => 'integer',
         ];
     }
 
@@ -88,6 +100,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function confirmer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
     public function pickupPoint(): BelongsTo
     {
         return $this->belongsTo(PickupPoint::class)->withTrashed();
@@ -98,24 +115,49 @@ class Order extends Model
         return 'code';
     }
 
-    /**
-     * Chuyển trạng thái tay ở admin (order/status): Đã thanh toán → Đang xử lý → Hoàn tất. "Đã thanh toán" chỉ do thanh toán
-     * (webhook / gán tay giao dịch — Step 6) đặt, không chọn tay ở đây.
-     */
+    /** Chuyển tay ở admin (order/status) sau khi đã thanh toán: Đã thanh toán → Đang giao → Hoàn tất. */
     public const TRANSITIONS = [
         self::STATUS_PAID => self::STATUS_PROCESSING,
         self::STATUS_PROCESSING => self::STATUS_COMPLETED,
     ];
 
-    /** Lọc theo trạng thái hiển thị (đơn chờ thanh toán quá hạn tính là "Hết hạn"). */
+    /** Lọc theo trạng thái hiển thị (đơn mới quá hạn mà lệnh tự hủy chưa chạy tới vẫn tính là "Đã hủy"). */
     public function scopeWhereDisplayStatus(Builder $query, string $status): void
     {
         match ($status) {
-            self::STATUS_PENDING => $query->where('status', self::STATUS_PENDING)->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now())),
-            self::STATUS_EXPIRED => $query->where(fn ($q) => $q->where('status', self::STATUS_EXPIRED)
-                ->orWhere(fn ($q) => $q->where('status', self::STATUS_PENDING)->where('expires_at', '<=', now()))),
+            self::STATUS_NEW => $query->where('status', self::STATUS_NEW)->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now())),
+            self::STATUS_CANCELLED => $query->where(fn ($q) => $q->where('status', self::STATUS_CANCELLED)
+                ->orWhere(fn ($q) => $q->where('status', self::STATUS_NEW)->where('expires_at', '<=', now()))),
             default => $query->where('status', $status),
         };
+    }
+
+    /** Đơn mới đã quá hạn thanh toán (orders:expire sẽ chuyển hẳn sang "Đã hủy"). Đơn chờ xác nhận không bị quá hạn. */
+    public function isOverdue(): bool
+    {
+        return $this->status === self::STATUS_NEW && $this->expires_at?->isPast();
+    }
+
+    public function displayStatus(): string
+    {
+        return $this->isOverdue() ? self::STATUS_CANCELLED : $this->status;
+    }
+
+    public function statusLabel(): string
+    {
+        return self::labelFor($this->displayStatus(), $this->delivery_type);
+    }
+
+    /** Nhãn trạng thái; "Đang giao" đổi thành "Chờ nhận tại VP" với đơn nhận tại VP tỉnh. */
+    public static function labelFor(string $status, ?string $delivery = null): string
+    {
+        return $status === self::STATUS_PROCESSING && $delivery === self::DELIVERY_PICKUP ? 'Chờ nhận tại VP' : (self::STATUSES[$status] ?? $status);
+    }
+
+    /** Lý do hủy để hiển thị (gồm đơn quá hạn chưa được lệnh tự hủy xử lý). */
+    public function cancelReasonText(): ?string
+    {
+        return $this->isOverdue() ? self::CANCEL_SOURCES[self::CANCEL_EXPIRED] : $this->cancel_reason;
     }
 
     public function nextStatus(): ?string
@@ -123,27 +165,22 @@ class Order extends Model
         return self::TRANSITIONS[$this->status] ?? null;
     }
 
-    /** Hủy được khi chưa thanh toán (kể cả đã quá hạn mà job chưa chuyển). */
+    /** Khách: bấm "Tôi đã chuyển khoản" / tự hủy — chỉ khi đơn mới còn hạn. */
+    public function isAwaitingPayment(): bool
+    {
+        return $this->status === self::STATUS_NEW && ! $this->isOverdue();
+    }
+
+    /** Admin hủy: đơn chưa thanh toán (mới / chờ xác nhận). */
     public function isCancellable(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return in_array($this->status, [self::STATUS_NEW, self::STATUS_AWAITING], true);
     }
 
-    /** Chờ thanh toán nhưng đã quá hạn (job Step 6 sẽ chuyển hẳn sang "Hết hạn"). */
-    public function isOverdue(): bool
+    /** Xác nhận đã thanh toán: đơn chưa thanh toán, hoặc đã hủy mà tiền về muộn (khôi phục — bắt buộc ghi chú). */
+    public function canConfirmPayment(): bool
     {
-        return $this->status === self::STATUS_PENDING && $this->expires_at?->isPast();
-    }
-
-    /** Trạng thái để hiển thị: đơn chờ thanh toán đã quá hạn coi như "Hết hạn". */
-    public function displayStatus(): string
-    {
-        return $this->isOverdue() ? self::STATUS_EXPIRED : $this->status;
-    }
-
-    public function statusLabel(): string
-    {
-        return self::STATUSES[$this->displayStatus()] ?? $this->status;
+        return in_array($this->status, [self::STATUS_NEW, self::STATUS_AWAITING, self::STATUS_CANCELLED], true);
     }
 
     public function isPickup(): bool

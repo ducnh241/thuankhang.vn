@@ -97,7 +97,7 @@ class CheckoutTest extends TestCase
         $this->assertMatchesRegularExpression('/^TK[2-9A-HJKMNP-Z]{8}$/', $order->code);
         AffiliateSettings::save(['order_code_prefix' => 'THK']);
         $this->assertMatchesRegularExpression('/^THK[2-9A-HJKMNP-Z]{8}$/', Order::generateCode());
-        $this->assertSame([Order::STATUS_PENDING, $member->id, 2270000, 30000, 2300000], [$order->status, $order->member_id, $order->goods_amount, $order->shipping_fee, $order->total_amount]);
+        $this->assertSame([Order::STATUS_NEW, $member->id, 2270000, 30000, 2300000], [$order->status, $order->member_id, $order->goods_amount, $order->shipping_fee, $order->total_amount]);
         $this->assertSame(160000 + 10000, $order->vat_amount); // 2.160.000 gồm 8% → 160.000; 110.000 gồm 10% → 10.000
         $this->assertSame(['0912345678', 'ha-noi', '12 Láng Hạ, Hà Nội', null], [$order->recipient_phone, $order->province, $order->shippingAddress(), $order->pickup_point_id]);
         $this->assertTrue($order->expires_at->between(now()->addHours(24)->subMinute(), now()->addHours(24)->addMinute()));
@@ -108,8 +108,8 @@ class CheckoutTest extends TestCase
 
         // Snapshot: đổi giá / tên sau khi đặt không ảnh hưởng đơn
         $a->update(['name' => 'Sâm mới', 'price' => 999000]);
-        $this->get(route('member.orders.show', $order))->assertOk()->assertSee($order->code)->assertSee('Chờ thanh toán')
-            ->assertSee('Sâm')->assertDontSee('Sâm mới')->assertSee('2.300.000đ')->assertSee('12 Láng Hạ, Hà Nội');
+        $this->get(route('member.orders.show', $order))->assertOk()->assertSee($order->code)
+            ->assertSee('Đơn mới')->assertSee('Sâm')->assertDontSee('Sâm mới')->assertSee('2.300.000đ')->assertSee('12 Láng Hạ, Hà Nội');
         $this->get('/don-hang')->assertOk()->assertSee($order->code)->assertSee('2.300.000đ');
     }
 
@@ -163,9 +163,55 @@ class CheckoutTest extends TestCase
         $other = Order::factory()->create();
 
         $this->actingAs($member, 'member')->get(route('member.orders.show', $mine))->assertOk()
-            ->assertSee('Chuyển khoản để hoàn tất')->assertSee('0123456789')->assertSee('CONG TY THUAN KHANG')->assertSee('1.230.000đ');
-        $this->get(route('member.orders.show', $overdue))->assertOk()->assertSee('Hết hạn')->assertDontSee('Chuyển khoản để hoàn tất');
+            ->assertSee('Chuyển khoản để hoàn tất')->assertSee('0123456789')->assertSee('CONG TY THUAN KHANG')->assertSee('1.230.000đ')
+            ->assertSee('https://img.vietqr.io/image/MB-0123456789-compact2.png?amount=1230000&amp;addInfo='.$mine->code, false)
+            ->assertSee('Tôi đã chuyển khoản');
+        $this->get(route('member.orders.show', $overdue))->assertOk()->assertSee('Đã hủy')->assertSee('Quá hạn thanh toán')
+            ->assertDontSee('Chuyển khoản để hoàn tất')->assertDontSee('data-qr', false);
         $this->get(route('member.orders.show', $other))->assertNotFound();
+        $this->post(route('member.orders.transferred', $other))->assertNotFound();
+        $this->post(route('member.orders.cancel', $other))->assertNotFound();
         $this->get('/don-hang')->assertSee($mine->code)->assertSee($overdue->code)->assertDontSee($other->code);
+    }
+
+    public function test_member_reports_transfer_and_cancels(): void
+    {
+        $member = Member::factory()->create();
+        $order = Order::factory()->create(['member_id' => $member->id]);
+        $toCancel = Order::factory()->create(['member_id' => $member->id]);
+        $overdue = Order::factory()->create(['member_id' => $member->id, 'expires_at' => now()->subMinute()]);
+
+        // Báo đã chuyển khoản → Chờ xác nhận, không còn bị quá hạn, không tự hủy được nữa
+        $this->actingAs($member, 'member')->post(route('member.orders.transferred', $order))->assertSessionHas('success');
+        $order->refresh();
+        $this->assertSame(Order::STATUS_AWAITING, $order->status);
+        $this->assertNotNull($order->confirm_requested_at);
+        $this->travel(2)->days();
+        $this->assertFalse($order->refresh()->isOverdue());
+        $this->get(route('member.orders.show', $order))->assertSee('Đang chờ xác nhận thanh toán')->assertDontSee('Tôi đã chuyển khoản');
+        $this->post(route('member.orders.cancel', $order))->assertSessionHas('error');
+        $this->assertSame(Order::STATUS_AWAITING, $order->refresh()->status);
+        $this->travelBack();
+
+        $this->post(route('member.orders.cancel', $toCancel), ['reason' => 'Đặt nhầm'])->assertSessionHas('success');
+        $toCancel->refresh();
+        $this->assertSame([Order::STATUS_CANCELLED, Order::CANCEL_CUSTOMER, 'Khách tự hủy: Đặt nhầm'], [$toCancel->status, $toCancel->cancel_source, $toCancel->cancel_reason]);
+
+        // Đơn quá hạn: không báo chuyển khoản / hủy được nữa
+        $this->post(route('member.orders.transferred', $overdue))->assertSessionHas('error');
+        $this->assertSame(Order::STATUS_NEW, $overdue->refresh()->status);
+    }
+
+    public function test_expire_command_cancels_overdue_new_orders_only(): void
+    {
+        $overdue = Order::factory()->create(['expires_at' => now()->subMinute()]);
+        $fresh = Order::factory()->create();
+        $awaiting = Order::factory()->create(['status' => Order::STATUS_AWAITING, 'expires_at' => now()->subDay()]);
+
+        $this->artisan('orders:expire')->expectsOutput('Đã hủy 1 đơn quá hạn.')->assertSuccessful();
+        $overdue->refresh();
+        $this->assertSame([Order::STATUS_CANCELLED, Order::CANCEL_EXPIRED, 'Quá hạn thanh toán'], [$overdue->status, $overdue->cancel_source, $overdue->cancel_reason]);
+        $this->assertSame(Order::STATUS_NEW, $fresh->refresh()->status);
+        $this->assertSame(Order::STATUS_AWAITING, $awaiting->refresh()->status);
     }
 }

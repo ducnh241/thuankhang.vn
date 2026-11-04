@@ -64,8 +64,36 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   cấp VP, giới hạn điểm đang bật mỗi tỉnh theo `max_vp_per_province`. Checkout dùng `PickupPoint::available()`.
 - Step 5 (Giỏ hàng & checkout): xong — giỏ trong session (`App\Support\Cart`, /gio-hang, khách chưa đăng nhập vẫn thêm
   được), /thanh-toan bắt đăng nhập thành viên: giao tận nơi (phí ship = tham số `shipping_fee`) hoặc nhận tại VP tỉnh
-  (ship 0, chỉ `PickupPoint::available()`). Bảng `orders` + `order_items` (snapshot tên / giá / VAT), mã = tiền tố `order_code_prefix` (mặc định `TK`) + 8 ký tự,
-  trạng thái `pending_payment` → `paid` → `processing` → `completed` (+ `expired`, `cancelled`), hạn thanh toán theo
-  `payment_expiry_hours` (đơn chờ quá hạn hiển thị "Hết hạn"; job chuyển hẳn làm ở Step 6). Thành viên: /don-hang (đơn của
-  tôi, thông tin chuyển khoản từ tham số ngân hàng). Admin /backend/order (A8): lọc trạng thái / điểm / hình thức / thời
-  gian, chuyển Đang xử lý → Hoàn tất (order/status), hủy đơn chưa thanh toán có lý do (order/cancel), ghi nhật ký tay.
+  (ship 0, chỉ `PickupPoint::available()`). Bảng `orders` + `order_items` (snapshot tên / giá / VAT), mã = tiền tố
+  `order_code_prefix` (mặc định `TK`) + 8 ký tự. Thành viên: /don-hang (đơn của tôi, QR VietQR — `App\Support\VietQr`).
+  Admin /backend/order (A8): lọc trạng thái / điểm / hình thức / thời gian / mã giao dịch. Luồng trạng thái: mục dưới.
+
+## Trạng thái đơn hàng (đã chốt 04/11/2026)
+`App\Models\Order`, cột `status`. Mọi lần đổi trạng thái chạy trong transaction có `lockForUpdate` và ghi `AuditLog` tay
+(Order thuộc `AuditLog::MANUAL_SUBJECTS`).
+
+| Trạng thái (`status`) | Nhãn | Vào khi | Ai |
+|---|---|---|---|
+| `new` | Đơn mới | Khách đặt hàng. Trang đơn hiện QR + thông tin chuyển khoản, đếm hạn `payment_expiry_hours` | Hệ thống |
+| `awaiting_confirmation` | Chờ xác nhận thanh toán | Khách bấm "Tôi đã chuyển khoản" (`confirm_requested_at`). **Dừng đếm hạn** | Thành viên |
+| `paid` | Đã thanh toán | Kế toán đối chiếu sao kê → xác nhận (webhook Step 6 sẽ tự chuyển đơn khớp) | `order/confirm_payment` |
+| `processing` | Đang giao / Chờ nhận tại VP (theo hình thức nhận) | Bắt đầu giao / hàng về VP | `order/status` |
+| `completed` | Hoàn tất | Khách đã nhận hàng | `order/status` |
+| `cancelled` | Đã hủy | Khách tự hủy, admin hủy, hoặc quá hạn (`cancel_source` = customer / admin / expired, `cancel_reason`) | Thành viên / `order/cancel` / lệnh |
+
+Chuyển trạng thái hợp lệ:
+- `new` → `awaiting_confirmation` (thành viên, khi còn hạn) · `new` → `cancelled` (thành viên tự hủy, khi còn hạn).
+- `new` | `awaiting_confirmation` → `paid` (xác nhận thanh toán) · → `cancelled` (admin hủy, bắt buộc lý do).
+- `awaiting_confirmation` → `new` ("Chưa nhận được tiền", bắt buộc lý do; hạn thanh toán tính lại từ lúc đó).
+- `cancelled` → `paid`: tiền về muộn, Kế toán xác nhận kèm **ghi chú bắt buộc** (khôi phục đơn).
+- `paid` → `processing` → `completed` (`Order::TRANSITIONS`). Đơn đã thanh toán **không hủy / không lùi** (Phase 1 không hoàn tiền).
+- Đơn `new` quá hạn: lệnh `orders:expire` (chạy mỗi phút qua scheduler — server cần cron `schedule:run`) chuyển
+  `cancelled` / nguồn `expired`. Trong lúc chờ lệnh, `displayStatus()` đã coi là "Đã hủy". Đơn chờ xác nhận không bao giờ tự hủy.
+
+Xác nhận thanh toán (admin, quyền `order/confirm_payment` — mặc định chỉ nhóm Kế toán):
+- Bắt buộc **mã giao dịch ngân hàng** (`payment_reference`, in hoa, unique toàn bảng — chống dùng một khoản tiền cho hai đơn)
+  và **số tiền thực nhận** (`paid_amount`, không được thấp hơn tổng đơn; chuyển thiếu → giữ chờ khách chuyển bù). Lưu
+  `paid_at`, `confirmed_by`, `payment_note`. Chuyển thừa: ghi nhận, hiện tag "Thừa … đ" ở chi tiết đơn.
+- Việc kèm theo khi sang `paid` (Step 7–8, TODO trong `OrderController::confirmPayment`): kích hoạt tài khoản, cộng doanh số /
+  lên cấp, ghi hoa hồng F1 / F2 — cùng transaction.
+- Nhóm quyền đã tạo trên DB trước thay đổi này phải tick thêm quyền `order/confirm_payment` (RoleSeeder không ghi đè).
