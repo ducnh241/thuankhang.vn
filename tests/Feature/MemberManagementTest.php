@@ -135,6 +135,46 @@ class MemberManagementTest extends TestCase
         $this->assertSame([$member->id, $child->id], [$child->fresh()->referrer_id, $grandchild->fresh()->referrer_id]);
     }
 
+    public function test_manual_activation(): void
+    {
+        $ops = $this->staff('Vận hành');
+        $member = Member::factory()->create();
+        $url = route('backend.members.activate', $member);
+        $show = route('backend.members.show', $member);
+
+        $this->actingAs($ops)->get($show)->assertSee('id="activate-form"', false)->assertSee('lên cấp Nhân viên');
+        $this->actingAs($ops)->from($show)->post($url, ['_form' => 'activate', 'reason' => ''])->assertSessionHasErrors(['reason' => 'Nhập lý do kích hoạt.']);
+        // Lỗi chỉ hiện ở form kích hoạt, không lẫn sang form đổi người giới thiệu
+        $html = $this->actingAs($ops)->from($show)->followingRedirects()->post($url, ['_form' => 'activate', 'reason' => 'abc'])->getContent();
+        $this->assertSame(1, substr_count($html, 'Lý do quá ngắn'));
+        $this->assertNull($member->fresh()->activated_at);
+
+        $this->actingAs($ops)->from($show)->post($url, ['_form' => 'activate', 'reason' => 'Khách đã mua tại văn phòng'])
+            ->assertRedirect($show)->assertSessionHas('success', "Đã kích hoạt tài khoản {$member->full_name} (cấp Nhân viên).");
+        $member->refresh();
+        $this->assertTrue($member->isActivated());
+        $this->assertSame(['Nhân viên', 0], [$member->level->name, $member->cumulative_amount]);
+        $log = AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)->where('action', 'updated')->sole();
+        $this->assertSame([$ops->id, 'Kích hoạt tài khoản thủ công. Lý do: Khách đã mua tại văn phòng', 'Nhân viên'],
+            [$log->user_id, $log->description, $log->changes['new']['level']]);
+
+        // Đã kích hoạt: không còn form, gửi lại báo lỗi; danh sách vào tab Đã kích hoạt
+        $this->actingAs($ops)->get($show)->assertDontSee('id="activate-form"', false);
+        $this->actingAs($ops)->post($url, ['reason' => 'Kích hoạt lại'])->assertSessionHas('error', 'Tài khoản đã được kích hoạt từ trước.');
+        $this->actingAs($ops)->get('/backend/member?tab=activated')->assertSee($member->full_name);
+
+        // Thành viên đã ở cấp cao hơn cấp gốc: giữ nguyên cấp
+        $agent = Member::factory()->create(['level_id' => Level::where('name', 'Đại lý')->value('id')]);
+        $this->actingAs($ops)->post(route('backend.members.activate', $agent), ['reason' => 'Chuyển từ hệ thống cũ']);
+        $this->assertSame('Đại lý', $agent->fresh()->level->name);
+
+        // CSKH không có quyền kích hoạt
+        $other = Member::factory()->create();
+        $this->actingAs($this->staff('CSKH'))->get(route('backend.members.show', $other))->assertDontSee('id="activate-form"', false);
+        $this->actingAs($this->staff('CSKH'))->post(route('backend.members.activate', $other), ['reason' => 'Thử quyền nè'])->assertForbidden();
+        $this->assertNull($other->fresh()->activated_at);
+    }
+
     public function test_downline_ids(): void
     {
         $a = Member::factory()->create();

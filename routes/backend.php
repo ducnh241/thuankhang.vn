@@ -52,10 +52,11 @@ Route::prefix('backend')->group(function () {
             Route::put('settings', [AffiliateSettingController::class, 'update'])->name('settings.update')->can('affiliate_setting/edit');
         });
 
-        // Thành viên website (A10; quyền: member, member/lock, member/referrer)
+        // Thành viên website (A10; quyền: member, member/lock, member/activate, member/referrer)
         Route::get('member', [MemberController::class, 'index'])->name('members.index')->can('member');
         Route::get('member/{member}', [MemberController::class, 'show'])->name('members.show')->can('member')->whereNumber('member');
         Route::post('member/{member}/lock', [MemberController::class, 'lock'])->name('members.lock')->can('member/lock');
+        Route::post('member/{member}/activate', [MemberController::class, 'activate'])->name('members.activate')->can('member/activate');
         Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');
 
         // Sản phẩm (quyền: product, product/add|edit|delete — chung với danh mục sản phẩm). Xóa = xóa mềm.

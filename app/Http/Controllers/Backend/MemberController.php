@@ -85,6 +85,7 @@ class MemberController extends Controller
             'f1' => $f1,
             'f2' => $f2,
             'f2Count' => Member::whereIn('referrer_id', $member->referrals()->select('id'))->count(),
+            'firstLevel' => Level::earning()->firstWhere('active', true),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)
                 ->whereIn('action', ['updated', 'created'])->latest('id')->limit(20)->get(),
         ]);
@@ -110,6 +111,34 @@ class MemberController extends Controller
         });
 
         return back()->with('success', $status === Member::STATUS_LOCKED ? "Đã khóa tài khoản {$member->full_name}." : "Đã mở khóa tài khoản {$member->full_name}.");
+    }
+
+    /**
+     * Kích hoạt thủ công (member/activate, bắt buộc lý do) — vd khách đã mua ngoài hệ thống. Thường kích hoạt tự động khi
+     * có đơn thanh toán đầu tiên (Step 7). Đặt activated_at, nâng từ cấp gốc lên cấp hưởng hoa hồng thấp nhất đang bật
+     * ("Nhân viên"); không đổi doanh số cộng dồn. Một chiều: không có hủy kích hoạt (không hạ cấp).
+     */
+    public function activate(Request $request, Member $member): RedirectResponse
+    {
+        $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:500']],
+            ['reason.required' => 'Nhập lý do kích hoạt.', 'reason.min' => 'Lý do quá ngắn (ít nhất 5 ký tự).'], ['reason' => 'lý do']);
+        if ($member->isActivated()) {
+            return back()->with('error', 'Tài khoản đã được kích hoạt từ trước.');
+        }
+
+        $level = DB::transaction(function () use ($member, $data) {
+            $member = Member::lockForUpdate()->findOrFail($member->id);
+            $oldLevel = $member->level;
+            $level = $oldLevel?->isBase() ? Level::earning()->firstWhere('active', true) : $oldLevel;
+            $member->forceFill(['activated_at' => now(), 'level_id' => $level?->id ?? $member->level_id])->saveQuietly();
+            AuditLog::record('updated', $member,
+                ['old' => ['activated_at' => null, 'level' => $oldLevel?->name], 'new' => ['activated_at' => $member->activated_at->toDateTimeString(), 'level' => $level?->name]],
+                'Kích hoạt tài khoản thủ công. Lý do: '.trim($data['reason']));
+
+            return $level;
+        });
+
+        return back()->with('success', "Đã kích hoạt tài khoản {$member->full_name}".($level ? " (cấp {$level->name})." : '.'));
     }
 
     /** Sửa người giới thiệu (bắt buộc lý do). Chỉ ảnh hưởng hoa hồng các đơn thanh toán sau thời điểm sửa. */

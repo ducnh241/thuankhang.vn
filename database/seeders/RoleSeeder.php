@@ -21,7 +21,7 @@ class RoleSeeder extends Seeder
             'product', 'product/add', 'product/edit', 'product/delete',
             'pickup_point', 'pickup_point/add', 'pickup_point/edit', 'pickup_point/delete',
             'order', 'order/status', 'order/cancel',
-            'member', 'member/lock', 'member/referrer',
+            'member', 'member/lock', 'member/activate', 'member/referrer',
             'kyc', 'kyc/view_document', 'kyc/review',
         ],
 

@@ -17,6 +17,7 @@
 @endphp
 
 @section('title', $member->full_name.' - Thành viên')
+@section('inline-errors', '1')
 
 @section('topbar')
   <div class="page-topbar-left">
@@ -157,22 +158,23 @@
           <form method="POST" action="{{ route('backend.members.referrer', $member) }}" class="ant-form ant-form-vertical mt-4 border-t border-[#f0f0f0] pt-4" novalidate id="referrer-form">
             @csrf
             @method('PUT')
+            <input type="hidden" name="_form" value="referrer" />
             <div class="ant-row ant-form-item{{ $hasError('referral_code') }}">
               <div class="ant-col ant-form-item-label"><label for="new_referrer" title="Mã người giới thiệu mới">Đổi sang mã người giới thiệu</label></div>
               <div class="ant-col ant-form-item-control">
                 <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                  <input type="text" id="new_referrer" name="referral_code" value="{{ is_string(old('referral_code')) ? old('referral_code') : '' }}" class="ant-input [&:not(:placeholder-shown)]:uppercase" maxlength="20" placeholder="Để trống = không có người giới thiệu" />
+                  <input type="text" id="new_referrer" name="referral_code" value="{{ old('_form') === 'referrer' && is_string(old('referral_code')) ? old('referral_code') : '' }}" class="ant-input [&:not(:placeholder-shown)]:uppercase" maxlength="20" placeholder="Để trống = không có người giới thiệu" />
                 </div></div>
                 {{ ant_form_error($errors->first('referral_code')) }}
               </div>
             </div>
-            <div class="ant-row ant-form-item{{ $hasError('reason') }}">
+            <div class="ant-row ant-form-item{{ old('_form') === 'referrer' ? $hasError('reason') : '' }}">
               <div class="ant-col ant-form-item-label"><label for="referrer_reason" class="ant-form-item-required" title="Lý do">Lý do</label></div>
               <div class="ant-col ant-form-item-control">
                 <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                  <textarea id="referrer_reason" name="reason" rows="2" maxlength="500" class="ant-input" placeholder="VD: Khách nhập nhầm mã khi đăng ký">{{ is_string(old('reason')) ? old('reason') : '' }}</textarea>
+                  <textarea id="referrer_reason" name="reason" rows="2" maxlength="500" class="ant-input" placeholder="VD: Khách nhập nhầm mã khi đăng ký">{{ old('_form') === 'referrer' && is_string(old('reason')) ? old('reason') : '' }}</textarea>
                 </div></div>
-                {{ ant_form_error($errors->first('reason')) }}
+                {{ old('_form') === 'referrer' ? ant_form_error($errors->first('reason')) : '' }}
               </div>
             </div>
             <button type="submit" class="ant-btn">{{ ant_icon('sync') }}<span>Đổi người giới thiệu</span></button>
@@ -181,6 +183,32 @@
         @endcan
       </div>
     </div>
+
+    {{-- Kích hoạt thủ công (member/activate): thường tự kích hoạt khi có đơn thanh toán đầu tiên --}}
+    @if (! $member->isActivated())
+      @can('member/activate')
+        <div class="ant-card ant-card-bordered" data-card="activate">
+          <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Kích hoạt tài khoản</div></div></div>
+          <div class="ant-card-body">
+            <form method="POST" action="{{ route('backend.members.activate', $member) }}" class="ant-form ant-form-vertical" novalidate id="activate-form">
+              @csrf
+              <input type="hidden" name="_form" value="activate" />
+              <p class="mt-0 mb-3 {{ $muted }}">Tài khoản tự kích hoạt khi có đơn thanh toán đầu tiên. Kích hoạt thủ công (vd khách đã mua ngoài hệ thống) thì thành viên được nhận hoa hồng từ đơn của F1 / F2 và lên cấp {{ $firstLevel?->name ?? 'hưởng hoa hồng đầu tiên' }}. Không hủy được.</p>
+              <div class="ant-row ant-form-item{{ old('_form') === 'activate' ? $hasError('reason') : '' }}">
+                <div class="ant-col ant-form-item-label"><label for="activate_reason" class="ant-form-item-required" title="Lý do">Lý do</label></div>
+                <div class="ant-col ant-form-item-control">
+                  <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                    <textarea id="activate_reason" name="reason" rows="2" maxlength="500" class="ant-input" placeholder="VD: Khách đã mua tại văn phòng, đơn số …">{{ old('_form') === 'activate' && is_string(old('reason')) ? old('reason') : '' }}</textarea>
+                  </div></div>
+                  {{ old('_form') === 'activate' ? ant_form_error($errors->first('reason')) : '' }}
+                </div>
+              </div>
+              <button type="submit" class="ant-btn ant-btn-primary">{{ ant_icon('check-circle') }}<span>Kích hoạt</span></button>
+            </form>
+          </div>
+        </div>
+      @endcan
+    @endif
 
     @can('member/lock')
       <div class="ant-card ant-card-bordered" data-card="lock">

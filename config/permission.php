@@ -107,6 +107,7 @@ return [
         'section' => 'Thành viên',
         'items' => [
             'lock' => 'Khoá / mở tài khoản',
+            'activate' => 'Kích hoạt tài khoản thủ công',
             'referrer' => 'Sửa người giới thiệu',
         ],
     ],
