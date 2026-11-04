@@ -14,6 +14,7 @@ use App\Http\Controllers\Backend\GroupController;
 use App\Http\Controllers\Backend\MemberController;
 use App\Http\Controllers\Backend\MenuController;
 use App\Http\Controllers\Backend\PageController;
+use App\Http\Controllers\Backend\PickupPointController;
 use App\Http\Controllers\Backend\ProductController;
 use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\SettingController;
@@ -58,6 +59,14 @@ Route::prefix('backend')->group(function () {
         Route::post('member/{member}/lock', [MemberController::class, 'lock'])->name('members.lock')->can('member/lock');
         Route::post('member/{member}/activate', [MemberController::class, 'activate'])->name('members.activate')->can('member/activate');
         Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');
+
+        // VP tỉnh / điểm nhận hàng (A7; quyền: pickup_point, pickup_point/add|edit|delete). Xóa = xóa mềm.
+        Route::get('pickup-point', [PickupPointController::class, 'index'])->name('pickup-points.index')->can('pickup_point');
+        Route::get('pickup-point/create', [PickupPointController::class, 'create'])->name('pickup-points.create')->can('pickup_point/add');
+        Route::post('pickup-point', [PickupPointController::class, 'store'])->name('pickup-points.store')->can('pickup_point/add');
+        Route::get('pickup-point/{pickup_point}/edit', [PickupPointController::class, 'edit'])->name('pickup-points.edit')->can('pickup_point/edit');
+        Route::put('pickup-point/{pickup_point}', [PickupPointController::class, 'update'])->name('pickup-points.update')->can('pickup_point/edit');
+        Route::delete('pickup-point/{pickup_point}', [PickupPointController::class, 'destroy'])->name('pickup-points.destroy')->can('pickup_point/delete');
 
         // Sản phẩm (quyền: product, product/add|edit|delete — chung với danh mục sản phẩm). Xóa = xóa mềm.
         Route::get('product', [ProductController::class, 'index'])->name('products.index')->can('product');

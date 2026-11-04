@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 
@@ -51,6 +52,12 @@ class Member extends Authenticatable
     public function referrals(): HasMany
     {
         return $this->hasMany(self::class, 'referrer_id');
+    }
+
+    /** Điểm nhận hàng / VP tỉnh thành viên này làm chủ (cấp VP). */
+    public function ownedPickupPoint(): HasOne
+    {
+        return $this->hasOne(PickupPoint::class, 'owner_member_id');
     }
 
     public function level(): BelongsTo

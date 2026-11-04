@@ -59,3 +59,6 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   (mã giới thiệu từ cookie ref, tra tên GET /ma-gioi-thieu/{code}, không mã → `root_referral_code`), /dang-nhap (SĐT),
   /dang-xuat, /tai-khoan. Admin /backend/member (A10): danh sách, cây F1/F2, khóa/mở (member/lock), sửa người giới thiệu
   có lý do (member/referrer, chặn vòng qua `Member::downlineIds()`). Nhật ký / backend luôn dùng guard `web`.
+- Step 4 (VP tỉnh / điểm nhận hàng): xong — bảng `pickup_points` (xóa mềm, `owner_member_id` duy nhất, gỡ khi xóa),
+  34 tỉnh/thành ở `config/provinces.php`, admin /backend/pickup-point (quyền `pickup_point/*`), chủ phải là thành viên
+  cấp VP, giới hạn điểm đang bật mỗi tỉnh theo `max_vp_per_province`. Checkout dùng `PickupPoint::available()`.

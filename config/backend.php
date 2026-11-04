@@ -56,6 +56,13 @@ return [
                     'can' => 'product',
                     'icon' => 'shop',
                 ],
+                [
+                    'label' => 'Pickup points',
+                    'route' => 'backend.pickup-points.index',
+                    'active' => 'backend.pickup-points.*',
+                    'can' => 'pickup_point',
+                    'icon' => 'environment',
+                ],
             ],
         ],
         [

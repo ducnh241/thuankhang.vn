@@ -41,6 +41,7 @@ class AuditLog extends Model
         KpiTier::class => 'Bậc KPI',
         Product::class => 'Sản phẩm',
         Member::class => 'Thành viên',
+        PickupPoint::class => 'Điểm nhận hàng',
         ProductImage::class => 'Ảnh sản phẩm',
     ];
 
