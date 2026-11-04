@@ -6,9 +6,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -30,8 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'backend.access' => EnsureBackendAccess::class,
         ]);
 
-        // User đã đăng nhập mà vào /backend/login thì về dashboard
-        $middleware->redirectUsersTo(fn () => route('backend.dashboard'));
+        // Đã đăng nhập mà vào trang đăng nhập / đăng ký: quản trị → dashboard, thành viên website → trang tài khoản
+        $middleware->redirectUsersTo(fn (Request $request) => $request->is('backend', 'backend/*') ? route('backend.dashboard') : route('member.account'));
+        // Chưa đăng nhập: trang quản trị → /backend/login, trang thành viên → /dang-nhap
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('backend', 'backend/*') ? route('login') : route('member.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

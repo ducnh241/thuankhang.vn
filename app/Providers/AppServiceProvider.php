@@ -46,9 +46,10 @@ class AppServiceProvider extends ServiceProvider
         // Website: tên / liên hệ / mạng xã hội (Cài đặt website), menu chính / chân trang, danh mục gốc — đưa vào các view
         // trang (layout nhận lại từ trang con; nội dung trang chạy trước layout nên không gắn vào layout được). Tính một lần
         // mỗi request (Catalog scoped), không gắn vào partial (thẻ sản phẩm lặp nhiều lần).
-        View::composer(['frontend.home', 'frontend.category', 'frontend.search', 'frontend.product', 'frontend.layouts.app'], function ($view) {
-            $view->with(app(Catalog::class)->layoutData());
-        });
+        View::composer(['frontend.home', 'frontend.category', 'frontend.search', 'frontend.product', 'frontend.account',
+            'frontend.auth.register', 'frontend.auth.login', 'frontend.layouts.app'], function ($view) {
+                $view->with(app(Catalog::class)->layoutData());
+            });
     }
 
     /**
@@ -61,13 +62,14 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(SystemAuditObserver::class);
         }
 
-        Event::listen(Login::class, fn (Login $event) => $event->user instanceof User
+        Event::listen(Login::class, fn (Login $event) => $event->guard === 'web' && $event->user instanceof User
             && AuditLog::record('login', $event->user, null, $event->remember ? 'Ghi nhớ đăng nhập' : null, $event->user));
-        Event::listen(Logout::class, fn (Logout $event) => $event->user instanceof User
+        Event::listen(Logout::class, fn (Logout $event) => $event->guard === 'web' && $event->user instanceof User
             && AuditLog::record('logout', $event->user, null, null, $event->user));
         // Người thử chưa đăng nhập: không gắn người thực hiện; chỉ ghi email đã gõ, không ghi mật khẩu.
         // Đối tượng = tài khoản có email đó (nếu có) để lọc được "ai đang bị dò mật khẩu".
-        Event::listen(Failed::class, fn (Failed $event) => AuditLog::record(
+        // Chỉ đăng nhập trang quản trị (guard web); đăng nhập của thành viên website không ghi vào nhật ký hệ thống
+        Event::listen(Failed::class, fn (Failed $event) => $event->guard === 'web' && AuditLog::record(
             'login_failed', $event->user instanceof User ? $event->user : null, null,
             'Email: '.Str::limit((string) ($event->credentials['email'] ?? ''), 255),
         ));

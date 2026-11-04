@@ -7,6 +7,7 @@ use App\Models\CommissionRate;
 use App\Models\Group;
 use App\Models\KpiTier;
 use App\Models\Level;
+use App\Models\Member;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\AffiliateSettings;
@@ -194,6 +195,19 @@ class AffiliateConfigTest extends TestCase
         $this->assertSame(['Cộng tác viên', 'Đại lý', 'Cửa hàng'], Level::ordered()->pluck('name')->slice(2, 3)->values()->all());
     }
 
+    public function test_level_with_members_cannot_be_turned_off(): void
+    {
+        $root = $this->root();
+        Member::factory()->count(2)->create(['level_id' => $this->level('Đại lý')->id]);
+
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['active' => null]]))
+            ->assertSessionHasErrors(['levels.4.active' => 'Không tắt được: đang có 2 thành viên ở cấp này.']);
+        $this->assertTrue($this->level('Đại lý')->active);
+        // Cấp chưa có ai vẫn tắt được
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['active' => null]]))->assertSessionHasNoErrors();
+        $this->assertFalse($this->level('Cửa hàng')->active);
+    }
+
     public function test_levels_page_redisplays_input_after_error(): void
     {
         $root = $this->root();
@@ -328,6 +342,7 @@ class AffiliateConfigTest extends TestCase
         $root = $this->root();
         $this->actingAs($root)->get('/backend/affiliate/settings')->assertOk()
             ->assertSee('value="500.000"', false)->assertSee('value="5"', false)->assertSee('Chưa cấu hình');
+        Member::factory()->create(['referral_code' => 'GOC01']); // tài khoản gốc phải là thành viên có thật
 
         $valid = [
             'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10',
@@ -356,6 +371,13 @@ class AffiliateConfigTest extends TestCase
             $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, $field => $value])->assertSessionHasErrors($field);
         }
         $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, 'business_fee_percent' => ''])->assertSessionHasErrors('business_fee_percent');
+        // Mã gốc không có thành viên / thành viên bị khóa
+        $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, 'root_referral_code' => 'KHONGCO'])
+            ->assertSessionHasErrors(['root_referral_code' => 'Không có thành viên nào có mã giới thiệu này.']);
+        Member::factory()->locked()->create(['referral_code' => 'KHOA1']);
+        $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, 'root_referral_code' => 'khoa1'])
+            ->assertSessionHasErrors(['root_referral_code' => 'Thành viên có mã này đang bị khóa.']);
+        $this->assertSame('GOC01', AffiliateSettings::get('root_referral_code'));
         $this->assertSame('5.50', AffiliateSettings::get('business_fee_percent'));
     }
 

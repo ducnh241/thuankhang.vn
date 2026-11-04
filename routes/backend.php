@@ -11,6 +11,7 @@ use App\Http\Controllers\Backend\AuditLogController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\GroupController;
+use App\Http\Controllers\Backend\MemberController;
 use App\Http\Controllers\Backend\MenuController;
 use App\Http\Controllers\Backend\PageController;
 use App\Http\Controllers\Backend\ProductController;
@@ -50,6 +51,12 @@ Route::prefix('backend')->group(function () {
             Route::get('settings', [AffiliateSettingController::class, 'edit'])->name('settings.edit')->can('affiliate_setting');
             Route::put('settings', [AffiliateSettingController::class, 'update'])->name('settings.update')->can('affiliate_setting/edit');
         });
+
+        // Thành viên website (A10; quyền: member, member/lock, member/referrer)
+        Route::get('member', [MemberController::class, 'index'])->name('members.index')->can('member');
+        Route::get('member/{member}', [MemberController::class, 'show'])->name('members.show')->can('member')->whereNumber('member');
+        Route::post('member/{member}/lock', [MemberController::class, 'lock'])->name('members.lock')->can('member/lock');
+        Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');
 
         // Sản phẩm (quyền: product, product/add|edit|delete — chung với danh mục sản phẩm). Xóa = xóa mềm.
         Route::get('product', [ProductController::class, 'index'])->name('products.index')->can('product');

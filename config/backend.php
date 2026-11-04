@@ -62,6 +62,13 @@ return [
             'label' => 'AFFILIATE',
             'items' => [
                 [
+                    'label' => 'Members',
+                    'route' => 'backend.members.index',
+                    'active' => 'backend.members.*',
+                    'can' => 'member',
+                    'icon' => 'contacts',
+                ],
+                [
                     'label' => 'Configuration',
                     'icon' => 'fund',
                     'children' => [

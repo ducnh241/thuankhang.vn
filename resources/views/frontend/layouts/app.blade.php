@@ -62,6 +62,22 @@
           <span class="text-lg font-bold text-slate-900">{{ $siteName }}</span>
         @endif
       </a>
+      {{-- Tài khoản thành viên (guard "member") --}}
+      <div class="ml-auto flex shrink-0 items-center gap-2 text-sm md:order-last md:ml-0">
+        @if ($currentMember = auth('member')->user())
+          <a href="{{ route('member.account') }}" class="flex items-center gap-2 rounded-full border border-slate-200 py-1.5 pr-4 pl-1.5 font-medium text-slate-700 hover:border-brand-500 hover:text-brand-700" data-member-menu>
+            <span class="flex size-7 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">{{ mb_strtoupper(mb_substr($currentMember->full_name, 0, 1)) }}</span>
+            <span class="max-w-32 truncate max-sm:hidden">{{ $currentMember->full_name }}</span>
+          </a>
+        @else
+          {{-- Điện thoại: một nút biểu tượng (trang đăng nhập có link sang đăng ký) --}}
+          <a href="{{ route('member.login') }}" class="rounded-full p-2 text-slate-600 hover:bg-slate-100 sm:hidden" aria-label="Đăng nhập">
+            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path stroke-linecap="round" d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" /></svg>
+          </a>
+          <a href="{{ route('member.login') }}" class="rounded-full px-3 py-2 font-medium text-slate-700 hover:text-brand-700 max-sm:hidden">Đăng nhập</a>
+          <a href="{{ route('member.register') }}" class="rounded-full bg-brand-600 px-4 py-2 font-semibold text-white hover:bg-brand-700 max-sm:hidden">Đăng ký</a>
+        @endif
+      </div>
       {{-- Điện thoại: ô tìm xuống dòng riêng, đủ rộng --}}
       <form action="{{ route('shop.search') }}" method="GET" role="search" class="order-last w-full md:order-none md:ml-auto md:max-w-md">
         <label class="relative block">
@@ -90,6 +106,7 @@
   </header>
 
   <main class="flex-1">
+    @include('frontend.partials.flash')
     @yield('content')
   </main>
 

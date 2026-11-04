@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SystemAuditObserver
 {
-    private const IGNORED = ['created_at', 'updated_at', 'remember_token'];
+    private const IGNORED = ['created_at', 'updated_at', 'remember_token', 'last_login_at'];
 
     /** Cột nhạy cảm: chỉ ghi "có thay đổi", không chép giá trị (mật khẩu, thông tin đăng nhập domain…). */
     private const MASKED = ['password', 'domain_note'];

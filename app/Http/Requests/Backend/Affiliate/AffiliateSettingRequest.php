@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests\Backend\Affiliate;
 
+use App\Models\Member;
 use App\Support\AffiliateSettings;
 use App\Support\Money;
 use App\Support\Percent;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Validator;
 
 /** Tham số chung (A5): ràng buộc lấy từ AffiliateSettings::FIELDS (trừ các khóa sửa ở trang khác, nhóm null). */
 class AffiliateSettingRequest extends FormRequest
@@ -46,6 +48,20 @@ class AffiliateSettingRequest extends FormRequest
             'bank_account.regex' => 'Số tài khoản chỉ gồm chữ số (và chữ in hoa).',
             'root_referral_code.regex' => 'Mã giới thiệu chỉ gồm chữ in hoa và số.',
         ];
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator) {
+            // Tài khoản gốc: mã phải là của thành viên đang hoạt động
+            $code = $this->input('root_referral_code');
+            if (! $validator->errors()->has('root_referral_code') && is_string($code) && $code !== '') {
+                $root = Member::findByReferralCode($code);
+                if (! $root || $root->isLocked()) {
+                    $validator->errors()->add('root_referral_code', $root ? 'Thành viên có mã này đang bị khóa.' : 'Không có thành viên nào có mã giới thiệu này.');
+                }
+            }
+        }];
     }
 
     /** Tiền "500.000" → 500000; mã / tên tự in hoa, bỏ khoảng trắng thừa. */

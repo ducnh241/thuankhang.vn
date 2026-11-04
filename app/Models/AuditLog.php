@@ -40,6 +40,7 @@ class AuditLog extends Model
         CommissionRate::class => 'Tỉ lệ hoa hồng',
         KpiTier::class => 'Bậc KPI',
         Product::class => 'Sản phẩm',
+        Member::class => 'Thành viên',
         ProductImage::class => 'Ảnh sản phẩm',
     ];
 
@@ -71,7 +72,8 @@ class AuditLog extends Model
      */
     public static function record(string $action, Model|string|null $subject = null, ?array $changes = null, ?string $description = null, ?User $actor = null): self
     {
-        $actor ??= Auth::user();
+        // Luôn lấy tài khoản quản trị (guard web): ở trang thành viên guard mặc định có thể là "member"
+        $actor ??= Auth::guard('web')->user();
         $http = ! app()->runningInConsole();
 
         return static::create([

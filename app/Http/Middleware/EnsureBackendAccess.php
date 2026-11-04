@@ -15,7 +15,7 @@ class EnsureBackendAccess
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        $user = $request->user('web');
 
         if ($user && ! $user->canAccessBackend()) {
             Auth::logout();

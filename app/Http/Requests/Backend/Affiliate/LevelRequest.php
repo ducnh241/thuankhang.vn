@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Backend\Affiliate;
 
 use App\Models\Level;
+use App\Models\Member;
 use App\Support\Money;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -102,7 +103,14 @@ class LevelRequest extends FormRequest
                         'Mốc phải lớn hơn mốc của cấp trước “'.$prev['name'].'” ('.Money::format($prev['threshold_amount']).' đ).');
                 }
             }
-            // Step 3: chặn tắt cấp đang có thành viên (đặc tả 6.2) khi đã có bảng thành viên.
+            // Không cho tắt cấp đang có thành viên (đặc tả 6.2)
+            $inUse = Member::query()->selectRaw('level_id, COUNT(*) as cnt')->groupBy('level_id')->pluck('cnt', 'level_id');
+            foreach ($rows as $row) {
+                $count = $inUse[(int) ($row['id'] ?? 0)] ?? 0;
+                if ($count > 0 && ! filter_var($row['active'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    $validator->errors()->add("levels.{$row['_key']}.active", "Không tắt được: đang có {$count} thành viên ở cấp này.");
+                }
+            }
         }];
     }
 

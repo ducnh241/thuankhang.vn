@@ -38,7 +38,7 @@ class AffiliateSettings
         'bank_code' => ['bank', 'Ngân hàng (mã BIN hoặc tên viết tắt VietQR)', 'code', null, ['nullable', 'max:20'], 'VD: 970436 hoặc VCB.'],
         'bank_account' => ['bank', 'Số tài khoản', 'code', null, ['nullable', 'max:30', 'regex:/^[0-9A-Z]+$/'], null],
         'bank_account_name' => ['bank', 'Tên chủ tài khoản', 'name', null, ['nullable', 'max:100'], 'In hoa, không dấu, đúng như trên ngân hàng (VD: CONG TY TNHH THUAN KHANG).'],
-        'root_referral_code' => ['network', 'Mã giới thiệu của tài khoản gốc', 'code', null, ['nullable', 'max:20', 'regex:/^[0-9A-Z]+$/'], 'Người đăng ký không có mã sẽ gắn vào tài khoản này (cần xác nhận với khách). Kiểm tra mã tồn tại từ Step 3.'],
+        'root_referral_code' => ['network', 'Mã giới thiệu của tài khoản gốc', 'code', null, ['nullable', 'max:20', 'regex:/^[0-9A-Z]+$/'], 'Người đăng ký không nhập mã sẽ gắn vào thành viên có mã này (cần xác nhận với khách). Để trống = không có người giới thiệu.'],
         'max_vp_per_province' => ['network', 'Số VP tối đa mỗi tỉnh', 'int', null, ['nullable', 'min:1', 'max:100'], 'Để trống = không giới hạn.'],
         // Sửa ở trang KPI (A4)
         'kpi_pay_day' => [null, 'Ngày trả thưởng KPI hằng tháng', 'int', 10, ['required', 'min:1', 'max:28'], null],

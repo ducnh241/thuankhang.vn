@@ -23,3 +23,48 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   if (e.target.matches('[data-autosubmit]')) e.target.form.requestSubmit();
 });
+
+/*
+ * Form đăng ký: gõ mã người giới thiệu thì tra tên (GET /ma-gioi-thieu/{code}) để xác nhận đúng người.
+ * Nút [data-copy]: sao chép nội dung (mã / link giới thiệu).
+ */
+const lookup = document.querySelector('[data-referrer-lookup]');
+if (lookup) {
+  const input = lookup.querySelector('[data-referrer-input]');
+  const result = lookup.querySelector('[data-referrer-result]');
+  let timer = null;
+  let seq = 0;
+  const show = (text, ok) => {
+    result.textContent = '';
+    if (!text) return;
+    const span = document.createElement('span');
+    span.className = ok ? 'text-brand-700' : 'text-rose-600';
+    span.textContent = text;
+    result.append(span);
+  };
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    const code = input.value.trim().toUpperCase();
+    if (!/^[A-Z0-9]{3,20}$/.test(code)) return show(code ? 'Mã giới thiệu chỉ gồm chữ và số.' : '', false);
+    timer = setTimeout(async () => {
+      const mine = ++seq;
+      const res = await fetch(`${lookup.dataset.url}/${encodeURIComponent(code)}`, { headers: { Accept: 'application/json' } });
+      if (mine !== seq) return;
+      if (res.ok) show(`Người giới thiệu: ${(await res.json()).name}`, true);
+      else show(res.status === 429 ? 'Bạn gõ quá nhanh, thử lại sau ít phút.' : 'Mã giới thiệu không tồn tại.', false);
+    }, 400);
+  });
+}
+
+document.addEventListener('click', async e => {
+  const button = e.target.closest('[data-copy]');
+  if (!button) return;
+  try {
+    await navigator.clipboard.writeText(button.dataset.copy);
+    const label = button.textContent;
+    button.textContent = 'Đã chép';
+    setTimeout(() => (button.textContent = label), 1500);
+  } catch {
+    window.prompt('Sao chép:', button.dataset.copy);
+  }
+});
