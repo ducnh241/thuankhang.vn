@@ -47,7 +47,8 @@ class AppServiceProvider extends ServiceProvider
         // trang (layout nhận lại từ trang con; nội dung trang chạy trước layout nên không gắn vào layout được). Tính một lần
         // mỗi request (Catalog scoped), không gắn vào partial (thẻ sản phẩm lặp nhiều lần).
         View::composer(['frontend.home', 'frontend.category', 'frontend.search', 'frontend.product', 'frontend.account',
-            'frontend.auth.register', 'frontend.auth.login', 'frontend.layouts.app'], function ($view) {
+            'frontend.auth.register', 'frontend.auth.login', 'frontend.cart', 'frontend.checkout', 'frontend.orders.index',
+            'frontend.orders.show', 'frontend.layouts.app'], function ($view) {
                 $view->with(app(Catalog::class)->layoutData());
             });
     }

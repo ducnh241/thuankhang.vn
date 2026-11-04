@@ -57,6 +57,13 @@ return [
                     'icon' => 'shop',
                 ],
                 [
+                    'label' => 'Orders',
+                    'route' => 'backend.orders.index',
+                    'active' => 'backend.orders.*',
+                    'can' => 'order',
+                    'icon' => 'container',
+                ],
+                [
                     'label' => 'Pickup points',
                     'route' => 'backend.pickup-points.index',
                     'active' => 'backend.pickup-points.*',

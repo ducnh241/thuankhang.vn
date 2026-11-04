@@ -91,3 +91,63 @@ document.addEventListener('click', async e => {
   clearTimeout(button.copyTimer);
   button.copyTimer = setTimeout(() => (button.textContent = label), 1500);
 });
+
+/*
+ * Thanh toán (S5): đổi hình thức nhận hàng → hiện ô tương ứng + phí ship trong tóm tắt; nhận tại VP: chọn tỉnh lọc danh
+ * sách điểm, chọn điểm thì hiện địa chỉ / giờ mở cửa / điện thoại. Dữ liệu điểm lấy từ data-points.
+ */
+const checkout = document.querySelector('[data-checkout]');
+if (checkout) {
+  const money = n => new Intl.NumberFormat('vi-VN').format(n).replace(/,/g, '.') + 'đ';
+  const points = JSON.parse(checkout.dataset.points || '[]');
+  const subtotal = Number(checkout.dataset.subtotal);
+  const fee = Number(checkout.dataset.shippingFee);
+  const province = checkout.querySelector('[data-pickup-province]');
+  const pointSelect = checkout.querySelector('[data-pickup-point]');
+  const info = checkout.querySelector('[data-pickup-info]');
+
+  const syncDelivery = () => {
+    const type = checkout.querySelector('[data-delivery]:checked')?.value;
+    checkout.querySelectorAll('[data-delivery-panel]').forEach(panel => (panel.hidden = panel.dataset.deliveryPanel !== type));
+    const ship = type === 'pickup' ? 0 : fee;
+    checkout.querySelector('[data-summary-shipping]').textContent = money(ship);
+    checkout.querySelector('[data-summary-total]').textContent = money(subtotal + ship);
+  };
+
+  const syncInfo = () => {
+    const point = points.find(p => String(p.id) === pointSelect.value);
+    info.hidden = !point;
+    info.textContent = '';
+    if (!point) return;
+    [point.address, point.opening_hours && `Giờ mở cửa: ${point.opening_hours}`, point.phone && `Điện thoại: ${point.phone}`]
+      .filter(Boolean)
+      .forEach(line => {
+        const p = document.createElement('p');
+        p.textContent = line;
+        info.append(p);
+      });
+  };
+
+  const filterPoints = () => {
+    const key = province.value;
+    [...pointSelect.options].forEach(opt => {
+      if (!opt.value) return;
+      const show = !key || opt.dataset.province === key;
+      opt.hidden = !show;
+      opt.disabled = !show;
+    });
+    if (pointSelect.selectedOptions[0]?.disabled) pointSelect.value = '';
+    // Tỉnh chỉ có 1 điểm: chọn luôn
+    const visible = [...pointSelect.options].filter(o => o.value && !o.disabled);
+    if (key && visible.length === 1) pointSelect.value = visible[0].value;
+    syncInfo();
+  };
+
+  checkout.addEventListener('change', e => {
+    if (e.target.matches('[data-delivery]')) syncDelivery();
+    else if (e.target === province) filterPoints();
+    else if (e.target === pointSelect) syncInfo();
+  });
+  syncDelivery();
+  syncInfo();
+}

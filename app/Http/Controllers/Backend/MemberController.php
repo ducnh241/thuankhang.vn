@@ -86,6 +86,8 @@ class MemberController extends Controller
             'f2' => $f2,
             'f2Count' => Member::whereIn('referrer_id', $member->referrals()->select('id'))->count(),
             'firstLevel' => Level::earning()->firstWhere('active', true),
+            'orders' => $member->orders()->latest('id')->limit(10)->get(),
+            'orderCount' => $member->orders()->count(),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)
                 ->whereIn('action', ['updated', 'created'])->latest('id')->limit(20)->get(),
         ]);

@@ -12,10 +12,13 @@
         <h1 class="text-2xl font-bold text-slate-900">Xin chào, {{ $member->full_name }}</h1>
         <p class="mt-1 text-sm text-slate-500">Thành viên từ {{ $member->created_at->format('d/m/Y') }}</p>
       </div>
+      <div class="flex items-center gap-3">
+      <a href="{{ route('member.orders.index') }}" class="rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700">Đơn hàng của tôi</a>
       <form method="POST" action="{{ route('member.logout') }}">
         @csrf
         <button type="submit" class="rounded-full border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:border-rose-400 hover:text-rose-600">Đăng xuất</button>
       </form>
+      </div>
     </div>
 
     <div class="mt-6 grid gap-4 md:grid-cols-3">

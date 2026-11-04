@@ -13,6 +13,7 @@ use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\GroupController;
 use App\Http\Controllers\Backend\MemberController;
 use App\Http\Controllers\Backend\MenuController;
+use App\Http\Controllers\Backend\OrderController;
 use App\Http\Controllers\Backend\PageController;
 use App\Http\Controllers\Backend\PickupPointController;
 use App\Http\Controllers\Backend\ProductController;
@@ -59,6 +60,12 @@ Route::prefix('backend')->group(function () {
         Route::post('member/{member}/lock', [MemberController::class, 'lock'])->name('members.lock')->can('member/lock');
         Route::post('member/{member}/activate', [MemberController::class, 'activate'])->name('members.activate')->can('member/activate');
         Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');
+
+        // Đơn hàng (A8; quyền: order, order/status, order/cancel). URL theo mã đơn.
+        Route::get('order', [OrderController::class, 'index'])->name('orders.index')->can('order');
+        Route::get('order/{order}', [OrderController::class, 'show'])->name('orders.show')->can('order');
+        Route::post('order/{order}/status', [OrderController::class, 'status'])->name('orders.status')->can('order/status');
+        Route::post('order/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->can('order/cancel');
 
         // VP tỉnh / điểm nhận hàng (A7; quyền: pickup_point, pickup_point/add|edit|delete). Xóa = xóa mềm.
         Route::get('pickup-point', [PickupPointController::class, 'index'])->name('pickup-points.index')->can('pickup_point');

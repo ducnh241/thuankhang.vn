@@ -50,6 +50,37 @@
       </div>
     </div>
 
+    {{-- Đơn hàng gần nhất của thành viên --}}
+    @can('order')
+      <div class="ant-card ant-card-bordered" data-card="orders">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper">
+          <div class="ant-card-head-title">Đơn hàng <span class="font-normal {{ $muted }}">— {{ $count($orderCount) }} đơn</span></div>
+          @if ($orderCount > $orders->count())
+            <div class="ant-card-extra"><a href="{{ route('backend.orders.index', ['q' => $member->phone]) }}">Xem tất cả</a></div>
+          @endif
+        </div></div>
+        <div class="ant-table ant-table-small">
+          <div class="ant-table-container"><div class="ant-table-content overflow-x-auto">
+            <table style="table-layout: auto">
+              <tbody class="ant-table-tbody">
+                @forelse ($orders as $order)
+                  @php $orderStatus = $order->displayStatus(); @endphp
+                  <tr class="ant-table-row" data-order="{{ $order->code }}">
+                    <td class="ant-table-cell"><a href="{{ route('backend.orders.show', $order) }}" class="font-mono">{{ $order->code }}</a></td>
+                    <td class="ant-table-cell tabular-nums {{ $muted }}">{{ $order->created_at?->format('d/m/Y H:i') }}</td>
+                    <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Money::format($order->total_amount) }} đ</td>
+                    <td class="ant-table-cell"><span class="ant-tag ant-tag-{{ \App\Models\Order::STATUS_COLORS[$orderStatus] }} m-0">{{ \App\Models\Order::STATUSES[$orderStatus] }}</span></td>
+                  </tr>
+                @empty
+                  <tr class="ant-table-placeholder"><td colspan="4" class="ant-table-cell"><div class="ant-empty ant-empty-small"><p class="ant-empty-description">Chưa có đơn hàng.</p></div></td></tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div></div>
+        </div>
+      </div>
+    @endcan
+
     {{-- Cây giới thiệu: F1 (người thành viên giới thiệu trực tiếp), mở rộng từng F1 để xem F2 --}}
     <div class="ant-card ant-card-bordered" data-card="tree">
       <div class="ant-card-head">

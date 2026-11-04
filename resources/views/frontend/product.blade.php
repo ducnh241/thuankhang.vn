@@ -77,11 +77,23 @@
           <p class="mt-5 text-[15px] leading-7 text-slate-700">{{ $product->short_description }}</p>
         @endif
 
-        <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-          @if ($hotline)
-            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $hotline) }}" class="flex-1 rounded-full bg-brand-600 px-6 py-3 text-center text-sm font-semibold text-white shadow hover:bg-brand-700">Gọi đặt hàng: {{ $hotline }}</a>
-          @endif
-        </div>
+        {{-- Thêm vào giỏ / Mua ngay (buy_now=1 → sang thanh toán) --}}
+        <form method="POST" action="{{ route('shop.cart.store') }}" class="mt-6" data-buy-form>
+          @csrf
+          <input type="hidden" name="product_id" value="{{ $product->id }}" />
+          <div class="flex flex-wrap items-center gap-3">
+            <label for="buy-qty" class="text-sm font-medium text-slate-700">Số lượng</label>
+            <input id="buy-qty" type="number" name="qty" value="1" min="1" max="{{ \App\Support\Cart::MAX_QTY }}"
+              class="w-24 rounded-lg border border-slate-300 px-3 py-2 text-center text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
+          </div>
+          <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <button type="submit" class="flex-1 rounded-full border-2 border-brand-600 px-6 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-50">Thêm vào giỏ</button>
+            <button type="submit" name="buy_now" value="1" class="flex-1 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700">Mua ngay</button>
+          </div>
+        </form>
+        @if ($hotline)
+          <p class="mt-3 text-sm text-slate-500">Cần tư vấn? Gọi <a href="tel:{{ preg_replace('/[^0-9+]/', '', $hotline) }}" class="font-semibold text-brand-700 hover:underline">{{ $hotline }}</a></p>
+        @endif
         <ul class="mt-6 space-y-2 text-sm text-slate-600">
           <li class="flex gap-2"><span class="text-brand-600">✓</span>Thanh toán chuyển khoản qua mã QR</li>
           <li class="flex gap-2"><span class="text-brand-600">✓</span>Giao tận nơi hoặc nhận tại văn phòng tỉnh gần bạn</li>

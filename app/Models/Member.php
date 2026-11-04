@@ -60,6 +60,11 @@ class Member extends Authenticatable
         return $this->hasOne(PickupPoint::class, 'owner_member_id');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class);

@@ -64,6 +64,14 @@
       </a>
       {{-- Tài khoản thành viên (guard "member") --}}
       <div class="ml-auto flex shrink-0 items-center gap-2 text-sm md:order-last md:ml-0">
+        {{-- Giỏ hàng: số sản phẩm trong giỏ (session) --}}
+        @php $cartCount = request()->hasSession() ? app(\App\Support\Cart::class)->count() : 0; @endphp
+        <a href="{{ route('shop.cart') }}" class="relative rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-brand-700" aria-label="Giỏ hàng{{ $cartCount ? " ($cartCount sản phẩm)" : '' }}" data-cart-link>
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6.2" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17" cy="20" r="1.3" /></svg>
+          @if ($cartCount)
+            <span class="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white" data-cart-count>{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
+          @endif
+        </a>
         @if ($currentMember = auth('member')->user())
           <a href="{{ route('member.account') }}" class="flex items-center gap-2 rounded-full border border-slate-200 py-1.5 pr-4 pl-1.5 font-medium text-slate-700 hover:border-brand-500 hover:text-brand-700" data-member-menu>
             <span class="flex size-7 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">{{ mb_strtoupper(mb_substr($currentMember->full_name, 0, 1)) }}</span>

@@ -346,7 +346,7 @@ class AffiliateConfigTest extends TestCase
 
         $valid = [
             'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10',
-            'default_vat_percent' => '8', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
+            'default_vat_percent' => '8', 'shipping_fee' => '35.000', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
             'bank_code' => ' vcb ', 'bank_account' => '0123456789', 'bank_account_name' => 'cong ty  thuan khang',
             'root_referral_code' => 'goc01', 'max_vp_per_province' => '',
         ];
