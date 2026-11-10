@@ -80,9 +80,9 @@ class AffiliateConfigTest extends TestCase
     public function test_seeds_defaults_from_spec_and_is_idempotent(): void
     {
         $this->assertSame(
-            ['Chưa kích hoạt', 'Nhân viên', 'Cộng tác viên', 'Cửa hàng', 'Đại lý', 'VP tỉnh cấp 1', 'VP tỉnh cấp 2'],
+            ['Chưa kích hoạt', 'Nhân viên', 'Cộng tác viên', 'Đại lý', 'VP tỉnh cấp 1', 'VP tỉnh cấp 2'],
             Level::ordered()->pluck('name')->all());
-        $this->assertSame([0, 1, 3_000_000, 10_000_000, 15_000_000, 150_000_000, 300_000_000], Level::ordered()->pluck('threshold_amount')->all());
+        $this->assertSame([0, 1, 3_000_000, 15_000_000, 150_000_000, 300_000_000], Level::ordered()->pluck('threshold_amount')->all());
         $this->assertSame(['VP tỉnh cấp 1', 'VP tỉnh cấp 2'], Level::where('is_vp', true)->ordered()->pluck('name')->all());
 
         // F1: CTV 10%, Đại lý 20%; cấp gốc không có tỉ lệ
@@ -103,7 +103,7 @@ class AffiliateConfigTest extends TestCase
 
         $this->level('Đại lý')->update(['threshold_amount' => 20_000_000]);
         $this->seed(AffiliateConfigSeeder::class);
-        $this->assertSame([7, 12, 4], [Level::count(), CommissionRate::count(), KpiTier::count()]);
+        $this->assertSame([6, 10, 4], [Level::count(), CommissionRate::count(), KpiTier::count()]);
         $this->assertSame(20_000_000, $this->level('Đại lý')->threshold_amount);
     }
 
@@ -152,7 +152,7 @@ class AffiliateConfigTest extends TestCase
         $this->assertSame(16_000_000, $this->level('Đại lý')->threshold_amount);
         $this->assertFalse($this->level('VP vùng')->active);
         $this->assertSame([500_000_000, true, 7], [$this->level('Tổng đại lý')->threshold_amount, $this->level('Tổng đại lý')->is_vp, $this->level('Tổng đại lý')->sort_order]);
-        $this->assertSame(8, Level::count());
+        $this->assertSame(7, Level::count());
         // Mọi thay đổi ghi nhật ký
         $this->assertTrue(AuditLog::where('auditable_type', Level::class)->where('auditable_id', $this->level('Đại lý')->id)->where('action', 'updated')->exists());
         $this->assertTrue(AuditLog::where('auditable_type', Level::class)->where('action', 'created')->where('user_id', $root->id)->exists());
@@ -164,10 +164,10 @@ class AffiliateConfigTest extends TestCase
         $before = Level::ordered()->pluck('threshold_amount', 'name')->all();
 
         // Mốc cấp sau ≤ cấp trước → lỗi đúng dòng
-        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['threshold_amount' => '3.000.000']]))
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['threshold_amount' => '3.000.000']]))
             ->assertSessionHasErrors(['levels.3.threshold_amount' => 'Mốc phải lớn hơn mốc của cấp trước “Cộng tác viên” (3.000.000 đ).']);
         // Đổi thứ tự làm mốc không còn tăng dần
-        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['sort_order' => '1'], 'Nhân viên' => ['sort_order' => '4']]))
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['sort_order' => '1'], 'Nhân viên' => ['sort_order' => '6']]))
             ->assertSessionHasErrors('levels.1.threshold_amount');
         // Cấp đầu tiên phải mốc 0, luôn bật, không là VP
         $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Chưa kích hoạt' => ['threshold_amount' => '1']]))
@@ -175,11 +175,11 @@ class AffiliateConfigTest extends TestCase
         $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Chưa kích hoạt' => ['active' => null, 'is_vp' => '1']]))
             ->assertSessionHasErrors(['levels.0.active', 'levels.0.is_vp']);
         // Tên / thứ tự trùng, mốc không phải số tiền
-        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['name' => 'đại lý', 'sort_order' => '4']]))
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['name' => 'cộng tác viên', 'sort_order' => '2']]))
             ->assertSessionHasErrors(['levels.3.name', 'levels.3.sort_order']);
-        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['threshold_amount' => '10,5']]))
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['threshold_amount' => '10,5']]))
             ->assertSessionHasErrors('levels.3.threshold_amount');
-        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['threshold_amount' => '']]))
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['threshold_amount' => '']]))
             ->assertSessionHasErrors('levels.3.threshold_amount');
         // Bỏ dòng cấp đã có = xóa cấp → chặn
         $form = $this->levelForm();
@@ -190,9 +190,9 @@ class AffiliateConfigTest extends TestCase
 
         // Đổi chỗ hai cấp kèm đổi mốc cho hợp lệ: lưu được (thứ tự không vướng ràng buộc duy nhất giữa chừng)
         $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm([
-            'Cửa hàng' => ['sort_order' => '4', 'threshold_amount' => '15.000.000'], 'Đại lý' => ['sort_order' => '3', 'threshold_amount' => '10.000.000'],
+            'Đại lý' => ['sort_order' => '4', 'threshold_amount' => '150.000.000'], 'VP tỉnh cấp 1' => ['sort_order' => '3', 'threshold_amount' => '15.000.000'],
         ]))->assertSessionHasNoErrors();
-        $this->assertSame(['Cộng tác viên', 'Đại lý', 'Cửa hàng'], Level::ordered()->pluck('name')->slice(2, 3)->values()->all());
+        $this->assertSame(['Cộng tác viên', 'VP tỉnh cấp 1', 'Đại lý'], Level::ordered()->pluck('name')->slice(2, 3)->values()->all());
     }
 
     public function test_level_with_members_cannot_be_turned_off(): void
@@ -201,18 +201,18 @@ class AffiliateConfigTest extends TestCase
         Member::factory()->count(2)->create(['level_id' => $this->level('Đại lý')->id]);
 
         $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['active' => null]]))
-            ->assertSessionHasErrors(['levels.4.active' => 'Không tắt được: đang có 2 thành viên ở cấp này.']);
+            ->assertSessionHasErrors(['levels.3.active' => 'Không tắt được: đang có 2 thành viên ở cấp này.']);
         $this->assertTrue($this->level('Đại lý')->active);
         // Cấp chưa có ai vẫn tắt được
-        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['active' => null]]))->assertSessionHasNoErrors();
-        $this->assertFalse($this->level('Cửa hàng')->active);
+        $this->actingAs($root)->put('/backend/affiliate/levels', $this->levelForm(['Cộng tác viên' => ['active' => null]]))->assertSessionHasNoErrors();
+        $this->assertFalse($this->level('Cộng tác viên')->active);
     }
 
     public function test_levels_page_redisplays_input_after_error(): void
     {
         $root = $this->root();
         $html = $this->actingAs($root)->from('/backend/affiliate/levels')->followingRedirects()
-            ->put('/backend/affiliate/levels', $this->levelForm(['Cửa hàng' => ['threshold_amount' => '2.000.000']], [['name' => 'Mới', 'sort_order' => '9', 'threshold_amount' => '900.000.000', 'active' => '1']]))
+            ->put('/backend/affiliate/levels', $this->levelForm(['Đại lý' => ['threshold_amount' => '2.000.000']], [['name' => 'Mới', 'sort_order' => '9', 'threshold_amount' => '900.000.000', 'active' => '1']]))
             ->assertOk()->getContent();
 
         $this->assertStringContainsString('value="2.000.000"', $html);

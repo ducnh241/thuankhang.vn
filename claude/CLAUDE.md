@@ -10,7 +10,7 @@ Website bán hàng có hệ thống affiliate 2 tầng (F1/F2), tự động lê
 Nếu đặc tả và file Excel mâu thuẫn, hỏi lại người dùng, không tự suy đoán.
 
 ## Quy tắc nghiệp vụ cốt lõi (đã chốt)
-- Cấp bậc (mốc cộng dồn tiền tự mua, cấu hình được): Chưa kích hoạt (0) → Nhân viên → CTV 3tr → Cửa hàng 10tr → Đại lý 15tr → VP tỉnh 150tr / 300tr.
+- Cấp bậc (mốc cộng dồn tiền tự mua, cấu hình được): Chưa kích hoạt (0) → Nhân viên → CTV 3tr → Đại lý 15tr → VP tỉnh 150tr / 300tr. (Đã bỏ cấp Cửa hàng 10tr — 10/11/2026.)
 - Lên cấp tự động ngay khi đơn được thanh toán. **Không bao giờ hạ cấp.**
 - Hoa hồng 2 tầng F1/F2, tỉ lệ theo **cấp của người hưởng** (ma trận cấu hình; mặc định F1: CTV 10%, Đại lý 20%). Áp dụng cho mọi đơn, kể cả mua lại.
 - Người hưởng phải **đã kích hoạt** (≥1 đơn thanh toán) và không bị khoá; nếu không → ledger `skipped` kèm lý do.

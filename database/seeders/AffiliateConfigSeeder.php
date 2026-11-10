@@ -14,15 +14,14 @@ use Illuminate\Support\Facades\DB;
  */
 class AffiliateConfigSeeder extends Seeder
 {
-    /** [tên, thứ tự, mốc (đ), là VP]. Mốc "Nhân viên" và tên 2 mức VP chờ khách xác nhận (câu hỏi mở #4). */
+    /** [tên, thứ tự, mốc (đ), là VP]. Mốc "Nhân viên" và tên 2 mức VP chờ khách xác nhận (câu hỏi mở #4). Đã bỏ cấp "Cửa hàng" (10tr). */
     public const LEVELS = [
         ['Chưa kích hoạt', 0, 0, false],
         ['Nhân viên', 1, 1, false],
         ['Cộng tác viên', 2, 3_000_000, false],
-        ['Cửa hàng', 3, 10_000_000, false],
-        ['Đại lý', 4, 15_000_000, false],
-        ['VP tỉnh cấp 1', 5, 150_000_000, true],
-        ['VP tỉnh cấp 2', 6, 300_000_000, true],
+        ['Đại lý', 3, 15_000_000, false],
+        ['VP tỉnh cấp 1', 4, 150_000_000, true],
+        ['VP tỉnh cấp 2', 5, 300_000_000, true],
     ];
 
     /** Tỉ lệ F1 mặc định theo tên cấp; cấp / tầng khác = 0 (admin cấu hình). */
