@@ -62,3 +62,22 @@
 .rich-text th {
   @apply border border-slate-200 px-3 py-2;
 }
+
+/* Chọn số sao (form đánh giá): radio ẩn, nhãn ★ xếp ngược để tô các sao bên trái sao đang chọn / rê chuột */
+.star-input {
+  @apply inline-flex flex-row-reverse justify-end gap-1;
+}
+.star-input input {
+  @apply sr-only;
+}
+.star-input label {
+  @apply cursor-pointer text-3xl leading-none text-slate-300 transition;
+}
+.star-input input:checked ~ label,
+.star-input label:hover,
+.star-input label:hover ~ label {
+  @apply text-amber-400;
+}
+.star-input input:focus-visible + label {
+  @apply rounded outline-2 outline-brand-500;
+}

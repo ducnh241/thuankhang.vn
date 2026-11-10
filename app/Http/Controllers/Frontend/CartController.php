@@ -33,17 +33,33 @@ class CartController extends Controller
         if (! $product) {
             return back()->with('error', 'Sản phẩm không còn bán.');
         }
-        $cart->add($product->id, (int) ($data['qty'] ?? 1));
+        $qty = (int) ($data['qty'] ?? 1);
+        if ($product->isOutOfStock()) {
+            return back()->with('error', "“{$product->name}” đã hết hàng.");
+        }
+        $inCart = $cart->raw()[$product->id] ?? 0;
+        if ($product->tracksStock() && $inCart + $qty > $product->stock) {
+            return back()->with('error', "“{$product->name}” chỉ còn {$product->stock} sản phẩm".($inCart ? " (giỏ đã có {$inCart})." : '.'));
+        }
+        $cart->add($product->id, $qty);
 
         return $request->boolean('buy_now')
             ? redirect()->route('shop.checkout')
             : back()->with('success', "Đã thêm “{$product->name}” vào giỏ hàng.");
     }
 
-    public function update(Request $request, Cart $cart, int $product): RedirectResponse
+    /** Sửa số lượng; vượt tồn kho thì đặt bằng số còn lại và báo. */
+    public function update(Request $request, Cart $cart, Catalog $catalog, int $product): RedirectResponse
     {
         $data = $request->validate(['qty' => ['required', 'integer', 'min:0', 'max:'.Cart::MAX_QTY]]);
-        $cart->set($product, (int) $data['qty']);
+        $qty = (int) $data['qty'];
+        $item = $catalog->products()->whereKey($product)->first(['id', 'name', 'stock']);
+        if ($item?->tracksStock() && $qty > $item->stock) {
+            $cart->set($product, $item->stock);
+
+            return redirect()->route('shop.cart')->with('error', $item->stock > 0 ? "“{$item->name}” chỉ còn {$item->stock} sản phẩm." : "“{$item->name}” đã hết hàng.");
+        }
+        $cart->set($product, $qty);
 
         return redirect()->route('shop.cart');
     }

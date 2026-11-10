@@ -11,6 +11,7 @@ use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\ProductController;
+use App\Http\Controllers\Frontend\ProductReviewController;
 use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Middleware\CaptureReferralCode;
 use App\Http\Middleware\EnsureMemberActive;
@@ -42,6 +43,7 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
         Route::get('tai-khoan', AccountController::class)->name('member.account');
         Route::get('thanh-toan', [CheckoutController::class, 'show'])->name('shop.checkout');
         Route::post('thanh-toan', [CheckoutController::class, 'store'])->name('shop.checkout.store')->middleware('throttle:10,1');
+        Route::post(Product::PATH.'/{slug}/danh-gia', [ProductReviewController::class, 'store'])->name('shop.product.review')->middleware('throttle:10,1');
         Route::get('don-hang', [OrderController::class, 'index'])->name('member.orders.index');
         Route::get('don-hang/{order}', [OrderController::class, 'show'])->name('member.orders.show');
         Route::post('don-hang/{order}/da-chuyen-khoan', [OrderController::class, 'confirmTransfer'])->name('member.orders.transferred')->middleware('throttle:10,1');

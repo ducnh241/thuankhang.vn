@@ -26,12 +26,15 @@
               <div class="min-w-0 flex-1">
                 <a href="{{ $product->url() }}" class="line-clamp-2 font-medium text-slate-900 hover:text-brand-700">{{ $product->name }}</a>
                 <div class="mt-1 text-sm text-slate-500">{{ Money::format($product->price) }}đ</div>
+                @if ($product->tracksStock() && $line['qty'] > $product->stock)
+                  <div class="mt-1 text-xs font-medium text-rose-600" data-stock-warning>{{ $product->stock > 0 ? 'Chỉ còn '.$product->stock.' sản phẩm — giảm số lượng để đặt hàng' : 'Đã hết hàng — xóa khỏi giỏ để đặt hàng' }}</div>
+                @endif
                 <div class="mt-3 flex flex-wrap items-center gap-3">
                   <form method="POST" action="{{ route('shop.cart.update', $product->id) }}" class="flex items-center gap-2">
                     @csrf
                     @method('PATCH')
                     <label for="qty-{{ $product->id }}" class="sr-only">Số lượng</label>
-                    <input id="qty-{{ $product->id }}" type="number" name="qty" value="{{ $line['qty'] }}" min="1" max="{{ \App\Support\Cart::MAX_QTY }}" data-autosubmit
+                    <input id="qty-{{ $product->id }}" type="number" name="qty" value="{{ $line['qty'] }}" min="1" max="{{ max(1, $product->maxOrderQty()) }}" data-autosubmit
                       class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-center text-sm outline-none focus:border-brand-500" />
                     <noscript><button type="submit" class="text-sm text-brand-700">Cập nhật</button></noscript>
                   </form>

@@ -64,6 +64,13 @@ return [
                     'icon' => 'container',
                 ],
                 [
+                    'label' => 'Reviews',
+                    'route' => 'backend.reviews.index',
+                    'active' => 'backend.reviews.*',
+                    'can' => 'review',
+                    'icon' => 'star',
+                ],
+                [
                     'label' => 'Pickup points',
                     'route' => 'backend.pickup-points.index',
                     'active' => 'backend.pickup-points.*',

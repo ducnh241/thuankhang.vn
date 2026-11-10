@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Cart;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +27,7 @@ class Product extends Model
 
     public const MAX_IMAGES = 10;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'price', 'vat_rate', 'short_description', 'description', 'status', 'is_featured', 'sort_order'];
+    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'vat_rate', 'stock', 'short_description', 'description', 'status', 'is_featured', 'sort_order'];
 
     protected $attributes = [
         'status' => true,
@@ -39,6 +40,7 @@ class Product extends Model
         return [
             'price' => 'integer',
             'vat_rate' => 'decimal:2',
+            'stock' => 'integer',
             'status' => 'boolean',
             'is_featured' => 'boolean',
             'sort_order' => 'integer',
@@ -66,10 +68,38 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    /** Dữ liệu cho thẻ sản phẩm: ảnh đại diện + lượt bán (`sold_qty` = tổng số lượng trong các đơn đã thanh toán). */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    /**
+     * Dữ liệu cho thẻ sản phẩm: ảnh đại diện, lượt bán (`sold_qty` = tổng số lượng trong các đơn đã thanh toán), điểm đánh
+     * giá (`rating_avg`, `rating_count` — chỉ đánh giá đang hiện).
+     */
     public function scopeForCard(Builder $query): void
     {
-        $query->with('cover')->withSum(['orderItems as sold_qty' => fn ($q) => $q->whereHas('order', fn ($o) => $o->whereNotNull('paid_at'))], 'qty');
+        $query->with('cover')
+            ->withSum(['orderItems as sold_qty' => fn ($q) => $q->whereHas('order', fn ($o) => $o->whereNotNull('paid_at'))], 'qty')
+            ->withAvg(['reviews as rating_avg' => fn ($q) => $q->where('is_visible', true)], 'rating')
+            ->withCount(['reviews as rating_count' => fn ($q) => $q->where('is_visible', true)]);
+    }
+
+    /** Có theo dõi tồn kho không (stock = NULL: không giới hạn số lượng bán). */
+    public function tracksStock(): bool
+    {
+        return $this->stock !== null;
+    }
+
+    public function isOutOfStock(): bool
+    {
+        return $this->tracksStock() && $this->stock <= 0;
+    }
+
+    /** Số lượng tối đa được đặt một lần: min(giới hạn giỏ, tồn kho nếu có theo dõi). */
+    public function maxOrderQty(): int
+    {
+        return $this->tracksStock() ? max(0, min(Cart::MAX_QTY, $this->stock)) : Cart::MAX_QTY;
     }
 
     public function scopeOnSale(Builder $query): void

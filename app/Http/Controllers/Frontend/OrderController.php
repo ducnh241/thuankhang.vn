@@ -68,6 +68,7 @@ class OrderController extends Controller
             }
             $text = Order::CANCEL_SOURCES[Order::CANCEL_CUSTOMER].($reason ? ': '.trim($reason) : '');
             $order->forceFill(['status' => Order::STATUS_CANCELLED, 'cancelled_at' => now(), 'cancel_source' => Order::CANCEL_CUSTOMER, 'cancel_reason' => $text])->save();
+            $order->load('items')->releaseStock();
             AuditLog::record('updated', $order, ['old' => ['status' => Order::STATUS_NEW], 'new' => ['status' => Order::STATUS_CANCELLED]], "Đơn {$order->code}: {$text}");
 
             return true;

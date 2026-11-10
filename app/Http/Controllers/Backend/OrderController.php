@@ -126,6 +126,8 @@ class OrderController extends Controller
                 'status' => Order::STATUS_PAID, 'paid_at' => now(), 'paid_amount' => (int) $data['paid_amount'],
                 'payment_reference' => $reference, 'payment_note' => $note ?: null, 'confirmed_by' => $request->user('web')->id,
             ])->save();
+            // Đơn hủy được khôi phục: giữ hàng lại (tồn có thể âm nếu đã bán hết — kho cần kiểm tra)
+            $order->load('items')->takeStock();
             AuditLog::record('updated', $order,
                 ['old' => ['status' => $old], 'new' => ['status' => Order::STATUS_PAID, 'paid_amount' => (int) $data['paid_amount'], 'payment_reference' => $reference]],
                 "Xác nhận đã thanh toán đơn {$order->code} — GD {$reference}, ".Money::format($data['paid_amount']).' đ'
@@ -203,6 +205,7 @@ class OrderController extends Controller
             $old = $order->status;
             $reason = trim($data['reason']);
             $order->forceFill(['status' => Order::STATUS_CANCELLED, 'cancelled_at' => now(), 'cancel_source' => Order::CANCEL_ADMIN, 'cancel_reason' => $reason])->save();
+            $order->load('items')->releaseStock();
             AuditLog::record('updated', $order, ['old' => ['status' => $old], 'new' => ['status' => Order::STATUS_CANCELLED]],
                 'Hủy đơn '.$order->code.'. Lý do: '.$reason);
 

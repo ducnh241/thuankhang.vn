@@ -151,3 +151,25 @@ if (checkout) {
   syncDelivery();
   syncInfo();
 }
+
+// Chọn số lượng (trang sản phẩm): nút −/+ trong [data-qty], giữ trong khoảng min–max của ô số
+const syncQty = box => {
+  const input = box.querySelector('input');
+  const value = Number(input.value) || 1;
+  box.querySelector('[data-qty-step="-1"]').disabled = value <= Number(input.min || 1);
+  box.querySelector('[data-qty-step="1"]').disabled = value >= Number(input.max || 99);
+};
+document.querySelectorAll('[data-qty]').forEach(box => {
+  syncQty(box);
+  box.querySelector('input').addEventListener('input', () => syncQty(box));
+});
+document.addEventListener('click', e => {
+  const step = e.target.closest('[data-qty-step]');
+  if (!step) return;
+  const box = step.closest('[data-qty]');
+  const input = box.querySelector('input');
+  const min = Number(input.min || 1);
+  const max = Number(input.max || 99);
+  input.value = Math.min(max, Math.max(min, (Number(input.value) || min) + Number(step.dataset.qtyStep)));
+  syncQty(box);
+});

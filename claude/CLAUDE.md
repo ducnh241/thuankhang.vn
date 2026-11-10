@@ -18,7 +18,7 @@ Nếu đặc tả và file Excel mâu thuẫn, hỏi lại người dùng, khôn
 - Cơ sở hoa hồng = giá trước VAT × (1 − 5% phí DN), không tính ship. Làm tròn xuống từng dòng.
 - Người giới thiệu gắn cố định khi đăng ký (link `?ref=CODE`, cookie 30 ngày).
 - Thanh toán: VietQR động (số tiền + mã đơn), tiền về TK công ty, xác nhận qua webhook ngân hàng (SePay/PayOS/Casso), idempotent theo mã giao dịch. Không khớp → hàng chờ xử lý tay.
-- Nhận hàng: giao tận nơi (khách trả ship) hoặc nhận tại VP tỉnh (hàng của VP, hệ thống không quản lý tồn kho).
+- Nhận hàng: giao tận nơi (khách trả ship) hoặc nhận tại VP tỉnh (hàng của VP). Tồn kho theo dõi tùy chọn từng sản phẩm (để trống = không theo dõi) — tồn chung của công ty, trừ cho mọi đơn kể cả nhận tại VP (giả định, chờ xác nhận).
 - Hoa hồng vào ví ngay. Rút tối thiểu 500k, cần KYC (CCCD + STK chính chủ, 1 CCCD = 1 tài khoản = 1 STK). Thuế TNCN khấu trừ riêng khi rút.
 - Mọi tỉ lệ, mốc, tham số đều cấu hình trong Admin; đơn lưu snapshot tỉ lệ/cấp.
 
@@ -71,6 +71,18 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   thanh toán) hoặc lời mời đăng ký; hàng nổi bật cuộn ngang; hàng link danh mục gốc (sang trang danh mục) + toàn bộ SP "N sản phẩm" + sắp
   xếp; thẻ SP có lượt bán (`Product::scopeForCard` — `sold_qty` chỉ tính đơn đã thanh toán) và nút "+" thêm nhanh vào giỏ;
   điện thoại có thanh điều hướng dưới (Trang chủ / Giỏ hàng / Đơn hàng / Tài khoản). Chưa hiện tỉ lệ hoa hồng theo SP (chờ câu 9).
+- Chi tiết sản phẩm theo Shoplife + S2: lượt bán, chọn số lượng −/+, Thêm vào giỏ / Mua ngay (điện thoại: thanh mua cố định
+  phía dưới), Chat Zalo (`social_zalo` trong Cài đặt website, chỉ link http(s)) / gọi hotline, ô giới thiệu sản phẩm: thành
+  viên đã kích hoạt có link `/san-pham/{slug}?ref=MÃ` + nút sao chép; chưa kích hoạt / khách chỉ thấy lời nhắc.
+- Thương hiệu / xuất xứ / tồn kho: cột `products.brand`, `origin`, `stock` (NULL = không theo dõi), nhập ở form sản phẩm admin.
+  Tồn kho: giỏ chặn thêm quá số còn; checkout khóa dòng sản phẩm (`lockForUpdate`) rồi kiểm tra, trừ tồn khi tạo đơn
+  (`Order::takeStock()`, cờ `orders.stock_reserved`); hủy đơn (khách / admin / `orders:expire`) trả lại (`releaseStock()`,
+  không trả hai lần); khôi phục đơn hủy thành đã thanh toán thì trừ lại (tồn có thể âm). Hết hàng: thẻ SP mờ + nút "+" khóa,
+  trang SP "Hết hàng".
+- Đánh giá sao: bảng `product_reviews` (1–5 sao + nhận xét, unique product + member, `is_visible`). Chỉ thành viên có đơn đã
+  thanh toán chứa SP mới gửi được (`ProductReview::canReview`), gửi lại = sửa. Trang SP: điểm TB, phân bố sao, 20 đánh giá
+  mới nhất; thẻ SP hiện ★ điểm TB. Admin /backend/review: lọc, ẩn / hiện (quyền `review`, `review/moderate` — Vận hành,
+  CSKH), ghi nhật ký tay (`ProductReview` thuộc `AuditLog::MANUAL_SUBJECTS`). Nhóm quyền cũ trên DB cần tick thêm 2 quyền này.
 
 ## Trạng thái đơn hàng (đã chốt 04/11/2026)
 `App\Models\Order`, cột `status`. Mọi lần đổi trạng thái chạy trong transaction có `lockForUpdate` và ghi `AuditLog` tay

@@ -48,6 +48,24 @@ class ProductManagementTest extends TestCase
         return UploadedFile::fake()->image($name, 400, 400);
     }
 
+    public function test_brand_origin_and_stock_fields(): void
+    {
+        $ops = $this->ops();
+        $this->actingAs($ops)->post('/backend/product', $this->form(['brand' => ' Blackmores ', 'origin' => 'Úc', 'stock' => '1.250']))->assertSessionHasNoErrors();
+        $product = Product::sole();
+        $this->assertSame(['Blackmores', 'Úc', 1250], [$product->brand, $product->origin, $product->stock]);
+        $this->actingAs($ops)->get(route('backend.products.edit', $product))->assertSee('value="Blackmores"', false)->assertSee('value="1250"', false);
+        $this->get('/backend/product')->assertSee('1.250');
+
+        // Để trống tồn kho = không theo dõi; số âm / chữ báo lỗi
+        $this->put(route('backend.products.update', $product), $this->form(['slug' => $product->slug, 'stock' => '', 'brand' => '', 'origin' => '']))->assertSessionHasNoErrors();
+        $this->assertSame([null, null, null], [$product->refresh()->stock, $product->brand, $product->origin]);
+        $this->put(route('backend.products.update', $product), $this->form(['slug' => $product->slug, 'stock' => '-1']))->assertSessionHasErrors('stock');
+        $this->put(route('backend.products.update', $product), $this->form(['slug' => $product->slug, 'stock' => 'abc']))->assertSessionHasErrors('stock');
+        $this->put(route('backend.products.update', $product), $this->form(['slug' => $product->slug, 'stock' => '0']))->assertSessionHasNoErrors();
+        $this->get('/backend/product')->assertSee('Hết hàng');
+    }
+
     public function test_create_product_with_images(): void
     {
         $ops = $this->ops();

@@ -7,6 +7,7 @@ use App\Http\Requests\Frontend\CheckoutRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PickupPoint;
+use App\Models\Product;
 use App\Support\AffiliateSettings;
 use App\Support\Cart;
 use Illuminate\Http\RedirectResponse;
@@ -56,6 +57,13 @@ class CheckoutController extends Controller
         $shipping = $ship ? (int) AffiliateSettings::get('shipping_fee') : 0;
 
         $order = DB::transaction(function () use ($request, $lines, $ship, $goods, $shipping) {
+            // Tồn kho: khóa các sản phẩm có theo dõi tồn rồi mới kiểm tra (hai khách đặt cùng lúc không bán quá số còn)
+            $stocks = Product::whereKey($lines->pluck('product.id'))->whereNotNull('stock')->lockForUpdate()->pluck('stock', 'id');
+            $short = $lines->filter(fn ($line) => $stocks->has($line['product']->id) && $line['qty'] > $stocks[$line['product']->id]);
+            if ($short->isNotEmpty()) {
+                return $short->map(fn ($line) => $line['product']->name.' (còn '.max(0, $stocks[$line['product']->id]).')')->implode(', ');
+            }
+
             $order = Order::create([
                 'code' => Order::generateCode(),
                 'member_id' => $request->user('member')->id,
@@ -80,9 +88,13 @@ class CheckoutController extends Controller
                     'vat_amount' => OrderItem::vatOf($line['line_amount'], $product->vat_rate),
                 ]);
             }
+            $order->load('items')->takeStock();
 
             return $order;
         });
+        if (is_string($order)) {
+            return redirect()->route('shop.cart')->with('error', 'Không đủ hàng: '.$order.'. Vui lòng giảm số lượng.');
+        }
         $cart->clear();
 
         return redirect()->route('member.orders.show', $order)->with('success', "Đã đặt đơn {$order->code}. Vui lòng chuyển khoản để hoàn tất.");

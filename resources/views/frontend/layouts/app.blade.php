@@ -128,7 +128,7 @@
         @if ($socials->isNotEmpty())
           <div class="mt-4 flex flex-wrap gap-3 text-sm">
             @foreach ($socials as $key => [$label])
-              <a href="{{ $site['social_'.$key] }}" target="_blank" rel="noopener" class="rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:border-brand-500 hover:text-brand-700">{{ $label }}</a>
+              <a href="{{ \App\Models\Menu::safeLink($site['social_'.$key])[0] }}" target="_blank" rel="noopener" class="rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:border-brand-500 hover:text-brand-700">{{ $label }}</a>
             @endforeach
           </div>
         @endif

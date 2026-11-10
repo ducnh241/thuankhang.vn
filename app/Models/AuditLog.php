@@ -43,11 +43,12 @@ class AuditLog extends Model
         Member::class => 'Thành viên',
         PickupPoint::class => 'Điểm nhận hàng',
         Order::class => 'Đơn hàng',
+        ProductReview::class => 'Đánh giá sản phẩm',
         ProductImage::class => 'Ảnh sản phẩm',
     ];
 
     /** Loại trong SUBJECTS nhưng không gắn observer: controller tự ghi một dòng tóm tắt (vd cả phiên bản tỉ lệ). */
-    public const MANUAL_SUBJECTS = [CommissionRate::class, Order::class];
+    public const MANUAL_SUBJECTS = [CommissionRate::class, Order::class, ProductReview::class];
 
     protected $fillable = [
         'user_id', 'user_name', 'action', 'auditable_type', 'auditable_id', 'description', 'changes',

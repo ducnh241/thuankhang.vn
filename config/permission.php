@@ -103,6 +103,13 @@ return [
             'cancel' => 'Huỷ đơn chưa thanh toán',
         ],
     ],
+    'review' => [
+        'label' => 'Đánh giá sản phẩm',
+        'section' => 'Bán hàng',
+        'items' => [
+            'moderate' => 'Ẩn / hiện đánh giá',
+        ],
+    ],
     'member' => [
         'label' => 'Thành viên',
         'section' => 'Thành viên',

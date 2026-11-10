@@ -161,7 +161,7 @@
       </div>
 
       <div class="ant-card ant-card-bordered" data-card="price">
-        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Giá bán</div></div></div>
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Giá bán & tồn kho</div></div></div>
         <div class="ant-card-body">
           <div class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             <div class="ant-row ant-form-item{{ $hasError('price') }}" data-required="Nhập giá bán.">
@@ -181,6 +181,16 @@
                 </div></div>
                 {{ ant_form_error($errors->first('vat_rate')) }}
               </div>
+            </div>
+          </div>
+          <div class="ant-row ant-form-item{{ $hasError('stock') }}">
+            <div class="ant-col ant-form-item-label"><label for="product_stock" title="Tồn kho">Tồn kho</label></div>
+            <div class="ant-col ant-form-item-control">
+              <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                <input type="text" id="product_stock" name="stock" value="{{ $old('stock') }}" class="ant-input tabular-nums sm:max-w-60" inputmode="numeric" placeholder="Để trống = không theo dõi" />
+              </div></div>
+              {{ ant_form_error($errors->first('stock')) }}
+              <div class="ant-form-item-extra">Tự trừ khi khách đặt đơn, cộng lại khi đơn bị hủy. Hết hàng (0) thì khách không đặt được.</div>
             </div>
           </div>
           {{-- Tính sẵn theo công thức đặc tả 8.3 (product-form.js cập nhật khi gõ) --}}
@@ -243,6 +253,24 @@
                 <input type="text" id="product_sku" name="sku" value="{{ $old('sku') }}" class="ant-input uppercase" maxlength="50" placeholder="VD: VITC-1000" />
               </div></div>
               {{ ant_form_error($errors->first('sku')) }}
+            </div>
+          </div>
+          <div class="ant-row ant-form-item{{ $hasError('brand') }}">
+            <div class="ant-col ant-form-item-label"><label for="product_brand" title="Thương hiệu">Thương hiệu</label></div>
+            <div class="ant-col ant-form-item-control">
+              <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                <input type="text" id="product_brand" name="brand" value="{{ $old('brand') }}" class="ant-input" maxlength="100" placeholder="VD: Blackmores" />
+              </div></div>
+              {{ ant_form_error($errors->first('brand')) }}
+            </div>
+          </div>
+          <div class="ant-row ant-form-item{{ $hasError('origin') }}">
+            <div class="ant-col ant-form-item-label"><label for="product_origin" title="Xuất xứ">Xuất xứ</label></div>
+            <div class="ant-col ant-form-item-control">
+              <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                <input type="text" id="product_origin" name="origin" value="{{ $old('origin') }}" class="ant-input" maxlength="100" placeholder="VD: Úc" />
+              </div></div>
+              {{ ant_form_error($errors->first('origin')) }}
             </div>
           </div>
           <div class="ant-row ant-form-item mb-0{{ $hasError('sort_order') }}">

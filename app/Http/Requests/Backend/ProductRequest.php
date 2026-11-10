@@ -29,6 +29,9 @@ class ProductRequest extends FormRequest
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('type', Category::TYPE_PRODUCT)],
             'price' => ['required', 'integer', 'min:0', 'max:100000000000'],
             'vat_rate' => ['required', 'string'],
+            'brand' => ['nullable', 'string', 'max:100'],
+            'origin' => ['nullable', 'string', 'max:100'],
+            'stock' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:500000'],
             'status' => ['required', 'boolean'],
@@ -45,7 +48,7 @@ class ProductRequest extends FormRequest
     {
         return [
             'name' => 'tên sản phẩm', 'slug' => 'đường dẫn', 'sku' => 'mã sản phẩm', 'category_id' => 'danh mục', 'price' => 'giá bán',
-            'vat_rate' => 'VAT', 'short_description' => 'mô tả ngắn', 'description' => 'mô tả', 'sort_order' => 'thứ tự', 'images' => 'ảnh', 'images.*' => 'ảnh',
+            'vat_rate' => 'VAT', 'brand' => 'thương hiệu', 'origin' => 'xuất xứ', 'stock' => 'tồn kho', 'short_description' => 'mô tả ngắn', 'description' => 'mô tả', 'sort_order' => 'thứ tự', 'images' => 'ảnh', 'images.*' => 'ảnh',
         ];
     }
 
@@ -59,6 +62,8 @@ class ProductRequest extends FormRequest
             'category_id.required' => 'Chọn danh mục.',
             'category_id.exists' => 'Danh mục không hợp lệ.',
             'price.integer' => 'Giá bán là số tiền nguyên (đồng).',
+            'stock.integer' => 'Tồn kho là số nguyên (để trống = không theo dõi).',
+            'stock.min' => 'Tồn kho không được âm.',
             'images.max' => 'Tối đa '.Product::MAX_IMAGES.' ảnh.',
             'images.*.image' => 'Chọn ảnh PNG, JPG hoặc WEBP.',
             'images.*.mimes' => 'Chọn ảnh PNG, JPG hoặc WEBP.',
@@ -74,6 +79,11 @@ class ProductRequest extends FormRequest
         $price = $this->input('price');
         if (is_string($price) && trim($price) !== '' && ($parsed = Money::parse($price)) !== null && ! str_contains($parsed, '.')) {
             $data['price'] = $parsed;
+        }
+        $stock = $this->input('stock');
+        if (is_string($stock)) {
+            $stock = str_replace(['.', ' '], '', trim($stock));
+            $data['stock'] = $stock === '' ? null : $stock;
         }
         if (is_string($sku = $this->input('sku'))) {
             $data['sku'] = trim($sku) === '' ? null : Str::upper(trim($sku));
@@ -119,6 +129,9 @@ class ProductRequest extends FormRequest
             'category_id' => (int) $this->validated('category_id'),
             'price' => (int) $this->validated('price'),
             'vat_rate' => Percent::parse($this->validated('vat_rate')),
+            'brand' => $trim($this->validated('brand')),
+            'origin' => $trim($this->validated('origin')),
+            'stock' => $this->validated('stock') === null ? null : (int) $this->validated('stock'),
             'short_description' => $trim($this->validated('short_description')),
             // Trình soạn thảo trống vẫn gửi "<p></p>" → coi như không có mô tả
             'description' => trim(strip_tags((string) $description, '<img><iframe><video><hr>')) === '' ? null : $description,

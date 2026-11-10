@@ -33,6 +33,7 @@ class ExpireOverdueOrders extends Command
                             'status' => Order::STATUS_CANCELLED, 'cancelled_at' => $order->expires_at,
                             'cancel_source' => Order::CANCEL_EXPIRED, 'cancel_reason' => $reason,
                         ])->save();
+                        $order->load('items')->releaseStock();
                         AuditLog::record('updated', $order, ['old' => ['status' => Order::STATUS_NEW], 'new' => ['status' => Order::STATUS_CANCELLED]],
                             "Đơn {$order->code}: tự hủy — {$reason}");
 

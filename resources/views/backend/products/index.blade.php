@@ -111,6 +111,7 @@
                   <th class="ant-table-cell max-md:hidden" data-col="category">Danh mục</th>
                   <th class="ant-table-cell whitespace-nowrap" data-col="price" style="text-align: right">Giá (gồm VAT)</th>
                   <th class="ant-table-cell max-md:hidden" data-col="vat" style="text-align: right">VAT</th>
+                  <th class="ant-table-cell max-md:hidden" data-col="stock" style="text-align: right">Tồn kho</th>
                   <th class="ant-table-cell" data-col="status">Trạng thái</th>
                   <th class="ant-table-cell product-actions-col max-sm:hidden" style="text-align: right">Thao tác</th>
                 </tr>
@@ -142,6 +143,15 @@
                     <td class="ant-table-cell max-md:hidden" data-col="category">{{ $product->category?->name ?? '—' }}</td>
                     <td class="ant-table-cell tabular-nums whitespace-nowrap" data-col="price" style="text-align: right">{{ Money::format($product->price) }} đ</td>
                     <td class="ant-table-cell tabular-nums max-md:hidden" data-col="vat" style="text-align: right">{{ Percent::format($product->vat_rate) }}%</td>
+                    <td class="ant-table-cell tabular-nums max-md:hidden" data-col="stock" style="text-align: right">
+                      @if (! $product->tracksStock())
+                        <span class="text-[rgba(0,0,0,0.45)]">—</span>
+                      @elseif ($product->isOutOfStock())
+                        <span class="ant-tag ant-tag-red m-0">Hết hàng</span>
+                      @else
+                        {{ Money::format($product->stock) }}
+                      @endif
+                    </td>
                     <td class="ant-table-cell" data-col="status">{!! $statusTag($product) !!}</td>
                     <td class="ant-table-cell product-actions-col max-sm:hidden" style="text-align: right">
                       <div class="product-row-actions">
@@ -159,7 +169,7 @@
                   </tr>
                 @empty
                   <tr class="ant-table-placeholder">
-                    <td colspan="{{ $canDelete ? 7 : 6 }}" class="ant-table-cell">
+                    <td colspan="{{ $canDelete ? 8 : 7 }}" class="ant-table-cell">
                       <div class="ant-empty ant-empty-normal">
                         <div class="ant-empty-image">{{ ant_icon('shop', '', 'font-size: 40px; color: rgba(0, 0, 0, 0.25)') }}</div>
                         @if (array_filter($filter))

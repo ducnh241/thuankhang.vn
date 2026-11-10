@@ -171,6 +171,33 @@ class StorefrontTest extends TestCase
         $this->get('/san-pham/khong-co')->assertNotFound();
     }
 
+    public function test_product_page_sold_count_share_link_and_chat(): void
+    {
+        $product = $this->product(['name' => 'Trà Gừng', 'slug' => 'tra-gung']);
+        $paid = Order::factory()->status(Order::STATUS_PAID)->create();
+        $paid->items()->create(['product_id' => $product->id, 'product_name' => 'Trà Gừng', 'qty' => 7, 'unit_price' => 1, 'vat_rate' => 0, 'line_amount' => 7, 'vat_amount' => 0]);
+        Setting::put('social_zalo', 'https://zalo.me/0968057988');
+        $shareMarker = 'Sao chép link giới thiệu';
+
+        // Khách: lượt bán, chọn số lượng, nút mua (cả thanh dưới điện thoại), chat Zalo; mời đăng ký thay vì link
+        $this->get('/san-pham/tra-gung')->assertOk()->assertSee('Đã bán 7')->assertSee('data-qty-step', false)
+            ->assertSee('form="buy-form" name="buy_now"', false)->assertSee('href="https://zalo.me/0968057988"', false)
+            ->assertSee('Đăng ký thành viên')->assertDontSee($shareMarker);
+
+        // Thành viên chưa kích hoạt: chưa có link
+        $inactive = Member::factory()->create(['activated_at' => null]);
+        $this->actingAs($inactive, 'member')->get('/san-pham/tra-gung')->assertSee('Mua đơn hàng đầu tiên để kích hoạt')->assertDontSee($shareMarker);
+
+        // Đã kích hoạt: link sản phẩm kèm ?ref=mã của mình
+        $active = Member::factory()->create(['referral_code' => 'GIOITHIEU1', 'activated_at' => now()]);
+        $this->actingAs($active, 'member')->get('/san-pham/tra-gung')->assertSee($shareMarker)
+            ->assertSee(url('/san-pham/tra-gung').'?ref=GIOITHIEU1', false);
+
+        // Zalo không phải link an toàn: không hiện nút chat
+        Setting::put('social_zalo', 'javascript:alert(1)');
+        $this->get('/san-pham/tra-gung')->assertDontSee('data-chat', false)->assertDontSee('javascript:alert', false);
+    }
+
     public function test_frontend_and_backend_load_their_own_assets(): void
     {
         // Website: chỉ build frontend (vite.frontend.config.js); trang quản trị: chỉ build admin

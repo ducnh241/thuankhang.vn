@@ -87,6 +87,7 @@ class Order extends Model
             'cancelled_at' => 'datetime',
             'confirm_requested_at' => 'datetime',
             'paid_amount' => 'integer',
+            'stock_reserved' => 'boolean',
         ];
     }
 
@@ -181,6 +182,33 @@ class Order extends Model
     public function canConfirmPayment(): bool
     {
         return in_array($this->status, [self::STATUS_NEW, self::STATUS_AWAITING, self::STATUS_CANCELLED], true);
+    }
+
+    /**
+     * Giữ hàng: trừ tồn kho các sản phẩm có theo dõi tồn (gọi lúc đặt đơn, và khi khôi phục đơn đã hủy thành đã thanh toán).
+     * Gọi trong transaction đã khóa đơn. Không làm gì nếu đơn đang giữ hàng.
+     */
+    public function takeStock(): void
+    {
+        if ($this->stock_reserved) {
+            return;
+        }
+        foreach ($this->items as $item) {
+            Product::withTrashed()->whereKey($item->product_id)->whereNotNull('stock')->decrement('stock', $item->qty);
+        }
+        $this->forceFill(['stock_reserved' => true])->save();
+    }
+
+    /** Trả hàng về kho khi đơn bị hủy (khách / admin / quá hạn). Không làm gì nếu đơn không giữ hàng. */
+    public function releaseStock(): void
+    {
+        if (! $this->stock_reserved) {
+            return;
+        }
+        foreach ($this->items as $item) {
+            Product::withTrashed()->whereKey($item->product_id)->whereNotNull('stock')->increment('stock', $item->qty);
+        }
+        $this->forceFill(['stock_reserved' => false])->save();
     }
 
     public function isPickup(): bool

@@ -17,6 +17,7 @@ use App\Http\Controllers\Backend\OrderController;
 use App\Http\Controllers\Backend\PageController;
 use App\Http\Controllers\Backend\PickupPointController;
 use App\Http\Controllers\Backend\ProductController;
+use App\Http\Controllers\Backend\ProductReviewController;
 use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\SettingController;
 use App\Http\Controllers\Backend\UserController;
@@ -68,6 +69,10 @@ Route::prefix('backend')->group(function () {
         Route::post('order/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.reject-payment')->can('order/confirm_payment');
         Route::post('order/{order}/status', [OrderController::class, 'status'])->name('orders.status')->can('order/status');
         Route::post('order/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->can('order/cancel');
+
+        // Đánh giá sản phẩm (quyền: review, review/moderate)
+        Route::get('review', [ProductReviewController::class, 'index'])->name('reviews.index')->can('review');
+        Route::post('review/{review}/visibility', [ProductReviewController::class, 'visibility'])->name('reviews.visibility')->can('review/moderate');
 
         // VP tỉnh / điểm nhận hàng (A7; quyền: pickup_point, pickup_point/add|edit|delete). Xóa = xóa mềm.
         Route::get('pickup-point', [PickupPointController::class, 'index'])->name('pickup-points.index')->can('pickup_point');
