@@ -74,10 +74,11 @@ svg text{font-family:inherit}
   <a href="#s8">8. Thanh toán &amp; tính hoa hồng</a>
   <a href="#s9">9. Edge case &amp; chống gian lận</a>
   <a href="#s10">10. Câu hỏi còn mở</a>
+  <a href="#s11">11. Đề xuất từ Shoplife</a>
 </nav>
 <main>
 <h1>Đặc tả triển khai hệ thống Affiliate – Phase 1</h1>
-<div class="meta">Cập nhật 02/11/2026 · Nguồn: file “[Anh Trung] Hỏi đáp dự án Affiliate.xlsx” và các trao đổi xác nhận · Trạng thái: bản nháp để review</div>
+<div class="meta">Cập nhật 10/11/2026 · Nguồn: file “[Anh Trung] Hỏi đáp dự án Affiliate.xlsx”, các trao đổi xác nhận, khảo sát shoplife.vn (Phan-tich-luong-Shoplife.md) · Trạng thái: bản nháp để review</div>
 
 <div class="lead">Phase 1 dựng một website bán hàng có cây giới thiệu 2 tầng. Thành viên tự động lên cấp theo tổng tiền tự mua cộng dồn, nhận hoa hồng F1/F2 vào ví ngay khi đơn được thanh toán qua QR động, và rút tiền sau khi KYC. Mọi tỉ lệ, mốc cấp và tham số đều cấu hình trong Admin. Đổi trả và cách tính thưởng KPI nhóm được hoãn sang Phase 2.</div>
 
@@ -93,7 +94,7 @@ svg text{font-family:inherit}
 <table>
 <tr><th>Hạng mục</th><th>Lý do hoãn</th><th>Phase 1 chuẩn bị gì</th></tr>
 <tr><td>Đổi trả, hoàn tiền, thu hồi hoa hồng, ví âm</td><td>Anh xác nhận tạm bỏ qua</td><td>Thiết kế sổ hoa hồng dạng ledger (chỉ ghi thêm) để sau này thêm bút toán đảo được</td></tr>
-<tr><td>Tính thưởng KPI tháng (mặt trời + nhị phân, “nhóm nhỏ”)</td><td>Chờ khách giải thích logic</td><td>Màn hình cấu hình bậc KPI (lưu tham số), dữ liệu đơn đủ để tính lùi</td></tr>
+<tr><td>Tính thưởng KPI tháng (mặt trời + nhị phân, “nhóm nhỏ”)</td><td>Chờ khách giải thích logic</td><td>Màn hình cấu hình bậc KPI (lưu tham số), dữ liệu đơn đủ để tính lùi. Tham khảo cách Shoplife làm ở mục 11.3</td></tr>
 <tr><td>Thanh toán tiền hàng cho VP tỉnh khi khách nhận tại kho VP</td><td>Chưa rõ, hoãn lại</td><td>Đơn ghi nhận kho nhận hàng; có báo cáo đơn theo từng VP để kế toán tự xử lý ngoài hệ thống</td></tr>
 <tr><td>Quản lý tồn kho từng kho</td><td>VP/đại lý tự quản lý</td><td>Không làm</td></tr>
 </table>
@@ -576,8 +577,55 @@ Từ chối → ví +amount, ghi lý do</pre>
 <tr><td>6</td><td>Tỉ lệ khấu trừ thuế TNCN khi chi hoa hồng</td><td>Rút tiền</td><td><span class="tag t-acc">Hỏi kế toán</span></td></tr>
 <tr><td>7</td><td>Logo, tên brand, tên miền</td><td>Step 0</td><td><span class="tag t-acc">Chờ khách gửi</span></td></tr>
 <tr><td>8</td><td>Rà soát pháp lý mô hình theo Nghị định 137/2026/NĐ-CP về kinh doanh theo phương thức đa cấp</td><td>Go-live</td><td><span class="tag t-crit">Trước khi mở đăng ký</span></td></tr>
+<tr><td>9</td><td>Hoa hồng tính theo cấp người hưởng (hiện tại), theo từng sản phẩm như Shoplife, hay kết hợp cả hai?</td><td>Engine hoa hồng, A3, A6</td><td><span class="tag t-acc">Hỏi khách</span></td></tr>
+<tr><td>10</td><td>Có cần Ví tiêu dùng (chuyển hoa hồng sang để mua hàng, không rút được) ở Phase 1 không?</td><td>Ví, checkout</td><td><span class="tag t-acc">Hỏi khách</span></td></tr>
+<tr><td>11</td><td>KPI “mặt trời + nhị phân” có giống Shoplife: chọn nhánh khi đăng ký, rank C1/C2 theo tháng, lên rank theo số F1 đạt rank?</td><td>KPI Phase 2, form đăng ký</td><td><span class="tag t-acc">Hỏi khách</span></td></tr>
+<tr><td>12</td><td>Có cần tính năng “Mua hộ cho tuyến dưới” không?</td><td>Checkout, xét cấp</td><td><span class="tag t-acc">Hỏi khách</span></td></tr>
+<tr><td>13</td><td>Có giới hạn trần hoa hồng không?</td><td>Engine hoa hồng</td><td><span class="tag t-acc">Hỏi khách</span></td></tr>
 </table>
 <div class="note crit">Mô hình có mua theo mốc để lên cấp, hoa hồng 2 tầng và thưởng theo doanh số nhóm. Đây là các dấu hiệu thường dùng để xác định kinh doanh theo phương thức đa cấp. Nên có ý kiến luật sư trước khi go-live.</div>
+
+<!-- ============ 11 ============ -->
+<h2 id="s11">11. Đề xuất bổ sung từ khảo sát Shoplife</h2>
+<p>Shoplife (shoplife.vn) là hệ thống cùng loại: sàn bán hàng + ví nhiều lớp + mạng lưới nhị phân. Chi tiết khảo sát ở file <code>Phan-tich-luong-Shoplife.md</code>. Các đề xuất dưới đây <b>chưa thuộc phạm vi đã chốt</b>; chỉ đưa vào Phase 1 khi khách duyệt (câu hỏi 9–13, mục 10).</p>
+
+<h3>11.1 Đề xuất đưa vào Phase 1 (nếu khách đồng ý)</h3>
+<div class="scroll">
+<table>
+<tr><th>#</th><th>Đề xuất</th><th>Thay đổi trong đặc tả</th><th>Step</th><th>Trạng thái</th></tr>
+<tr><td>P1</td><td><b>Tỉ lệ hoa hồng theo sản phẩm</b>, hiển thị “Tỉ lệ hoa hồng X%” trên thẻ SP</td><td>Thêm <code>products.commission_rate</code> (để trống = dùng tỉ lệ theo cấp). Công thức 8.3 đổi thành: tiền hoa hồng = cơ sở × tỉ lệ, trong đó tỉ lệ lấy theo SP nếu có, không thì theo cấp. Đơn nhiều SP tính theo từng dòng. A6 thêm trường; S1/S2 hiện nhãn</td><td>2, 8</td><td><span class="tag t-warn">Chờ câu 9</span></td></tr>
+<tr><td>P2</td><td><b>Ví tiêu dùng</b>: chuyển hoa hồng từ ví thưởng sang, tức thì, một chiều, không rút được</td><td>Thêm loại ví <code>wallet_type</code> (reward / spending) vào <code>wallet_transactions</code>; S9 thêm nút “Chuyển ví” và lịch sử chuyển</td><td>8</td><td><span class="tag t-warn">Chờ câu 10</span></td></tr>
+<tr><td>P3</td><td><b>Thanh toán bằng số dư ví</b> khi checkout, đơn xác nhận ngay</td><td>Checkout S5/S6 thêm lựa chọn “Trả bằng ví”; nếu đủ số dư thì trừ ví và phát <code>order.paid</code> ngay, không qua QR. Không cho trả một phần ví + một phần QR ở Phase 1</td><td>5, 6</td><td><span class="tag t-warn">Đi kèm P2</span></td></tr>
+<tr><td>P4</td><td><b>OTP/2FA</b> khi tạo lệnh rút và khi đổi tài khoản ngân hàng</td><td>S9, S10 thêm bước nhập OTP gửi qua SĐT</td><td>9</td><td><span class="tag t-acc">Đề xuất kỹ thuật</span></td></tr>
+<tr><td>P5</td><td><b>Ảnh biên lai</b> khi giao dịch chuyển khoản không tự khớp</td><td>S6 thêm “Tôi đã chuyển khoản nhưng chưa được xác nhận” → tải ảnh biên lai, đưa vào hàng chờ A9</td><td>6</td><td><span class="tag t-acc">Đề xuất kỹ thuật</span></td></tr>
+</table>
+</div>
+
+<h3>11.2 Giữ nguyên cách của mình (đã tốt hơn)</h3>
+<table>
+<tr><th>Shoplife</th><th>Hệ thống mình</th></tr>
+<tr><td>Nội dung chuyển khoản = mã thành viên, admin duyệt tay từng đơn</td><td>QR động có mã đơn + webhook ngân hàng, tự xác nhận (mục 8.2)</td></tr>
+<tr><td>Nhiều tài khoản ngân hàng nhận tiền</td><td>Một STK trùng tên KYC, chặn một người nhiều tài khoản</td></tr>
+<tr><td>Rank tính lại theo tháng</td><td>Cấp theo doanh số cộng dồn, không hạ cấp (đã chốt)</td></tr>
+</table>
+
+<h3>11.3 Tham khảo cho Phase 2 (KPI nhị phân)</h3>
+<p>Cách Shoplife làm phần nhị phân gợi ý những gì cần hỏi khi khách giải thích “mặt trời + nhị phân”:</p>
+<ul>
+  <li><b>Chọn nhánh khi đăng ký:</b> link mời ghi “chọn team tại trang đăng ký”, tức người mới chọn nhánh (trái/phải) ngay từ đầu. Nếu áp dụng, form đăng ký S3 và bảng <code>users</code> cần thêm vị trí nhánh từ Phase 1 để không phải sửa dữ liệu sau.</li>
+  <li><b>Rank theo tháng</b> (C1, C2…) tách biệt với cấp mua hàng (Đại lý…). Lên rank theo số F1 đạt rank, ví dụ C2 cần 3 F1 đạt C1.</li>
+  <li><b>Sản phẩm có/không tính doanh số nhị phân</b>: Shoplife gắn nhãn “Binary XP” và “Spacer” cho từng sản phẩm.</li>
+  <li><b>Điểm nội bộ (PV)</b> dùng để tính doanh số thay cho VNĐ.</li>
+</ul>
+<div class="note">Nếu khách xác nhận có chọn nhánh khi đăng ký, nên thêm trường <code>users.binary_side</code> (L/R) và <code>users.binary_parent_id</code> ngay từ Step 3 dù Phase 1 chưa tính KPI.</div>
+
+<h3>11.4 Không đề xuất áp dụng</h3>
+<table>
+<tr><th>Tính năng Shoplife</th><th>Lý do</th></tr>
+<tr><td>Mua hộ cho tuyến dưới (đặt đơn, tính doanh số cho downline)</td><td>Dễ bị dùng để đẩy cấp cho F1. Nếu khách vẫn cần (câu 12): đơn phải lưu riêng người trả tiền và người được tính doanh số, có báo cáo riêng</td></tr>
+<tr><td>Nạp USDT, ví PV, Token, kết nối ví Web3</td><td>Ràng buộc pháp lý về thanh toán bằng tài sản số tại Việt Nam; đối soát phức tạp</td></tr>
+<tr><td>Trần hoa hồng gắn với số lần “tái tiêu dùng”</td><td>Buộc mua thêm mới được nhận tiếp là dấu hiệu nhạy cảm theo quy định về đa cấp (câu 13)</td></tr>
+</table>
 </main>
 </div>
 </body>

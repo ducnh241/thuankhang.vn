@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\CaptureReferralCode;
 use App\Models\Category;
+use App\Models\Member;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
@@ -48,18 +50,46 @@ class StorefrontTest extends TestCase
         $this->product(['name' => 'Đang Ẩn', 'status' => false, 'is_featured' => true]);
         $this->product(['name' => 'Thuộc Danh Mục Ẩn', 'category_id' => $this->hidden->id, 'is_featured' => true]);
         $this->product(['name' => 'Đã Xóa', 'is_featured' => true])->delete();
-        $this->category('Danh mục rỗng', 'rong');
+        $other = $this->category('Gia dụng', 'gia-dung');
+        Product::factory()->create(['category_id' => $other->id, 'name' => 'Nồi Chiên']);
 
         $this->get('/')->assertOk()
             ->assertSee('<title>Thuận Khang</title>', false)
+            ->assertSee('data-join-card', false)->assertSee(route('member.register'))
             ->assertSee('Sản phẩm nổi bật')->assertSee('Dầu Cá Nổi Bật')->assertSee('480.000đ')
-            // Khối theo danh mục gốc gồm cả sản phẩm danh mục con; danh mục chưa có sản phẩm không có khối
-            ->assertSee('data-section="thuc-pham-chuc-nang"', false)->assertSee('Vitamin Con')->assertDontSee('data-section="rong"', false)
-            // Thanh danh mục chỉ danh mục gốc đang hiện
-            ->assertSee('href="/danh-muc/thuc-pham-chuc-nang"', false)->assertDontSee('Danh mục ẩn')
+            // Tab nhóm = danh mục gốc đang hiện; "Tất cả" gồm cả sản phẩm danh mục con
+            ->assertSee('data-group="thuc-pham-chuc-nang"', false)->assertSee('data-group="gia-dung"', false)->assertDontSee('Danh mục ẩn')
+            ->assertSee('Vitamin Con')->assertSee('Nồi Chiên')->assertSeeInOrder(['data-product-count', '3', 'sản phẩm'], false)
+            ->assertSee('data-quick-add', false)->assertSee('data-bottom-nav', false)
             ->assertDontSee('Đang Ẩn')->assertDontSee('Thuộc Danh Mục Ẩn')->assertDontSee('Đã Xóa')
             ->assertDontSee('/backend', false);
+
+        $this->get('/?nhom=thuc-pham-chuc-nang')->assertOk()->assertSee('Vitamin Con')->assertSee('Dầu Cá Nổi Bật')
+            ->assertDontSee('Nồi Chiên')->assertSee('aria-selected="true" data-group="thuc-pham-chuc-nang"', false);
+        $this->get('/?nhom=khong-co&sort=x')->assertOk()->assertSee('Nồi Chiên');
+        $this->get('/?nhom[]=1')->assertOk();
         $this->actingAs(User::factory()->superAdmin()->create())->get('/')->assertOk();
+    }
+
+    public function test_home_member_card_sold_count_and_quick_add(): void
+    {
+        $product = $this->product(['name' => 'Trà Gừng']);
+        $member = Member::factory()->create(['full_name' => 'Phạm Thu', 'referral_code' => 'THU123']);
+        $paid = Order::factory()->status(Order::STATUS_PAID)->create();
+        $paid->items()->create(['product_id' => $product->id, 'product_name' => 'Trà Gừng', 'qty' => 3, 'unit_price' => 1, 'vat_rate' => 0, 'line_amount' => 3, 'vat_amount' => 0]);
+        $unpaid = Order::factory()->create();
+        $unpaid->items()->create(['product_id' => $product->id, 'product_name' => 'Trà Gừng', 'qty' => 50, 'unit_price' => 1, 'vat_rate' => 0, 'line_amount' => 50, 'vat_amount' => 0]);
+        Order::factory()->create(['member_id' => $member->id]);
+
+        // Lượt bán chỉ tính đơn đã thanh toán
+        $this->get('/')->assertSee('Đã bán 3')->assertDontSee('Đã bán 53');
+
+        $this->actingAs($member, 'member')->get('/')->assertOk()->assertSee('data-member-card', false)->assertDontSee('data-join-card', false)
+            ->assertSee('Xin chào, Phạm Thu')->assertSee('THU123')->assertSee($member->referralLink())
+            ->assertSee('data-pending-orders', false)->assertSee('<strong>1</strong> đơn chờ thanh toán', false);
+
+        $this->from('/')->post('/gio-hang', ['product_id' => $product->id])->assertRedirect('/')->assertSessionHas('success');
+        $this->get('/')->assertSee('data-cart-count>1<', false);
     }
 
     public function test_category_page(): void

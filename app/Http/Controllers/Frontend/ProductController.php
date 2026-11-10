@@ -27,7 +27,7 @@ class ProductController extends Controller
 
         $product->load(['images', 'category']);
         $related = $catalog->products()->where('category_id', $product->category_id)->whereKeyNot($product->id)
-            ->with('cover')->orderBy('sort_order')->orderByDesc('id')->limit(4)->get();
+            ->forCard()->orderBy('sort_order')->orderByDesc('id')->limit(4)->get();
 
         return view('frontend.product', [
             'product' => $product,

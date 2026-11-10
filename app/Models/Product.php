@@ -61,6 +61,17 @@ class Product extends Model
         return $this->hasOne(ProductImage::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    /** Dữ liệu cho thẻ sản phẩm: ảnh đại diện + lượt bán (`sold_qty` = tổng số lượng trong các đơn đã thanh toán). */
+    public function scopeForCard(Builder $query): void
+    {
+        $query->with('cover')->withSum(['orderItems as sold_qty' => fn ($q) => $q->whereHas('order', fn ($o) => $o->whereNotNull('paid_at'))], 'qty');
+    }
+
     public function scopeOnSale(Builder $query): void
     {
         $query->where('status', true);

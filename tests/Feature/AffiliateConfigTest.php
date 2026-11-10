@@ -225,12 +225,14 @@ class AffiliateConfigTest extends TestCase
 
     public function test_saving_rates_creates_a_new_version_and_keeps_history(): void
     {
-        Carbon::setTestNow('2026-11-04 09:00:00');
+        // Mốc tương đối (phiên bản gốc do seeder ghi theo giờ thật lúc setUp)
+        $day = now()->addDays(2)->setTime(10, 30);
+        $future = $day->copy()->addMonth()->startOfMonth();
         $root = $this->root();
         $agent = $this->level('Đại lý');
         $old = CommissionRate::versions()->first()['effective_from'];
 
-        Carbon::setTestNow('2026-11-05 10:30:00');
+        Carbon::setTestNow($day);
         $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => '22,5', 'F2' => '5']]))
             ->assertRedirect(route('backend.affiliate.commission.index'))->assertSessionHas('success', 'Đã lưu phiên bản tỉ lệ mới, áp dụng ngay.');
 
@@ -247,13 +249,13 @@ class AffiliateConfigTest extends TestCase
         $this->assertSame(['22,5%', '5%'], array_values($log->changes['new']['Đại lý']));
 
         // Phiên bản tương lai: chưa áp dụng tới giờ đó
-        $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => '25']], '2026-12-01T00:00'))
-            ->assertSessionHas('success', 'Đã lưu phiên bản tỉ lệ mới, áp dụng từ 01/12/2026 00:00.');
+        $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => '25']], $future->format('Y-m-d\\TH:i')))
+            ->assertSessionHas('success', 'Đã lưu phiên bản tỉ lệ mới, áp dụng từ '.$future->format('d/m/Y H:i').'.');
         $this->assertSame('22.50', CommissionRate::rateFor($agent->id, 'F1', now()));
-        $this->assertSame('25.00', CommissionRate::rateFor($agent->id, 'F1', Carbon::parse('2026-12-01 00:00')));
+        $this->assertSame('25.00', CommissionRate::rateFor($agent->id, 'F1', $future));
 
         $this->actingAs($root)->get('/backend/affiliate/commission')->assertOk()
-            ->assertSeeInOrder(['01/12/2026 00:00', 'Sắp áp dụng', '05/11/2026 10:30', 'Đang áp dụng', 'Đã thay thế'])
+            ->assertSeeInOrder([$future->format('d/m/Y H:i'), 'Sắp áp dụng', $day->format('d/m/Y H:i'), 'Đang áp dụng', 'Đã thay thế'])
             ->assertSee('value="25"', false); // form điền sẵn phiên bản mới nhất
 
         // Lịch sử không sửa / xóa được
@@ -263,7 +265,7 @@ class AffiliateConfigTest extends TestCase
 
     public function test_rate_validation(): void
     {
-        Carbon::setTestNow('2026-11-05 10:30:00');
+        Carbon::setTestNow(now()->addDays(2)->setTime(10, 30));
         $root = $this->root();
         $agent = $this->level('Đại lý');
         $count = CommissionRate::count();
@@ -272,7 +274,7 @@ class AffiliateConfigTest extends TestCase
             $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => $bad]]))
                 ->assertSessionHasErrors("rates.{$agent->id}.F1");
         }
-        $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => '21']], '2026-11-01T00:00'))
+        $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => '21']], now()->subDays(3)->format('Y-m-d\\TH:i')))
             ->assertSessionHasErrors('effective_from');
         $this->actingAs($root)->post('/backend/affiliate/commission', $this->rateForm(['Đại lý' => ['F1' => '21']], 'hôm nay'))
             ->assertSessionHasErrors('effective_from');

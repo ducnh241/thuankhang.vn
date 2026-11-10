@@ -30,7 +30,7 @@ class SearchController extends Controller
                     }
                 })
                 ->when($category, fn ($query) => $query->whereIn('category_id', $catalog->subtreeIds($category->id)));
-            $products = $catalog->sorted($query, $sort)->with('cover')->paginate(24)->withQueryString();
+            $products = $catalog->sorted($query, $sort)->forCard()->paginate(24)->withQueryString();
         }
 
         return view('frontend.search', compact('q', 'category', 'sort', 'products') + ['categories' => $catalog->visible()]);

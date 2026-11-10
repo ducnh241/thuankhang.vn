@@ -16,7 +16,7 @@ class CategoryController extends Controller
         $sort = $catalog->sort($this->queryString($request, 'sort'));
 
         $products = $catalog->sorted($catalog->products()->whereIn('category_id', $catalog->subtreeIds($category->id)), $sort)
-            ->with('cover')->paginate(24)->withQueryString();
+            ->forCard()->paginate(24)->withQueryString();
 
         return view('frontend.category', [
             'category' => $category,

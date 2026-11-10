@@ -1,77 +1,88 @@
 @extends('frontend.layouts.app')
 
-{{-- Trang chủ cửa hàng (S1): banner, danh mục, sản phẩm nổi bật, sản phẩm theo từng danh mục gốc. --}}
+{{-- Trang chủ cửa hàng (S1), theo luồng Shoplife: thẻ thành viên / lời mời đăng ký → nổi bật (hàng cuộn ngang) → tab nhóm
+     sản phẩm (danh mục gốc) + số sản phẩm + sắp xếp → lưới sản phẩm (lượt bán, nút "+" thêm nhanh vào giỏ). --}}
+@php use App\Support\Money; @endphp
+
 @section('content')
-  {{-- Banner --}}
-  <section class="bg-gradient-to-br from-brand-700 via-brand-600 to-emerald-500 text-white">
-    <div class="mx-auto grid max-w-7xl items-center gap-8 px-4 py-14 md:grid-cols-2 md:py-20">
-      <div>
-        <p class="text-sm font-semibold tracking-wider text-brand-100 uppercase">Chào mừng bạn đến với {{ $site['site_name'] ?: config('app.name') }}</p>
-        <h1 class="mt-3 text-3xl leading-tight font-bold md:text-5xl">{{ $site['seo_title'] ?: 'Sản phẩm chất lượng cho sức khỏe và gia đình' }}</h1>
-        <p class="mt-4 max-w-xl text-base text-brand-50/90">{{ $site['seo_description'] ?: 'Đặt hàng nhanh, thanh toán QR tiện lợi, giao tận nơi hoặc nhận tại văn phòng tỉnh gần bạn.' }}</p>
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href="#noi-bat" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-800 shadow hover:bg-brand-50">Xem sản phẩm nổi bật</a>
-          @if ($roots->isNotEmpty())
-            <a href="{{ $roots->first()->url() }}" class="rounded-full border border-white/60 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">{{ $roots->first()->name }}</a>
-          @endif
+  <div class="mx-auto max-w-7xl px-4 pt-5 md:pt-8">
+    {{-- Thẻ thành viên (đã đăng nhập) / lời mời tham gia --}}
+    @if ($member)
+      <section class="rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-emerald-500 p-5 text-white shadow-sm md:p-6" data-member-card>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-4">
+          <div class="flex min-w-0 items-center gap-3">
+            <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-lg font-bold">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
+            <div class="min-w-0">
+              <div class="truncate font-semibold">Xin chào, {{ $member->full_name }}</div>
+              <div class="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-brand-50">
+                <span class="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold tracking-wide uppercase">{{ $member->level?->name }}</span>
+                @unless ($member->isActivated())<span class="text-xs">Mua đơn đầu tiên để kích hoạt và nhận hoa hồng</span>@endunless
+              </div>
+            </div>
+          </div>
+          <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 text-sm max-md:justify-start">
+            <span class="text-brand-50">Mã giới thiệu <strong class="font-mono text-white">{{ $member->referral_code }}</strong></span>
+            <button type="button" class="rounded-full bg-white px-4 py-1.5 font-semibold text-brand-800 hover:bg-brand-50" data-copy="{{ $member->referralLink() }}">Sao chép link mời</button>
+            <a href="{{ route('member.account') }}" class="rounded-full border border-white/60 px-4 py-1.5 font-semibold hover:bg-white/10">Đội nhóm</a>
+          </div>
         </div>
-      </div>
-      @if ($featured->isNotEmpty())
-        <div class="hidden grid-cols-2 gap-4 md:grid">
-          @foreach ($featured->take(4) as $product)
-            <a href="{{ $product->url() }}" @class(['overflow-hidden rounded-2xl bg-white/10 shadow-xl ring-1 ring-white/20', 'translate-y-6' => $loop->odd])>
-              @if ($product->cover)<img src="{{ $product->cover->url() }}" alt="{{ $product->name }}" class="aspect-square w-full object-cover" />@endif
-            </a>
+        @if ($pendingOrders)
+          <a href="{{ route('member.orders.index') }}" class="mt-4 flex items-center justify-between gap-3 rounded-xl bg-white/15 px-4 py-2.5 text-sm hover:bg-white/20" data-pending-orders>
+            <span>Bạn có <strong>{{ $pendingOrders }}</strong> đơn chờ thanh toán</span><span aria-hidden="true">›</span>
+          </a>
+        @endif
+      </section>
+    @else
+      <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-emerald-500 p-5 text-white shadow-sm md:p-7" data-join-card>
+        <div class="max-w-2xl">
+          <h1 class="text-xl leading-snug font-bold md:text-3xl">{{ $site['seo_title'] ?: 'Mua sắm thông minh, giới thiệu bạn bè nhận hoa hồng' }}</h1>
+          <p class="mt-2 text-sm text-brand-50/90 md:text-base">{{ $site['seo_description'] ?: 'Thanh toán QR tiện lợi, giao tận nơi hoặc nhận tại văn phòng tỉnh. Mời bạn bè mua hàng để nhận hoa hồng 2 tầng.' }}</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="{{ route('member.register') }}" class="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-brand-800 shadow hover:bg-brand-50">Đăng ký</a>
+          <a href="{{ route('member.login') }}" class="rounded-full border border-white/60 px-6 py-2.5 text-sm font-semibold hover:bg-white/10">Đăng nhập</a>
+        </div>
+      </section>
+    @endif
+
+    {{-- Nổi bật: hàng cuộn ngang --}}
+    @if ($featured->isNotEmpty())
+      <section class="pt-8" id="noi-bat">
+        <h2 class="text-lg font-bold text-slate-900 md:text-xl">Sản phẩm nổi bật</h2>
+        <div class="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:gap-4" data-featured>
+          @foreach ($featured as $product)
+            <div class="w-40 shrink-0 snap-start sm:w-48 lg:w-56">@include('frontend.partials.product-card')</div>
           @endforeach
         </div>
-      @endif
-    </div>
-  </section>
+      </section>
+    @endif
 
-  {{-- Danh mục --}}
-  @if ($roots->isNotEmpty())
-    <section class="mx-auto max-w-7xl px-4 pt-12">
-      <h2 class="text-xl font-bold text-slate-900 md:text-2xl">Danh mục sản phẩm</h2>
-      <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    {{-- Tab nhóm sản phẩm + lưới --}}
+    <section class="scroll-mt-32 pt-8" id="san-pham">
+      <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="tablist" aria-label="Nhóm sản phẩm" data-group-tabs>
+        @php $tabUrl = fn ($slug) => route('home', array_filter(['nhom' => $slug, 'sort' => $sort])).'#san-pham'; @endphp
+        <a href="{{ $tabUrl(null) }}" role="tab" aria-selected="{{ $group ? 'false' : 'true' }}" @class(['shrink-0 rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition', 'border-brand-600 bg-brand-600 text-white' => ! $group, 'border-slate-200 bg-white text-slate-700 hover:border-brand-500 hover:text-brand-700' => $group])>Tất cả</a>
         @foreach ($roots as $category)
-          <a href="{{ $category->url() }}" class="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand-500 hover:shadow-md">
-            <span class="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-lg font-bold text-brand-700 group-hover:bg-brand-600 group-hover:text-white">{{ mb_strtoupper(mb_substr($category->name, 0, 1)) }}</span>
-            <span class="mt-3 block font-semibold text-slate-900 group-hover:text-brand-700">{{ $category->name }}</span>
-            @if ($category->description)<span class="mt-1 line-clamp-2 block text-xs text-slate-500">{{ $category->description }}</span>@endif
-          </a>
+          @php $active = $group?->id === $category->id; @endphp
+          <a href="{{ $tabUrl($category->slug) }}" role="tab" aria-selected="{{ $active ? 'true' : 'false' }}" data-group="{{ $category->slug }}" @class(['shrink-0 rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition', 'border-brand-600 bg-brand-600 text-white' => $active, 'border-slate-200 bg-white text-slate-700 hover:border-brand-500 hover:text-brand-700' => ! $active])>{{ $category->name }}</a>
         @endforeach
       </div>
-    </section>
-  @endif
 
-  {{-- Nổi bật --}}
-  @if ($featured->isNotEmpty())
-    <section id="noi-bat" class="mx-auto max-w-7xl scroll-mt-32 px-4 pt-12">
-      <h2 class="text-xl font-bold text-slate-900 md:text-2xl">Sản phẩm nổi bật</h2>
-      <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        @foreach ($featured as $product)
-          @include('frontend.partials.product-card')
-        @endforeach
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-slate-500" data-product-count><strong class="text-slate-900">{{ Money::format($products->total()) }}</strong> sản phẩm{{ $group ? ' · '.$group->name : '' }}</p>
+        @include('frontend.partials.sort', ['hidden' => ['nhom' => $group?->slug]])
       </div>
-    </section>
-  @endif
 
-  {{-- Theo danh mục --}}
-  @foreach ($sections as $section)
-    <section class="mx-auto max-w-7xl px-4 pt-12" data-section="{{ $section['category']->slug }}">
-      <div class="flex items-end justify-between gap-4">
-        <h2 class="text-xl font-bold text-slate-900 md:text-2xl">{{ $section['category']->name }}</h2>
-        <a href="{{ $section['category']->url() }}" class="shrink-0 text-sm font-medium text-brand-700 hover:underline">Xem tất cả ›</a>
-      </div>
-      <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        @foreach ($section['products'] as $product)
-          @include('frontend.partials.product-card')
-        @endforeach
-      </div>
+      @if ($products->isEmpty())
+        <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center text-slate-500">Cửa hàng đang cập nhật sản phẩm, mời bạn quay lại sau.</div>
+      @else
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          @foreach ($products as $product)
+            @include('frontend.partials.product-card')
+          @endforeach
+        </div>
+        {{ $products->links('frontend.partials.pagination') }}
+      @endif
     </section>
-  @endforeach
-
-  @if ($featured->isEmpty() && $sections->isEmpty())
-    <section class="mx-auto max-w-7xl px-4 py-20 text-center text-slate-500">Cửa hàng đang cập nhật sản phẩm, mời bạn quay lại sau.</section>
-  @endif
+  </div>
 @endsection

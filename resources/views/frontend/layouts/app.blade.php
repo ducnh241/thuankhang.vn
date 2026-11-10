@@ -36,7 +36,7 @@
   {{ (new \Illuminate\Foundation\Vite)->useHotFile(public_path('hot-frontend'))->useBuildDirectory('assets/frontend/build')->withEntryPoints(['resources/frontend/css/app.css', 'resources/frontend/js/app.js']) }}
   {!! $site['code_head'] !!}
 </head>
-<body class="flex min-h-screen flex-col">
+<body class="flex min-h-screen flex-col pb-16 md:pb-0">
   {!! $site['code_body'] !!}
 
   {{-- Thanh liên hệ --}}
@@ -157,6 +157,35 @@
       @if ($site['site_footer']){!! \App\Support\RichText::clean($site['site_footer']) !!}@else© {{ date('Y') }} {{ $siteName }}@endif
     </div>
   </footer>
+
+  {{-- Điện thoại: thanh điều hướng dưới kiểu app (Shoplife) — Trang chủ, Giỏ hàng, Đơn hàng, Tài khoản --}}
+  @php
+      $tabs = [
+          ['route' => 'home', 'label' => 'Trang chủ', 'active' => request()->routeIs('home', 'shop.category', 'shop.product', 'shop.search'),
+              'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />'],
+          ['route' => 'shop.cart', 'label' => 'Giỏ hàng', 'active' => request()->routeIs('shop.cart', 'shop.checkout'), 'badge' => $cartCount,
+              'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6.2" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17" cy="20" r="1.3" />'],
+          ['route' => 'member.orders.index', 'label' => 'Đơn hàng', 'active' => request()->routeIs('member.orders.*'),
+              'icon' => '<rect x="5" y="3" width="14" height="18" rx="2" /><path stroke-linecap="round" d="M9 8h6M9 12h6M9 16h3" />'],
+          ['route' => 'member.account', 'label' => 'Tài khoản', 'active' => request()->routeIs('member.account', 'member.login', 'member.register'),
+              'icon' => '<circle cx="12" cy="8" r="4" /><path stroke-linecap="round" d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />'],
+      ];
+  @endphp
+  <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden" aria-label="Điều hướng nhanh" data-bottom-nav>
+    <ul class="grid grid-cols-4">
+      @foreach ($tabs as $tab)
+        <li>
+          <a href="{{ route($tab['route']) }}" @class(['relative flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium', 'text-brand-700' => $tab['active'], 'text-slate-500' => ! $tab['active']]) @if ($tab['active']) aria-current="page" @endif>
+            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">{!! $tab['icon'] !!}</svg>
+            {{ $tab['label'] }}
+            @if (! empty($tab['badge']))
+              <span class="absolute top-1 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{{ $tab['badge'] > 99 ? '99+' : $tab['badge'] }}</span>
+            @endif
+          </a>
+        </li>
+      @endforeach
+    </ul>
+  </nav>
   {!! $site['code_bottom'] !!}
 </body>
 </html>
