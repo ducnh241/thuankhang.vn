@@ -68,7 +68,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   `order_code_prefix` (mặc định `TK`) + 8 ký tự. Thành viên: /don-hang (đơn của tôi, QR VietQR — `App\Support\VietQr`).
   Admin /backend/order (A8): lọc trạng thái / điểm / hình thức / thời gian / mã giao dịch. Luồng trạng thái: mục dưới.
 - Trang chủ theo luồng Shoplife (`Phan-tich-luong-Shoplife.md` mục 4.3): thẻ thành viên (cấp, mã / link mời, số đơn chờ
-  thanh toán) hoặc lời mời đăng ký; hàng nổi bật cuộn ngang; tab nhóm = danh mục gốc (`/?nhom=slug`) + "N sản phẩm" + sắp
+  thanh toán) hoặc lời mời đăng ký; hàng nổi bật cuộn ngang; hàng link danh mục gốc (sang trang danh mục) + toàn bộ SP "N sản phẩm" + sắp
   xếp; thẻ SP có lượt bán (`Product::scopeForCard` — `sold_qty` chỉ tính đơn đã thanh toán) và nút "+" thêm nhanh vào giỏ;
   điện thoại có thanh điều hướng dưới (Trang chủ / Giỏ hàng / Đơn hàng / Tài khoản). Chưa hiện tỉ lệ hoa hồng theo SP (chờ câu 9).
 

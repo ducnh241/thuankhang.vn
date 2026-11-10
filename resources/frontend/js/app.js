@@ -151,8 +151,3 @@ if (checkout) {
   syncDelivery();
   syncInfo();
 }
-
-// Trang chủ: tab nhóm sản phẩm đang chọn luôn nằm trong vùng nhìn thấy của hàng tab cuộn ngang (điện thoại)
-const groupTabs = document.querySelector('[data-group-tabs]');
-const activeTab = groupTabs?.querySelector('[aria-selected="true"]');
-if (activeTab) groupTabs.scrollLeft = activeTab.offsetLeft - (groupTabs.clientWidth - activeTab.offsetWidth) / 2;

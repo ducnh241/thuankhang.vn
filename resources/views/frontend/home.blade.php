@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
-{{-- Trang chủ cửa hàng (S1), theo luồng Shoplife: thẻ thành viên / lời mời đăng ký → nổi bật (hàng cuộn ngang) → tab nhóm
-     sản phẩm (danh mục gốc) + số sản phẩm + sắp xếp → lưới sản phẩm (lượt bán, nút "+" thêm nhanh vào giỏ). --}}
+{{-- Trang chủ cửa hàng (S1), theo luồng Shoplife: thẻ thành viên / lời mời đăng ký → nổi bật (hàng cuộn ngang) → link danh
+     mục gốc + số sản phẩm + sắp xếp → lưới sản phẩm (lượt bán, nút "+" thêm nhanh vào giỏ). --}}
 @php use App\Support\Money; @endphp
 
 @section('content')
@@ -59,18 +59,17 @@
 
     {{-- Tab nhóm sản phẩm + lưới --}}
     <section class="scroll-mt-32 pt-8" id="san-pham">
-      <div class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="tablist" aria-label="Nhóm sản phẩm" data-group-tabs>
-        @php $tabUrl = fn ($slug) => route('home', array_filter(['nhom' => $slug, 'sort' => $sort])).'#san-pham'; @endphp
-        <a href="{{ $tabUrl(null) }}" role="tab" aria-selected="{{ $group ? 'false' : 'true' }}" @class(['shrink-0 rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition', 'border-brand-600 bg-brand-600 text-white' => ! $group, 'border-slate-200 bg-white text-slate-700 hover:border-brand-500 hover:text-brand-700' => $group])>Tất cả</a>
+      {{-- Danh mục gốc: link sang trang danh mục; "Tất cả" = toàn bộ sản phẩm ngay tại trang chủ --}}
+      <nav class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" aria-label="Danh mục sản phẩm" data-group-tabs>
+        <a href="{{ route('home') }}#san-pham" aria-current="page" class="shrink-0 rounded-full border border-brand-600 bg-brand-600 px-4 py-2 text-sm font-medium whitespace-nowrap text-white">Tất cả</a>
         @foreach ($roots as $category)
-          @php $active = $group?->id === $category->id; @endphp
-          <a href="{{ $tabUrl($category->slug) }}" role="tab" aria-selected="{{ $active ? 'true' : 'false' }}" data-group="{{ $category->slug }}" @class(['shrink-0 rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition', 'border-brand-600 bg-brand-600 text-white' => $active, 'border-slate-200 bg-white text-slate-700 hover:border-brand-500 hover:text-brand-700' => ! $active])>{{ $category->name }}</a>
+          <a href="{{ $category->url() }}" data-group="{{ $category->slug }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-brand-500 hover:text-brand-700">{{ $category->name }}</a>
         @endforeach
-      </div>
+      </nav>
 
       <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-500" data-product-count><strong class="text-slate-900">{{ Money::format($products->total()) }}</strong> sản phẩm{{ $group ? ' · '.$group->name : '' }}</p>
-        @include('frontend.partials.sort', ['hidden' => ['nhom' => $group?->slug]])
+        <p class="text-sm text-slate-500" data-product-count><strong class="text-slate-900">{{ Money::format($products->total()) }}</strong> sản phẩm</p>
+        @include('frontend.partials.sort')
       </div>
 
       @if ($products->isEmpty())

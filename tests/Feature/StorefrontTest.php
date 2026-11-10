@@ -57,17 +57,15 @@ class StorefrontTest extends TestCase
             ->assertSee('<title>Thuận Khang</title>', false)
             ->assertSee('data-join-card', false)->assertSee(route('member.register'))
             ->assertSee('Sản phẩm nổi bật')->assertSee('Dầu Cá Nổi Bật')->assertSee('480.000đ')
-            // Tab nhóm = danh mục gốc đang hiện; "Tất cả" gồm cả sản phẩm danh mục con
-            ->assertSee('data-group="thuc-pham-chuc-nang"', false)->assertSee('data-group="gia-dung"', false)->assertDontSee('Danh mục ẩn')
+            // Link danh mục gốc đang hiện; "Tất cả" gồm cả sản phẩm danh mục con
+            ->assertSee('href="/danh-muc/thuc-pham-chuc-nang" data-group="thuc-pham-chuc-nang"', false)->assertSee('data-group="gia-dung"', false)->assertDontSee('Danh mục ẩn')
             ->assertSee('Vitamin Con')->assertSee('Nồi Chiên')->assertSeeInOrder(['data-product-count', '3', 'sản phẩm'], false)
             ->assertSee('data-quick-add', false)->assertSee('data-bottom-nav', false)
             ->assertDontSee('Đang Ẩn')->assertDontSee('Thuộc Danh Mục Ẩn')->assertDontSee('Đã Xóa')
             ->assertDontSee('/backend', false);
 
-        $this->get('/?nhom=thuc-pham-chuc-nang')->assertOk()->assertSee('Vitamin Con')->assertSee('Dầu Cá Nổi Bật')
-            ->assertDontSee('Nồi Chiên')->assertSee('aria-selected="true" data-group="thuc-pham-chuc-nang"', false);
-        $this->get('/?nhom=khong-co&sort=x')->assertOk()->assertSee('Nồi Chiên');
-        $this->get('/?nhom[]=1')->assertOk();
+        $this->get('/?sort=x')->assertOk()->assertSee('Nồi Chiên');
+        $this->get('/?sort[]=1')->assertOk();
         $this->actingAs(User::factory()->superAdmin()->create())->get('/')->assertOk();
     }
 
