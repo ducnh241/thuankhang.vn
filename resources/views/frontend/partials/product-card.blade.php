@@ -9,9 +9,9 @@
     [$minPrice, $maxPrice] = $product->priceRange();
 @endphp
 <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-lg" data-product="{{ $product->id }}">
-  <a href="{{ $product->url() }}" class="relative block aspect-square overflow-hidden bg-slate-100" tabindex="-1" aria-hidden="true">
+  <a href="{{ $product->url() }}" class="relative block aspect-square overflow-hidden bg-white" tabindex="-1" aria-hidden="true">
     @if ($cover)
-      <img src="{{ $cover }}" alt="" loading="lazy" class="size-full object-cover transition duration-300 group-hover:scale-105" />
+      <img src="{{ $cover }}" alt="" loading="lazy" class="size-full object-contain transition duration-300 group-hover:scale-105" />
     @else
       <span class="flex size-full items-center justify-center text-slate-300">
         <svg class="size-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="m21 16-5-5-8 9" /></svg>

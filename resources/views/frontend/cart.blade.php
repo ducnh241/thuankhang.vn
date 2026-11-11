@@ -24,8 +24,8 @@
                 $slug = str_replace(':', '-', $line['key']);
             @endphp
             <div class="flex gap-4 p-4" data-cart-line="{{ $line['key'] }}">
-              <a href="{{ $product->url() }}" class="size-20 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                @if ($product->cover)<img src="{{ $product->cover->url() }}" alt="" class="size-full object-cover" />@endif
+              <a href="{{ $product->url() }}" class="size-20 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-white">
+                @if ($product->cover)<img src="{{ $product->cover->url() }}" alt="" class="size-full object-contain" />@endif
               </a>
               <div class="min-w-0 flex-1">
                 <a href="{{ $product->url() }}" class="line-clamp-2 font-medium text-slate-900 hover:text-brand-700">{{ $product->name }}</a>

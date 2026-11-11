@@ -58,7 +58,7 @@
       <div>
         <div class="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white">
           @if ($cover)
-            <img src="{{ $cover }}" alt="{{ $product->name }}" class="size-full object-cover" data-gallery-main />
+            <img src="{{ $cover }}" alt="{{ $product->name }}" class="size-full object-contain" data-gallery-main />
           @else
             <div class="flex size-full items-center justify-center text-slate-300">Chưa có ảnh</div>
           @endif
@@ -68,7 +68,7 @@
             @foreach ($images as $image)
               <button type="button" class="overflow-hidden rounded-xl border-2 border-transparent bg-white aria-[current=true]:border-brand-500" data-gallery-thumb
                 data-src="{{ $image->url() }}" data-alt="{{ $product->name }}" aria-current="{{ $loop->first ? 'true' : 'false' }}" aria-label="Xem ảnh {{ $loop->iteration }}">
-                <img src="{{ $image->url() }}" alt="" loading="lazy" class="aspect-square w-full object-cover" />
+                <img src="{{ $image->url() }}" alt="" loading="lazy" class="aspect-square w-full object-contain" />
               </button>
             @endforeach
           </div>
