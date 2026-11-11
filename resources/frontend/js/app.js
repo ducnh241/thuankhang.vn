@@ -1,13 +1,14 @@
 /*
- * JS của website (không jQuery): mở / đóng menu điện thoại, đổi ảnh chính khi bấm ảnh nhỏ ở trang sản phẩm, ô sắp
+ * JS của website (không jQuery): ngăn kéo menu điện thoại (trượt từ trái), đổi ảnh chính khi bấm ảnh nhỏ ở trang sản phẩm, ô sắp
  * xếp tự gửi form.
  */
 document.addEventListener('click', e => {
-  const toggle = e.target.closest('[data-nav-toggle]');
-  if (toggle) {
-    const nav = document.getElementById(toggle.getAttribute('aria-controls'));
-    const open = nav.classList.toggle('hidden') === false;
-    toggle.setAttribute('aria-expanded', String(open));
+  if (e.target.closest('[data-nav-toggle]')) {
+    openMobileNav();
+    return;
+  }
+  if (e.target.closest('[data-nav-close]')) {
+    closeMobileNav();
     return;
   }
 
@@ -272,3 +273,41 @@ document.querySelectorAll('[data-slider]').forEach(slider => {
   }, true);
   track.addEventListener('dragstart', e => e.preventDefault());
 });
+
+/*
+ * Ngăn kéo menu điện thoại: bỏ hidden → ép vẽ lại → thêm .is-open (để CSS trượt vào); đóng: bỏ .is-open, hết hiệu ứng
+ * thì hidden lại. Khóa cuộn trang khi mở; Esc / chạm nền / nút X để đóng; trả focus về nút ☰.
+ */
+const mobileNav = document.querySelector('[data-mobile-nav]');
+const navToggle = document.querySelector('[data-nav-toggle]');
+let navOpen = false;
+function openMobileNav() {
+  if (!mobileNav || navOpen) return;
+  navOpen = true;
+  mobileNav.hidden = false;
+  document.documentElement.style.overflow = 'hidden';
+  navToggle?.setAttribute('aria-expanded', 'true');
+  // Đọc offsetWidth buộc trình duyệt vẽ trạng thái đóng trước, rồi mới thêm .is-open → hiệu ứng trượt chạy
+  void mobileNav.offsetWidth;
+  mobileNav.classList.add('is-open');
+  mobileNav.querySelector('[data-nav-close][aria-label]')?.focus({ preventScroll: true });
+}
+function closeMobileNav() {
+  if (!mobileNav || !navOpen) return;
+  navOpen = false;
+  mobileNav.classList.remove('is-open');
+  document.documentElement.style.overflow = '';
+  navToggle?.setAttribute('aria-expanded', 'false');
+  const panel = mobileNav.querySelector('nav');
+  const done = () => {
+    if (!navOpen) mobileNav.hidden = true;
+  };
+  panel.addEventListener('transitionend', done, { once: true });
+  setTimeout(done, 350); // phòng khi không có transitionend
+  navToggle?.focus({ preventScroll: true });
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMobileNav();
+});
+// Màn hình rộng ra (xoay ngang / đổi cỡ): đóng ngăn kéo
+window.matchMedia('(min-width: 768px)').addEventListener('change', e => e.matches && closeMobileNav());

@@ -51,7 +51,7 @@
 
   <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
     <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
-      <button type="button" class="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" data-nav-toggle aria-controls="site-nav" aria-expanded="false" aria-label="Mở menu">
+      <button type="button" class="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" data-nav-toggle aria-controls="mobile-nav" aria-expanded="false" aria-label="Mở menu">
         <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
       </button>
       <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2" aria-label="{{ $siteName }} — Trang chủ">
@@ -98,6 +98,7 @@
       </form>
     </div>
     {{-- Thanh danh mục + menu chính; điện thoại: xổ xuống khi bấm nút menu --}}
+    {{-- Máy tính: thanh danh mục dưới header. Điện thoại: dùng ngăn kéo #mobile-nav bên dưới --}}
     <nav id="site-nav" class="hidden border-t border-slate-100 md:block" aria-label="Danh mục">
       <ul class="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-2 text-sm font-medium md:flex-row md:flex-wrap md:items-center md:gap-6 md:py-0">
         @foreach ($shopCategories as $category)
@@ -113,6 +114,61 @@
       </ul>
     </nav>
   </header>
+
+  {{-- Điện thoại: ngăn kéo menu trượt từ trái (đặt ngoài header: header có backdrop-blur nên "fixed" bên trong bị giới hạn).
+       JS [data-nav-toggle] / [data-nav-close] trong frontend/js/app.js --}}
+  <div class="fixed inset-0 z-50 md:hidden" id="mobile-nav-root" data-mobile-nav hidden>
+    <div class="absolute inset-0 bg-slate-900/40 opacity-0 transition-opacity duration-300 [[data-mobile-nav].is-open_&]:opacity-100" data-nav-close></div>
+    <nav id="mobile-nav" class="absolute inset-y-0 left-0 flex w-[82%] max-w-xs -translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300 ease-out [[data-mobile-nav].is-open_&]:translate-x-0" aria-label="Menu">
+      <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+        <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-2">
+          @if ($logo)
+            <img src="{{ $logo }}" alt="{{ $siteName }}" class="h-8 w-auto" />
+          @else
+            <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 font-bold text-white">{{ mb_strtoupper(mb_substr($siteName, 0, 1)) }}</span>
+            <span class="truncate font-bold text-slate-900">{{ $siteName }}</span>
+          @endif
+        </a>
+        <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100" data-nav-close aria-label="Đóng menu">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-2 py-3 text-[15px]">
+        @if ($shopCategories->isNotEmpty())
+          <div class="px-3 pb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Danh mục</div>
+          <ul>
+            @foreach ($shopCategories as $category)
+              <li><a href="{{ $category->url() }}" @class(['block rounded-lg px-3 py-2.5 font-medium hover:bg-slate-50 hover:text-brand-700', 'bg-brand-50 text-brand-700' => request()->is(ltrim($category->url(), '/')), 'text-slate-800' => ! request()->is(ltrim($category->url(), '/'))])>{{ $category->name }}</a></li>
+            @endforeach
+          </ul>
+        @endif
+        @if (count($mainMenu))
+          <ul class="mt-2 border-t border-slate-100 pt-2">
+            @foreach ($mainMenu as $item)
+              @php [$href, $external] = \App\Models\Menu::safeLink($item['url']); @endphp
+              <li><a href="{{ $href }}" class="block rounded-lg px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-700"@if ($external) target="_blank" rel="noopener"@endif>{{ $item['label'] }}</a></li>
+            @endforeach
+          </ul>
+        @endif
+      </div>
+      <div class="border-t border-slate-100 p-4 text-sm">
+        @if ($currentMember)
+          <div class="flex gap-2">
+            <a href="{{ route('member.orders.index') }}" class="flex-1 rounded-full border border-slate-200 py-2 text-center font-semibold text-slate-700">Đơn hàng</a>
+            <a href="{{ route('member.account') }}" class="flex-1 rounded-full bg-brand-600 py-2 text-center font-semibold text-white">Tài khoản</a>
+          </div>
+        @else
+          <div class="flex gap-2">
+            <a href="{{ route('member.login') }}" class="flex-1 rounded-full border border-slate-200 py-2 text-center font-semibold text-slate-700">Đăng nhập</a>
+            <a href="{{ route('member.register') }}" class="flex-1 rounded-full bg-brand-600 py-2 text-center font-semibold text-white">Đăng ký</a>
+          </div>
+        @endif
+        @if ($site['site_hotline'] ?? '')
+          <a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['site_hotline']) }}" class="mt-3 block text-center text-slate-500">Hotline: <span class="font-semibold text-brand-700">{{ $site['site_hotline'] }}</span></a>
+        @endif
+      </div>
+    </nav>
+  </div>
 
   <main class="flex-1">
     @include('frontend.partials.flash')
