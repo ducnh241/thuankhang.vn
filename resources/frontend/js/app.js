@@ -202,3 +202,73 @@ document.addEventListener('change', e => {
     syncQty(qty);
   }
 });
+
+/*
+ * Slider ngang ([data-slider] > [data-slider-track] > [data-slider-item]): nút ‹ › chuyển 1 sản phẩm (tự tắt ở hai đầu, ẩn khi không có gì
+ * để cuộn); máy tính kéo chuột để gạt (kéo xong không mở link); điện thoại vuốt sẵn có (scroll-snap).
+ */
+document.querySelectorAll('[data-slider]').forEach(slider => {
+  const track = slider.querySelector('[data-slider-track]');
+  const nav = slider.querySelector('[data-slider-nav]');
+  const prev = slider.querySelector('[data-slider-prev]');
+  const next = slider.querySelector('[data-slider-next]');
+  if (!track) return;
+
+  const update = () => {
+    const max = track.scrollWidth - track.clientWidth;
+    if (nav) nav.hidden = max <= 4;
+    if (prev) prev.disabled = track.scrollLeft <= 4;
+    if (next) next.disabled = track.scrollLeft >= max - 4;
+  };
+  // Mỗi lần bấm chuyển đúng 1 sản phẩm (độ rộng thẻ + khoảng cách)
+  const step = () => {
+    const items = track.querySelectorAll('[data-slider-item]');
+    if (items.length < 2) return track.clientWidth;
+    return items[1].getBoundingClientRect().left - items[0].getBoundingClientRect().left;
+  };
+  const page = dir => track.scrollBy({ left: dir * step(), behavior: 'smooth' });
+  prev?.addEventListener('click', () => page(-1));
+  next?.addEventListener('click', () => page(1));
+  track.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+
+  // Kéo chuột (chỉ chuột — cảm ứng dùng cuộn gốc của trình duyệt)
+  let startX = 0;
+  let startLeft = 0;
+  let moved = false;
+  let down = false;
+  track.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    down = true;
+    moved = false;
+    startX = e.clientX;
+    startLeft = track.scrollLeft;
+  });
+  track.addEventListener('pointermove', e => {
+    if (!down) return;
+    const dx = e.clientX - startX;
+    if (!moved && Math.abs(dx) > 5) {
+      moved = true;
+      track.classList.add('is-dragging');
+      track.setPointerCapture(e.pointerId);
+    }
+    if (moved) track.scrollLeft = startLeft - dx;
+  });
+  const end = () => {
+    if (!down) return;
+    down = false;
+    track.classList.remove('is-dragging');
+  };
+  track.addEventListener('pointerup', end);
+  track.addEventListener('pointercancel', end);
+  // Vừa kéo xong: chặn click (không mở sản phẩm / không thêm vào giỏ), chặn kéo ảnh / link gốc
+  track.addEventListener('click', e => {
+    if (moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      moved = false;
+    }
+  }, true);
+  track.addEventListener('dragstart', e => e.preventDefault());
+});

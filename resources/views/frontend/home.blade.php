@@ -47,11 +47,23 @@
 
     {{-- Nổi bật: hàng cuộn ngang --}}
     @if ($featured->isNotEmpty())
-      <section class="pt-8" id="noi-bat">
-        <h2 class="text-lg font-bold text-slate-900 md:text-xl">Sản phẩm nổi bật</h2>
-        <div class="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:gap-4" data-featured>
+      {{-- Slider: vuốt (điện thoại), kéo chuột / nút ‹ › (máy tính) — JS [data-slider] trong frontend/js/app.js --}}
+      <section class="pt-8" id="noi-bat" data-slider>
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-bold text-slate-900 md:text-xl">Sản phẩm nổi bật</h2>
+          <div class="flex gap-2" data-slider-nav hidden>
+            <button type="button" class="flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-500 hover:text-brand-700 disabled:cursor-default disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-700" data-slider-prev aria-label="Sản phẩm trước">
+              <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <button type="button" class="flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-brand-500 hover:text-brand-700 disabled:cursor-default disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-700" data-slider-next aria-label="Sản phẩm tiếp">
+              <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+            </button>
+          </div>
+        </div>
+        {{-- Cùng lề, cùng khoảng cách và số cột với lưới sản phẩm bên dưới (2 / 3 / 4 / 5 cột) --}}
+        <div class="mt-4 flex snap-x snap-mandatory scroll-smooth gap-3 overflow-x-auto pt-1 pb-2 [scrollbar-width:none] md:gap-4 [&.is-dragging]:cursor-grabbing [&.is-dragging]:snap-none [&.is-dragging]:scroll-auto" data-featured data-slider-track>
           @foreach ($featured as $product)
-            <div class="w-40 shrink-0 snap-start sm:w-48 lg:w-56">@include('frontend.partials.product-card')</div>
+            <div class="w-[calc((100%-0.75rem)/2)] shrink-0 snap-start sm:w-[calc((100%-1.5rem)/3)] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)]" data-slider-item>@include('frontend.partials.product-card')</div>
           @endforeach
         </div>
       </section>

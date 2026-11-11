@@ -60,7 +60,7 @@ class StorefrontTest extends TestCase
             // Link danh mục gốc đang hiện; "Tất cả" gồm cả sản phẩm danh mục con
             ->assertSee('href="/danh-muc/thuc-pham-chuc-nang" data-group="thuc-pham-chuc-nang"', false)->assertSee('data-group="gia-dung"', false)->assertDontSee('Danh mục ẩn')
             ->assertSee('Vitamin Con')->assertSee('Nồi Chiên')->assertSeeInOrder(['data-product-count', '3', 'sản phẩm'], false)
-            ->assertSee('data-quick-add', false)->assertSee('data-bottom-nav', false)
+            ->assertSee('data-quick-add', false)->assertSee('data-bottom-nav', false)->assertSee('data-slider-track', false)->assertSee('aria-label="Sản phẩm tiếp"', false)
             ->assertDontSee('Đang Ẩn')->assertDontSee('Thuộc Danh Mục Ẩn')->assertDontSee('Đã Xóa')
             ->assertDontSee('/backend', false);
 
