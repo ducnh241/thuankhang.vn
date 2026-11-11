@@ -29,7 +29,7 @@ class OrderController extends Controller
         $this->authorizeOwner($request, $order);
 
         return view('frontend.orders.show', [
-            'order' => $order->load(['items.product.cover', 'pickupPoint']),
+            'order' => $order->load(['items.product.cover', 'items.variant.image', 'pickupPoint']),
             'bank' => VietQr::bank(),
             'qr' => $order->isAwaitingPayment() ? VietQr::imageUrl($order) : null,
         ]);

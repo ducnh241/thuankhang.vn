@@ -94,6 +94,33 @@ class ProductVariantTest extends TestCase
         $this->assertSame(0, $product->variants()->count());
     }
 
+    public function test_variant_image(): void
+    {
+        $ops = User::factory()->create(['group_id' => Group::where('name', 'Vận hành')->value('id')]);
+        $product = $this->lipstick();
+        [$img1, $img2] = [$product->images()->create(['path' => 'products/1.jpg', 'sort_order' => 0]), $product->images()->create(['path' => 'products/2.jpg', 'sort_order' => 1])];
+        $foreign = Product::factory()->create(['category_id' => $this->category->id])->images()->create(['path' => 'products/x.jpg', 'sort_order' => 0]);
+        $cam = $product->variants->first();
+        $rows = fn ($image) => ['variants' => [['id' => (string) $cam->id, 'name' => $cam->name, 'sku' => '', 'price' => '', 'stock' => '', 'image_id' => (string) $image, 'active' => '1']],
+            'keep_images' => [$img1->id, $img2->id]];
+
+        $this->actingAs($ops)->get(route('backend.products.edit', $product))->assertSee('<option value="'.$img2->id.'">Ảnh 2</option>', false);
+        $this->put(route('backend.products.update', $product), $this->form($rows($foreign->id)))->assertSessionHasErrors('variants.0.image_id');
+        $this->put(route('backend.products.update', $product), $this->form($rows($img2->id)))->assertSessionHasNoErrors();
+        $this->assertSame($img2->id, $cam->refresh()->image_id);
+        $this->get(route('backend.products.edit', $product))->assertSee('<option value="'.$img2->id.'" selected>Ảnh 2</option>', false);
+
+        // Website: biến thể chọn sẵn có ảnh → ảnh chính là ảnh đó; radio mang link ảnh
+        $this->get('/san-pham/son-wskin')->assertSee('src="'.$img2->url().'" alt="Son WSKIN" class="size-full object-contain" data-gallery-main', false)
+            ->assertSee('data-image="'.$img2->url().'"', false);
+        $this->post('/gio-hang', ['product_id' => $product->id, 'variant_id' => $cam->id]);
+        $this->get('/gio-hang')->assertSee($img2->url(), false);
+
+        // Gỡ ảnh trong cùng lần lưu → biến thể về ảnh đại diện
+        $this->put(route('backend.products.update', $product), $this->form([...$rows($img2->id), 'keep_images' => [$img1->id]]))->assertSessionHasNoErrors();
+        $this->assertNull($cam->refresh()->image_id);
+    }
+
     public function test_storefront_requires_choosing_a_variant(): void
     {
         $product = $this->lipstick();

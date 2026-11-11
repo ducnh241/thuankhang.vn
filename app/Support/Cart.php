@@ -109,7 +109,7 @@ class Cart
             return collect();
         }
         $parsed = collect($items)->mapWithKeys(fn ($qty, $key) => [(string) $key => [...self::parseKey($key), $qty]]);
-        $products = $this->catalog->products()->whereKey($parsed->pluck(0)->unique()->all())->with(['cover', 'activeVariants'])->get()->keyBy('id');
+        $products = $this->catalog->products()->whereKey($parsed->pluck(0)->unique()->all())->with(['cover', 'activeVariants.image'])->get()->keyBy('id');
 
         $lines = collect();
         $dropped = [];

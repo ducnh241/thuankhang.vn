@@ -179,6 +179,12 @@ document.addEventListener('change', e => {
   const radio = e.target.closest('[data-variants] input[name="variant_id"]');
   if (!radio) return;
   document.querySelectorAll('[data-variant-price]').forEach(el => (el.textContent = radio.dataset.price));
+  // Biến thể có ảnh riêng: đổi ảnh chính, đánh dấu ảnh nhỏ tương ứng
+  const main = document.querySelector('[data-gallery-main]');
+  if (radio.dataset.image && main) {
+    main.src = radio.dataset.image;
+    document.querySelectorAll('[data-gallery-thumb]').forEach(t => t.setAttribute('aria-current', String(t.dataset.src === radio.dataset.image)));
+  }
   const name = document.querySelector('[data-variant-name]');
   if (name) name.textContent = radio.dataset.name;
   const stock = document.querySelector('[data-stock]');

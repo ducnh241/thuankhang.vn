@@ -25,7 +25,8 @@
             @endphp
             <div class="flex gap-4 p-4" data-cart-line="{{ $line['key'] }}">
               <a href="{{ $product->url() }}" class="size-20 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-white">
-                @if ($product->cover)<img src="{{ $product->cover->url() }}" alt="" class="size-full object-contain" />@endif
+                @php $thumb = $line['variant']?->image ?? $product->cover; @endphp
+                @if ($thumb)<img src="{{ $thumb->url() }}" alt="" class="size-full object-contain" />@endif
               </a>
               <div class="min-w-0 flex-1">
                 <a href="{{ $product->url() }}" class="line-clamp-2 font-medium text-slate-900 hover:text-brand-700">{{ $product->name }}</a>

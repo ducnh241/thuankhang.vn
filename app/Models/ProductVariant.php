@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** Biến thể sản phẩm (VD một màu son). Giá NULL = giá sản phẩm; tồn NULL = không theo dõi. */
 class ProductVariant extends Model
 {
-    protected $fillable = ['product_id', 'name', 'sku', 'price', 'stock', 'sort_order', 'active'];
+    protected $fillable = ['product_id', 'name', 'sku', 'price', 'stock', 'image_id', 'sort_order', 'active'];
 
     protected $attributes = ['active' => true, 'sort_order' => 0];
 
@@ -21,6 +21,11 @@ class ProductVariant extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
+    }
+
+    public function image(): BelongsTo
+    {
+        return $this->belongsTo(ProductImage::class, 'image_id');
     }
 
     /** Giá bán (đã gồm VAT): giá riêng hoặc giá sản phẩm. */

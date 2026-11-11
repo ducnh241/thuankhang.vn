@@ -10,6 +10,9 @@
     use App\Support\RichText;
 
     $images = $product->images;
+    // Ảnh chính: ảnh của biến thể đang chọn sẵn (nếu có), không thì ảnh đại diện
+    $preselected = $product->activeVariants->first(fn ($v) => ! $v->isOutOfStock()) ?? $product->activeVariants->first();
+    $mainImage = ($preselected?->image_id ? $images->firstWhere('id', $preselected->image_id) : null) ?? $images->first();
     $cover = $images->first()?->url();
     $hotline = $site['site_hotline'] ?? '';
     $tel = preg_replace('/[^0-9+]/', '', $hotline);
@@ -58,7 +61,7 @@
       <div>
         <div class="aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white">
           @if ($cover)
-            <img src="{{ $cover }}" alt="{{ $product->name }}" class="size-full object-contain" data-gallery-main />
+            <img src="{{ $mainImage->url() }}" alt="{{ $product->name }}" class="size-full object-contain" data-gallery-main />
           @else
             <div class="flex size-full items-center justify-center text-slate-300">Chưa có ảnh</div>
           @endif
@@ -67,7 +70,7 @@
           <div class="mt-3 grid grid-cols-5 gap-3">
             @foreach ($images as $image)
               <button type="button" class="overflow-hidden rounded-xl border-2 border-transparent bg-white aria-[current=true]:border-brand-500" data-gallery-thumb
-                data-src="{{ $image->url() }}" data-alt="{{ $product->name }}" aria-current="{{ $loop->first ? 'true' : 'false' }}" aria-label="Xem ảnh {{ $loop->iteration }}">
+                data-src="{{ $image->url() }}" data-alt="{{ $product->name }}" aria-current="{{ $image->id === $mainImage?->id ? 'true' : 'false' }}" aria-label="Xem ảnh {{ $loop->iteration }}">
                 <img src="{{ $image->url() }}" alt="" loading="lazy" class="aspect-square w-full object-contain" />
               </button>
             @endforeach
@@ -115,6 +118,7 @@
                   @php $out = $variant->isOutOfStock(); @endphp
                   <label @class(['relative cursor-pointer rounded-lg border px-3.5 py-2 text-sm transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 has-[:checked]:font-semibold has-[:checked]:text-brand-800 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-200', 'border-slate-300 hover:border-brand-500' => ! $out, 'cursor-not-allowed border-dashed border-slate-200 text-slate-400 line-through' => $out])>
                     <input type="radio" name="variant_id" value="{{ $variant->id }}" class="sr-only" @checked($selected?->id === $variant->id) @disabled($out)
+                      data-image="{{ $variant->image_id ? $images->firstWhere('id', $variant->image_id)?->url() : '' }}"
                       data-price="{{ Money::format($variant->effectivePrice($product)) }}đ" data-name="{{ $variant->name }}" data-max="{{ max(1, $variant->maxOrderQty()) }}"
                       data-stock-text="{{ $stockText($variant) }}" data-stock-low="{{ $variant->tracksStock() && $variant->stock <= 5 ? '1' : '' }}" />
                     {{ $variant->name }}

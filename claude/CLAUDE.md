@@ -85,6 +85,8 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   giá / tồn theo biến thể, tồn của SP không dùng. Giỏ: khóa dòng `productId` hoặc `productId:variantId` (`Cart::key()`),
   route `/gio-hang/{line}`. Đơn: `order_items.variant_id` (null khi biến thể bị xóa) + snapshot `variant_name`; giữ / trả tồn
   theo biến thể.
+  Ảnh biến thể: `product_variants.image_id` (một ảnh trong bộ ảnh SP, chọn ở cột "Ảnh" của bảng biến thể; ảnh bị gỡ → về
+  ảnh đại diện). Website: chọn biến thể thì đổi ảnh chính; giỏ hàng / trang đơn của khách dùng ảnh biến thể.
 - SEO sản phẩm: `products.meta_title` (70) / `meta_description` (160), để trống thì website dùng tên / mô tả ngắn. Form admin:
   thẻ "Hiển thị trên Google" (xem trước kiểu Google + giá, bút mở ô tiêu đề / mô tả SEO / đường dẫn — đường dẫn đã chuyển từ
   đầu form xuống đây); thẻ Biến thể thu gọn khi chưa có dòng, bấm "Thêm biến thể" mới hiện.

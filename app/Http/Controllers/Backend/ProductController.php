@@ -146,14 +146,14 @@ class ProductController extends Controller
      */
     private function syncVariants(Product $product, array $rows): void
     {
-        $before = $product->variants()->get()->map(fn ($v) => $v->only(['name', 'sku', 'price', 'stock', 'active']))->values()->all();
+        $before = $product->variants()->get()->map(fn ($v) => $v->only(['name', 'sku', 'price', 'stock', 'image_id', 'active']))->values()->all();
         $keep = array_filter(array_column($rows, 'id'));
         $product->variants()->whereNotIn('id', $keep ?: [0])->delete();
         foreach ($rows as $row) {
             $data = collect($row)->except('id')->all();
             $row['id'] ? $product->variants()->whereKey($row['id'])->first()?->update($data) : $product->variants()->create($data);
         }
-        $after = $product->variants()->get()->map(fn ($v) => $v->only(['name', 'sku', 'price', 'stock', 'active']))->values()->all();
+        $after = $product->variants()->get()->map(fn ($v) => $v->only(['name', 'sku', 'price', 'stock', 'image_id', 'active']))->values()->all();
         if ($before !== $after) {
             AuditLog::record('updated', $product, ['old' => ['variants' => $before], 'new' => ['variants' => $after]], "Cập nhật biến thể sản phẩm {$product->name}");
         }

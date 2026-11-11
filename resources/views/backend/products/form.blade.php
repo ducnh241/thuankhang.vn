@@ -26,17 +26,21 @@
     $seoOpen = $errors->hasAny(['meta_title', 'meta_description', 'slug']);
     // Biến thể: dòng từ old input (sau lỗi) hoặc từ DB
     $variantRows = session()->hasOldInput()
-        ? collect(is_array(old('variants')) ? old('variants') : [])->map(fn ($r, $i) => ['key' => $i, ...array_map(fn ($v) => is_string($v) ? $v : '', array_intersect_key((array) $r, array_flip(['id', 'name', 'sku', 'price', 'stock', 'active'])))])
+        ? collect(is_array(old('variants')) ? old('variants') : [])->map(fn ($r, $i) => ['key' => $i, ...array_map(fn ($v) => is_string($v) ? $v : '', array_intersect_key((array) $r, array_flip(['id', 'name', 'sku', 'price', 'stock', 'image_id', 'active'])))])
         : ($editing ? $product->variants : collect())->map(fn ($v, $i) => [
             'key' => $i, 'id' => (string) $v->id, 'name' => $v->name, 'sku' => (string) $v->sku,
-            'price' => $v->price === null ? '' : Money::format($v->price), 'stock' => $v->stock === null ? '' : (string) $v->stock, 'active' => $v->active ? '1' : '0',
+            'price' => $v->price === null ? '' : Money::format($v->price), 'stock' => $v->stock === null ? '' : (string) $v->stock,
+            'image_id' => (string) $v->image_id, 'active' => $v->active ? '1' : '0',
         ]);
     $variantLabel = $old('variant_label');
     $cell = fn (string $key, string $control) => new \Illuminate\Support\HtmlString(
         '<div class="ant-form-item mb-0'.($errors->has($key) ? ' ant-form-item-has-error ant-form-item-with-help' : '').'">'
         .'<div class="ant-form-item-control"><div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">'.$control.'</div></div>'
         .ant_form_error($errors->first($key)).'</div></div>');
-    $variantRow = function (array $row) use ($cell) {
+    // Ảnh của biến thể: chọn trong các ảnh đã lưu của sản phẩm (ảnh mới thêm phải lưu sản phẩm trước)
+    $imageOptions = fn (string $selected) => '<option value="">Ảnh đại diện</option>'.$images->values()->map(fn ($img, $i) =>
+        '<option value="'.$img->id.'"'.($selected === (string) $img->id ? ' selected' : '').'>Ảnh '.($i + 1).'</option>')->implode('');
+    $variantRow = function (array $row) use ($cell, $imageOptions) {
         $k = $row['key'];
         $n = fn ($f) => 'variants['.$k.']['.$f.']';
         $e = fn ($f) => "variants.{$k}.{$f}";
@@ -47,6 +51,7 @@
             .$cell($e('name'), '<input type="text" name="'.$n('name').'" value="'.$v('name').'" class="ant-input ant-input-sm" maxlength="100" placeholder="VD: 401 Cam san hô" aria-label="Tên biến thể" />').'</td>'
             .'<td class="ant-table-cell align-top">'.$cell($e('sku'), '<input type="text" name="'.$n('sku').'" value="'.$v('sku').'" class="ant-input ant-input-sm uppercase" maxlength="50" aria-label="SKU biến thể" />').'</td>'
             .'<td class="ant-table-cell align-top">'.$cell($e('price'), '<input type="text" inputmode="numeric" data-money name="'.$n('price').'" value="'.$v('price').'" class="ant-input ant-input-sm tabular-nums" style="text-align: right" placeholder="Giá SP" aria-label="Giá biến thể" />').'</td>'
+            .'<td class="ant-table-cell align-top">'.$cell($e('image_id'), '<select name="'.$n('image_id').'" class="ant-input ant-input-sm" aria-label="Ảnh biến thể">'.$imageOptions($row['image_id'] ?? '').'</select>').'</td>'
             .'<td class="ant-table-cell align-top">'.$cell($e('stock'), '<input type="text" inputmode="numeric" name="'.$n('stock').'" value="'.$v('stock').'" class="ant-input ant-input-sm tabular-nums" style="text-align: right" placeholder="—" aria-label="Tồn kho biến thể" />').'</td>'
             .'<td class="ant-table-cell align-top text-center"><input type="hidden" name="'.$n('active').'" value="0" /><input type="checkbox" name="'.$n('active').'" value="1" class="mt-1.5 size-4 accent-[#1677ff]" aria-label="Đang bán"'.(($row['active'] ?? '1') === '1' ? ' checked' : '').' /></td>'
             .'<td class="ant-table-cell align-top" style="text-align: right"><button type="button" class="ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only ant-btn-dangerous" data-repeater-remove aria-label="Bỏ biến thể">'.ant_icon('delete').'</button></td>'
@@ -238,7 +243,7 @@
                 <input type="text" id="product_variant_label" name="variant_label" value="{{ $variantLabel }}" class="ant-input sm:max-w-60" maxlength="50" placeholder="VD: Màu sắc, Dung tích" />
               </div></div>
               {{ ant_form_error($errors->first('variant_label')) }}
-              <div class="ant-form-item-extra">Giá để trống = giá sản phẩm; tồn kho để trống = không theo dõi. Khi có biến thể đang bán, tồn kho của sản phẩm không dùng nữa.</div>
+              <div class="ant-form-item-extra">Giá để trống = giá sản phẩm; tồn kho để trống = không theo dõi. Khi có biến thể đang bán, tồn kho của sản phẩm không dùng nữa. Ảnh: chọn trong các ảnh đã lưu ở mục Ảnh sản phẩm (đánh số theo thứ tự) — ảnh mới thêm cần lưu sản phẩm trước.</div>
             </div>
           </div>
           {{ ant_form_error($errors->first('variants')) }}
@@ -251,6 +256,7 @@
                   <th class="ant-table-cell" style="min-width: 180px">Tên</th>
                   <th class="ant-table-cell" style="min-width: 110px">SKU</th>
                   <th class="ant-table-cell" style="min-width: 120px; text-align: right">Giá (gồm VAT)</th>
+                  <th class="ant-table-cell" style="min-width: 110px">Ảnh</th>
                   <th class="ant-table-cell" style="min-width: 80px; text-align: right">Tồn kho</th>
                   <th class="ant-table-cell text-center">Đang bán</th>
                   <th class="ant-table-cell" style="width: 48px"></th>

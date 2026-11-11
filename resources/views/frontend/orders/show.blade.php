@@ -78,7 +78,7 @@
         <ul class="divide-y divide-slate-100">
           @foreach ($order->items as $item)
             <li class="flex gap-4 px-5 py-4">
-              <span class="size-14 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-white">@if ($item->product?->cover)<img src="{{ $item->product->cover->url() }}" alt="" class="size-full object-contain" />@endif</span>
+              <span class="size-14 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-white">@php $thumb = $item->variant?->image ?? $item->product?->cover; @endphp @if ($thumb)<img src="{{ $thumb->url() }}" alt="" class="size-full object-contain" />@endif</span>
               <div class="min-w-0 flex-1 text-sm">
                 <div class="font-medium text-slate-900">{{ $item->product_name }}</div>
                 @if ($item->variant_name)<div class="text-slate-600" data-item-variant>{{ $item->variant_name }}</div>@endif

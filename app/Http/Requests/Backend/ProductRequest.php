@@ -41,6 +41,7 @@ class ProductRequest extends FormRequest
             'variants.*.sku' => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', 'distinct:ignore_case'],
             'variants.*.price' => ['nullable', 'integer', 'min:0', 'max:100000000000'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            'variants.*.image_id' => ['nullable', 'integer'],
             'variants.*.active' => ['nullable', 'boolean'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:500000'],
@@ -110,7 +111,7 @@ class ProductRequest extends FormRequest
                 if (! is_array($row)) {
                     return $row;
                 }
-                foreach (['name', 'sku', 'price', 'stock'] as $f) {
+                foreach (['name', 'sku', 'price', 'stock', 'image_id'] as $f) {
                     $row[$f] = is_string($row[$f] ?? null) && trim($row[$f]) !== '' ? trim($row[$f]) : null;
                 }
                 if ($row['sku'] !== null) {
@@ -162,11 +163,16 @@ class ProductRequest extends FormRequest
     {
         $product = $this->route('product');
         $own = $product instanceof Product ? $product->variants()->pluck('id')->all() : [];
+        $ownImages = $product instanceof Product ? $product->images()->pluck('id')->all() : [];
         $skus = [];
         foreach ((array) $this->input('variants', []) as $i => $row) {
             $id = is_array($row) && isset($row['id']) && ctype_digit((string) $row['id']) ? (int) $row['id'] : null;
             if ($id !== null && ! in_array($id, $own, true)) {
                 $validator->errors()->add("variants.{$i}.name", 'Biến thể không thuộc sản phẩm này — tải lại trang.');
+            }
+            $imageId = is_array($row) && isset($row['image_id']) && ctype_digit((string) $row['image_id']) ? (int) $row['image_id'] : null;
+            if ($imageId !== null && ! in_array($imageId, $ownImages, true)) {
+                $validator->errors()->add("variants.{$i}.image_id", 'Ảnh không thuộc sản phẩm này.');
             }
             if (is_array($row) && is_string($row['sku'] ?? null)) {
                 $taken = ProductVariant::where('sku', $row['sku'])->when($id, fn ($q) => $q->whereKeyNot($id))->exists();
@@ -177,13 +183,15 @@ class ProductRequest extends FormRequest
         }
     }
 
-    /** Biến thể đã chuẩn hóa để controller đồng bộ: [id|null, name, sku, price, stock, active, sort_order]. */
+    /** Biến thể đã chuẩn hóa để controller đồng bộ: [id|null, name, sku, price, stock, image_id, active, sort_order]. */
     public function variantRows(): array
     {
         return array_values(array_map(fn ($row, $i) => [
             'id' => isset($row['id']) && ctype_digit((string) $row['id']) ? (int) $row['id'] : null,
             'name' => $row['name'], 'sku' => $row['sku'] ?? null,
             'price' => isset($row['price']) ? (int) $row['price'] : null, 'stock' => isset($row['stock']) ? (int) $row['stock'] : null,
+            // Ảnh bị gỡ trong cùng lần lưu: về ảnh đại diện
+            'image_id' => isset($row['image_id']) && in_array((int) $row['image_id'], $this->keptImageIds(), true) ? (int) $row['image_id'] : null,
             'active' => (string) ($row['active'] ?? '0') === '1', 'sort_order' => $i,
         ], $v = array_values($this->validated('variants') ?? []), array_keys($v)));
     }
