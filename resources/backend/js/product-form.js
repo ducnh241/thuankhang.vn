@@ -9,7 +9,8 @@ import { toSlug } from './tree-page';
  *   - đường dẫn tự theo tên cho tới khi sửa tay (như page-form.js);
  *   - mô tả chi tiết: trình soạn thảo Tiptap (editor.js) ghi HTML vào ô ẩn description;
  *   - giá trước VAT và cơ sở hoa hồng tính lại khi gõ giá / VAT (công thức như Product::priceBeforeVat, đặc tả 8.3);
- *   - ảnh: thêm nhiều ảnh (gom vào ô images[] bằng DataTransfer), bỏ ảnh, ★ đưa ảnh đang có lên đầu (ảnh đại diện).
+ *   - ảnh: thêm nhiều ảnh (gom vào ô images[] bằng DataTransfer), bỏ ảnh, kéo thả sắp xếp (cả ảnh mới xen ảnh cũ —
+ *     ô ẩn image_order), ★ đưa ảnh đang có lên đầu (ảnh đại diện).
  *     Đổi ảnh thì form coi như đã đổi (data-dirty): "Hủy thay đổi" tải lại trang.
  */
 
@@ -47,12 +48,24 @@ function initGallery($form) {
   const maxSize = Number($field.attr('data-max-size'));
   const files = new Map(); // thẻ ảnh mới → File
 
+  const $order = $field.find('[data-gallery-order]');
   const sync = () => {
     const dt = new DataTransfer();
     $list.find('[data-gallery-item][data-new]').each(function () {
       dt.items.add(files.get(this));
     });
     input.files = dt.files;
+    // Thứ tự trên màn hình → server: k{id} ảnh đang có, n{i} ảnh mới (i = vị trí trong images[])
+    let n = 0;
+    $order.val(
+      $list
+        .find('[data-gallery-item]')
+        .map(function () {
+          return this.hasAttribute('data-new') ? `n${n++}` : `k${this.getAttribute('data-image-id')}`;
+        })
+        .get()
+        .join(','),
+    );
     $add.toggleClass('hidden', $list.find('[data-gallery-item]').length >= max);
     $form[0].setAttribute('data-dirty', '');
     $form.trigger('change');
@@ -74,10 +87,10 @@ function initGallery($form) {
         if (room <= 0) return message(`Tối đa ${max} ảnh.`, 'error');
         room -= 1;
         const src = URL.createObjectURL(file);
-        const $card = $(`<div class="ant-upload-list-picture-card-container relative" data-gallery-item data-new>
+        const $card = $(`<div class="ant-upload-list-picture-card-container relative" data-gallery-item data-new draggable="true">
           <div class="ant-upload-list-item ant-upload-list-item-done ant-upload-list-item-list-type-picture-card">
-            <div class="ant-upload-list-item-info"><span><a class="ant-upload-list-item-thumbnail" href="${src}" target="_blank" rel="noopener noreferrer"
-              ><img src="${src}" alt="${escapeHtml(file.name)}" class="ant-upload-list-item-image" /></a></span></div>
+            <div class="ant-upload-list-item-info"><span><a class="ant-upload-list-item-thumbnail" href="${src}" target="_blank" rel="noopener noreferrer" draggable="false"
+              ><img src="${src}" alt="${escapeHtml(file.name)}" class="ant-upload-list-item-image" draggable="false" /></a></span></div>
             <span class="ant-upload-list-item-actions"
               ><a href="${src}" target="_blank" rel="noopener noreferrer" title="Xem ảnh">${icon('eye')}</a
               ><button type="button" class="ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only" title="Bỏ ảnh" data-gallery-remove>${icon('delete')}</button></span>
@@ -99,10 +112,41 @@ function initGallery($form) {
     sync();
   });
 
-  // ★: ảnh đang có lên đầu danh sách (thứ tự keep_images[] = thứ tự lưu)
+  // ★: ảnh đang có lên đầu danh sách
   $list.on('click', '[data-gallery-cover]', function () {
     $list.prepend($(this).closest('[data-gallery-item]'));
     sync();
+  });
+
+  // Kéo thả sắp xếp (HTML5 drag & drop): thả vào nửa trái / phải của một ảnh = chèn trước / sau ảnh đó
+  let dragged = null;
+  const clearMarks = () => $list.find('[data-gallery-item]').removeClass('is-drop-before is-drop-after');
+  $list.on('dragstart', '[data-gallery-item]', function (e) {
+    dragged = this;
+    this.classList.add('is-dragging');
+    e.originalEvent.dataTransfer.effectAllowed = 'move';
+    e.originalEvent.dataTransfer.setData('text/plain', ''); // Firefox cần có dữ liệu mới cho kéo
+  });
+  $list.on('dragover', '[data-gallery-item]', function (e) {
+    if (!dragged || this === dragged) return;
+    e.preventDefault();
+    const rect = this.getBoundingClientRect();
+    const after = e.originalEvent.clientX > rect.left + rect.width / 2;
+    clearMarks();
+    this.classList.add(after ? 'is-drop-after' : 'is-drop-before');
+  });
+  $list.on('drop', '[data-gallery-item]', function (e) {
+    if (!dragged || this === dragged) return;
+    e.preventDefault();
+    const after = this.classList.contains('is-drop-after');
+    after ? this.after(dragged) : this.before(dragged);
+    clearMarks();
+    sync();
+  });
+  $list.on('dragend', '[data-gallery-item]', function () {
+    this.classList.remove('is-dragging');
+    clearMarks();
+    dragged = null;
   });
 }
 

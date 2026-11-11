@@ -48,6 +48,34 @@ class ProductManagementTest extends TestCase
         return UploadedFile::fake()->image($name, 400, 400);
     }
 
+    public function test_drag_and_drop_image_order(): void
+    {
+        $ops = $this->ops();
+        $this->actingAs($ops)->post('/backend/product', $this->form(['images' => [$this->image('a.jpg'), $this->image('b.jpg')]]))->assertSessionHasNoErrors();
+        $product = Product::sole();
+        [$a, $b] = $product->images->all();
+        $this->get(route('backend.products.edit', $product))->assertSee('data-image-id="'.$a->id.'" draggable="true"', false)->assertSee('data-gallery-order', false);
+
+        // Ảnh mới c xen giữa, b lên đầu: thứ tự lưu đúng như kéo thả
+        $this->put(route('backend.products.update', $product), $this->form([
+            'slug' => $product->slug, 'keep_images' => [$a->id, $b->id], 'images' => [$this->image('c.jpg')],
+            'image_order' => "k{$b->id},n0,k{$a->id}",
+        ]))->assertSessionHasNoErrors();
+        $ordered = $product->images()->get();
+        $this->assertSame([$b->id, $a->id], [$ordered[0]->id, $ordered[2]->id]);
+        $this->assertNotContains($ordered[1]->id, [$a->id, $b->id]);
+        $this->assertSame($b->id, $product->cover()->first()->id);
+
+        // Mục lạ (ảnh sản phẩm khác, ảnh mới không tồn tại) bị bỏ qua; ảnh thiếu trong danh sách xếp sau
+        $other = Product::factory()->create(['category_id' => $this->category->id])->images()->create(['path' => 'products/x.jpg', 'sort_order' => 0]);
+        $this->put(route('backend.products.update', $product), $this->form([
+            'slug' => $product->slug, 'keep_images' => $ordered->pluck('id')->all(), 'image_order' => "k{$other->id},n5,k{$a->id},rác",
+        ]))->assertSessionHasNoErrors();
+        $this->assertSame($a->id, $product->images()->first()->id);
+        $this->assertSame(3, $product->images()->count());
+        $this->assertSame(0, $other->refresh()->sort_order);
+    }
+
     public function test_seo_fields_and_form_layout(): void
     {
         $ops = $this->ops();

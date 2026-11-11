@@ -152,10 +152,10 @@
                 <div class="ant-upload-picture-card-wrapper">
                   <div class="ant-upload-list ant-upload-list-picture-card product-gallery">
                     @foreach ($images as $image)
-                      <div class="ant-upload-list-picture-card-container relative" data-gallery-item>
+                      <div class="ant-upload-list-picture-card-container relative" data-gallery-item data-image-id="{{ $image->id }}" draggable="true">
                         <div class="ant-upload-list-item ant-upload-list-item-done ant-upload-list-item-list-type-picture-card">
                           <div class="ant-upload-list-item-info">
-                            <span><a class="ant-upload-list-item-thumbnail" href="{{ $image->url() }}" target="_blank" rel="noopener noreferrer"><img src="{{ $image->url() }}" alt="" class="ant-upload-list-item-image" /></a></span>
+                            <span><a class="ant-upload-list-item-thumbnail" href="{{ $image->url() }}" target="_blank" rel="noopener noreferrer" draggable="false"><img src="{{ $image->url() }}" alt="" class="ant-upload-list-item-image" draggable="false" /></a></span>
                           </div>
                           <span class="ant-upload-list-item-actions"
                             ><a href="{{ $image->url() }}" target="_blank" rel="noopener noreferrer" title="Xem ảnh">{{ ant_icon('eye') }}</a
@@ -175,9 +175,11 @@
                 </div>
                 {{-- Ô chọn tệp thật nằm ngoài khung .ant-upload; product-form.js gom các tệp đã chọn vào ô này --}}
                 <input type="file" name="images[]" multiple accept="image/png,image/jpeg,image/webp" class="hidden" data-gallery-input aria-label="Ảnh sản phẩm" />
+                {{-- Thứ tự cuối cùng (kéo thả): "k{id}" = ảnh đang có, "n{i}" = ảnh mới thứ i trong images[] --}}
+                <input type="hidden" name="image_order" value="" data-gallery-order />
               </div></div>
               {{ ant_form_error($imageError) }}
-              <div class="ant-form-item-extra">Tối đa {{ Product::MAX_IMAGES }} ảnh PNG, JPG hoặc WEBP, mỗi ảnh tối đa 4 MB; ảnh vuông là đẹp nhất. Ảnh đầu tiên là ảnh đại diện — bấm ★ để đổi.</div>
+              <div class="ant-form-item-extra">Tối đa {{ Product::MAX_IMAGES }} ảnh PNG, JPG hoặc WEBP, mỗi ảnh tối đa 4 MB; ảnh vuông là đẹp nhất. Kéo thả để sắp xếp; ảnh đầu tiên là ảnh đại diện (hoặc bấm ★ để đưa ảnh lên đầu).</div>
             </div>
           </div>
         </div>

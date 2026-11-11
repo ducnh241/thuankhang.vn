@@ -2956,6 +2956,19 @@ a.project-thumb:hover {
 .product-gallery [data-gallery-item]:first-child .product-gallery-cover {
   display: inline-block;
 }
+/* Kéo thả sắp xếp ảnh */
+.product-gallery [data-gallery-item][draggable='true'] {
+  cursor: grab;
+}
+.product-gallery [data-gallery-item].is-dragging {
+  opacity: 0.4;
+}
+.product-gallery [data-gallery-item].is-drop-before .ant-upload-list-item {
+  box-shadow: -3px 0 0 #1677ff;
+}
+.product-gallery [data-gallery-item].is-drop-after .ant-upload-list-item {
+  box-shadow: 3px 0 0 #1677ff;
+}
 .product-gallery [data-gallery-item]:first-child [data-gallery-cover],
 .product-gallery [data-gallery-item][data-new] [data-gallery-cover] {
   display: none;

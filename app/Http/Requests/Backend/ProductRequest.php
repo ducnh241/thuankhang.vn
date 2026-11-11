@@ -51,6 +51,7 @@ class ProductRequest extends FormRequest
             'is_featured' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:-9999', 'max:9999'],
             'keep_images' => ['nullable', 'array'],
+            'image_order' => ['nullable', 'string', 'max:2000'],
             'keep_images.*' => ['integer'],
             'images' => ['nullable', 'array', 'max:'.Product::MAX_IMAGES],
             'images.*' => ['image', 'mimes:png,jpg,jpeg,webp', 'max:4096'],
@@ -194,6 +195,22 @@ class ProductRequest extends FormRequest
             'image_id' => isset($row['image_id']) && in_array((int) $row['image_id'], $this->keptImageIds(), true) ? (int) $row['image_id'] : null,
             'active' => (string) ($row['active'] ?? '0') === '1', 'sort_order' => $i,
         ], $v = array_values($this->validated('variants') ?? []), array_keys($v)));
+    }
+
+    /**
+     * Thứ tự ảnh sau kéo thả: danh sách ["k", id] (ảnh đang có) / ["n", i] (ảnh mới thứ i trong images[]). Rỗng = không
+     * gửi (giữ cách cũ: ảnh đang có theo keep_images[], ảnh mới nối cuối).
+     */
+    public function imageOrder(): array
+    {
+        $raw = $this->input('image_order');
+        if (! is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(function ($token) {
+            return preg_match('/^([kn])(\d+)$/', trim($token), $m) ? [$m[1], (int) $m[2]] : null;
+        }, explode(',', $raw))));
     }
 
     /** Dữ liệu lưu vào bảng products (ảnh xử lý riêng ở controller). */

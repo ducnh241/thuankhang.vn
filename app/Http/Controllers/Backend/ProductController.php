@@ -70,7 +70,8 @@ class ProductController extends Controller
         $product = DB::transaction(function () use ($request) {
             $product = Product::create($request->productData());
             $this->syncVariants($product, $request->variantRows());
-            $this->addImages($product, $request->file('images') ?? [], 0);
+            $added = $this->addImages($product, $request->file('images') ?? [], 0);
+            $this->applyImageOrder($product, $request->imageOrder(), $added);
 
             return $product;
         });
@@ -98,7 +99,8 @@ class ProductController extends Controller
             foreach ($keep as $i => $id) {
                 ProductImage::whereKey($id)->where('sort_order', '!=', $i)->first()?->update(['sort_order' => $i]);
             }
-            $this->addImages($product, $request->file('images') ?? [], count($keep));
+            $added = $this->addImages($product, $request->file('images') ?? [], count($keep));
+            $this->applyImageOrder($product, $request->imageOrder(), $added);
 
             return $removed;
         });
@@ -159,10 +161,39 @@ class ProductController extends Controller
         }
     }
 
-    private function addImages(Product $product, array $files, int $start): void
+    /** @return list<ProductImage> ảnh vừa thêm, theo thứ tự trong images[] */
+    private function addImages(Product $product, array $files, int $start): array
     {
+        $added = [];
         foreach (array_values($files) as $i => $file) {
-            $product->images()->create(['path' => $file->store(Product::IMAGE_DIRECTORY, 'public'), 'sort_order' => $start + $i]);
+            $added[] = $product->images()->create(['path' => $file->store(Product::IMAGE_DIRECTORY, 'public'), 'sort_order' => $start + $i]);
+        }
+
+        return $added;
+    }
+
+    /**
+     * Sắp lại thứ tự ảnh theo kéo thả (image_order). Mục không hợp lệ (ảnh của sản phẩm khác, ảnh đã bỏ, ảnh mới không có)
+     * bị bỏ qua; ảnh còn lại không có trong danh sách giữ thứ tự cũ, xếp sau.
+     */
+    private function applyImageOrder(Product $product, array $order, array $added): void
+    {
+        if ($order === []) {
+            return;
+        }
+        $images = $product->images()->get()->keyBy('id');
+        $ids = [];
+        foreach ($order as [$kind, $n]) {
+            $id = $kind === 'k' ? ($images->has($n) ? $n : null) : ($added[$n]->id ?? null);
+            if ($id !== null && ! in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+        }
+        $ids = [...$ids, ...$images->keys()->diff($ids)->all()];
+        foreach (array_values($ids) as $i => $id) {
+            if ($images[$id]->sort_order !== $i) {
+                $images[$id]->update(['sort_order' => $i]);
+            }
         }
     }
 
