@@ -44,6 +44,8 @@ class ProductRequest extends FormRequest
             'variants.*.active' => ['nullable', 'boolean'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:500000'],
+            'meta_title' => ['nullable', 'string', 'max:70'],
+            'meta_description' => ['nullable', 'string', 'max:160'],
             'status' => ['required', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:-9999', 'max:9999'],
@@ -58,7 +60,7 @@ class ProductRequest extends FormRequest
     {
         return [
             'name' => 'tên sản phẩm', 'slug' => 'đường dẫn', 'sku' => 'mã sản phẩm', 'category_id' => 'danh mục', 'price' => 'giá bán',
-            'vat_rate' => 'VAT', 'brand' => 'thương hiệu', 'origin' => 'xuất xứ', 'stock' => 'tồn kho', 'short_description' => 'mô tả ngắn', 'description' => 'mô tả', 'sort_order' => 'thứ tự', 'images' => 'ảnh', 'images.*' => 'ảnh',
+            'vat_rate' => 'VAT', 'brand' => 'thương hiệu', 'origin' => 'xuất xứ', 'stock' => 'tồn kho', 'short_description' => 'mô tả ngắn', 'description' => 'mô tả', 'meta_title' => 'tiêu đề SEO', 'meta_description' => 'mô tả SEO', 'sort_order' => 'thứ tự', 'images' => 'ảnh', 'images.*' => 'ảnh',
         ];
     }
 
@@ -206,6 +208,8 @@ class ProductRequest extends FormRequest
             'short_description' => $trim($this->validated('short_description')),
             // Trình soạn thảo trống vẫn gửi "<p></p>" → coi như không có mô tả
             'description' => trim(strip_tags((string) $description, '<img><iframe><video><hr>')) === '' ? null : $description,
+            'meta_title' => $trim($this->validated('meta_title')),
+            'meta_description' => $trim($this->validated('meta_description')),
             'status' => $this->boolean('status'),
             'is_featured' => $this->boolean('is_featured'),
             'sort_order' => (int) ($this->validated('sort_order') ?? 0),

@@ -106,6 +106,61 @@ function initGallery($form) {
   });
 }
 
+// Chữ thuần của HTML mô tả (DOMParser: không chạy script, không tải ảnh)
+const textOf = html => new DOMParser().parseFromString(html || '', 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+
+// Hiển thị trên Google: xem trước + đếm ký tự; nút bút mở / đóng ô tiêu đề, mô tả SEO, đường dẫn
+function initSeo($form) {
+  const $slug = $('#product_slug');
+  const $name = $('#product_name');
+  const refresh = () => {
+    const slug = toSlug($slug.val()) || toSlug($name.val()) || 'duong-dan';
+    $('#seo-preview-url').text($('#seo-preview-url').attr('data-base') + slug);
+    $('#seo-full-url').text($('#seo-full-url').attr('data-base') + slug);
+    $('#seo-preview-title').text($('#product_meta_title').val().trim() || $name.val().trim() || 'Tên sản phẩm');
+    const description =
+      $('#product_meta_description').val().trim() ||
+      $('#product_short_description').val().trim() ||
+      textOf($form.find('[name=description]').val()).slice(0, 160);
+    $('#seo-preview-description').text(description || 'Thêm mô tả ngắn hoặc mô tả SEO để xem sản phẩm hiện thế nào trong kết quả tìm kiếm.');
+    const price = $('#product_price').val().trim();
+    $('#seo-preview-price').text(price ? `${formatMoneyInput(String(parseMoney(price)))} ₫` : '');
+    $form.find('[data-counter-for]').each(function () {
+      const len = $(`#${$(this).attr('data-counter-for')}`).val().length;
+      $(this).text(`${len} / ${$(this).attr('data-max')} ký tự`);
+    });
+  };
+  $form.on('input change', refresh);
+  $form.on('reset', () => setTimeout(refresh));
+  refresh();
+
+  $('#seo-edit').on('click', function () {
+    const $fields = $('#seo-fields').toggleClass('hidden');
+    const open = !$fields.hasClass('hidden');
+    $(this).attr('aria-expanded', open);
+    if (open) $('#product_meta_title').trigger('focus');
+  });
+}
+
+// Biến thể: phần nhập (tên nhóm + bảng) chỉ hiện khi có dòng biến thể; bấm "Thêm biến thể" thì hiện (repeater.js thêm dòng)
+function initVariants($form) {
+  const $card = $form.find('[data-card="variants"]');
+  const $body = $card.find('[data-variant-body]');
+  const sync = () => {
+    if ($card.find('[data-repeater-row]').length) $body.removeClass('hidden');
+    else if (!$body.find('.ant-form-item-has-error').length) $body.addClass('hidden');
+  };
+  // Chạy sau xử lý thêm / bỏ dòng của repeater.js
+  $card.on('click', '[data-repeater-remove]', () => setTimeout(sync));
+  $card.on('click', '[data-repeater-add]', () =>
+    setTimeout(() => {
+      sync();
+      $card.find('[data-repeater-row]').last().find('input[type=text]').first().trigger('focus');
+    }),
+  );
+  $form.on('reset', () => setTimeout(sync));
+}
+
 export default async function initProductForm() {
   const $form = $('#product-form');
   if (!$form.length) return;
@@ -126,6 +181,8 @@ export default async function initProductForm() {
   });
   $form.on('reset', () => setTimeout(() => $slug.attr('data-touched', $slug.val() !== '' ? '' : null)));
 
+  initSeo($form);
+  initVariants($form);
   initPrice($form);
   initGallery($form);
 

@@ -1,7 +1,7 @@
 @extends('layouts.backend')
 
-{{-- Thêm / sửa sản phẩm (A6), dựng như trang sửa Trang: cột chính (Tên, Đường dẫn, Mô tả ngắn, Mô tả — Tiptap; Ảnh;
-     Giá) + cột phụ (Trạng thái, Danh mục, Mã / thứ tự). Giá nhập ĐÃ GỒM VAT; dưới ô hiện giá trước VAT và cơ sở hoa hồng.
+{{-- Thêm / sửa sản phẩm (A6), dựng như trang sửa Trang: cột chính (Tên, Mô tả ngắn, Mô tả — Tiptap; Ảnh; Giá & tồn kho;
+     Biến thể; Hiển thị trên Google — tiêu đề / mô tả SEO, đường dẫn) + cột phụ (Trạng thái, Danh mục, Mã / thứ tự). Giá nhập ĐÃ GỒM VAT; dưới ô hiện giá trước VAT và cơ sở hoa hồng.
      JS: product-form.js (đường dẫn theo tên, trình soạn thảo, tính giá, ảnh), edit-form.js (thay đổi chưa lưu). --}}
 @php
     use App\Models\Product;
@@ -21,6 +21,9 @@
     $images = $editing ? $product->images : collect();
     $imageError = $errors->first('images') ?: collect($errors->keys())->filter(fn ($k) => str_starts_with($k, 'images.'))->map(fn ($k) => $errors->first($k))->first();
     $base = url('/'.Product::PATH).'/';
+    $site = \App\Support\SiteSettings::all();
+    $favicon = \App\Support\SiteSettings::imageUrl($site['site_favicon'] ?? null);
+    $seoOpen = $errors->hasAny(['meta_title', 'meta_description', 'slug']);
     // Biến thể: dòng từ old input (sau lỗi) hoặc từ DB
     $variantRows = session()->hasOldInput()
         ? collect(is_array(old('variants')) ? old('variants') : [])->map(fn ($r, $i) => ['key' => $i, ...array_map(fn ($v) => is_string($v) ? $v : '', array_intersect_key((array) $r, array_flip(['id', 'name', 'sku', 'price', 'stock', 'active'])))])
@@ -105,19 +108,6 @@
                 <input type="text" id="product_name" name="name" value="{{ $old('name') }}" class="ant-input" maxlength="255" placeholder="VD: Viên uống Vitamin C 1000mg" />
               </div></div>
               {{ ant_form_error($errors->first('name')) }}
-            </div>
-          </div>
-          <div class="ant-row ant-form-item{{ $hasError('slug') }}">
-            <div class="ant-col ant-form-item-label"><label for="product_slug" title="Đường dẫn">Đường dẫn</label></div>
-            <div class="ant-col ant-form-item-control">
-              <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                <span class="ant-input-group-wrapper"><span class="ant-input-wrapper ant-input-group"
-                  ><span class="ant-input-group-addon"><span class="page-slug-base" title="{{ $base }}"><bdi>{{ $base }}</bdi></span></span
-                  ><input type="text" id="product_slug" name="slug" value="{{ $old('slug') }}" class="ant-input" maxlength="255" placeholder="tu-dong-theo-ten" @if ($old('slug') !== '') data-touched @endif /></span
-                ></span>
-              </div></div>
-              {{ ant_form_error($errors->first('slug')) }}
-              <div class="ant-form-item-extra">Để trống thì tự tạo theo tên. Chỉ chữ thường không dấu, số và dấu “-”.</div>
             </div>
           </div>
           <div class="ant-row ant-form-item{{ $hasError('short_description') }}">
@@ -238,6 +228,8 @@
           <div class="ant-card-head-title">Biến thể <span class="font-normal {{ $muted }}">(tùy chọn)</span></div>
           <div class="ant-card-extra"><button type="button" class="ant-btn ant-btn-dashed" data-repeater-add>{{ ant_icon('plus') }}<span>Thêm biến thể</span></button></div>
         </div></div>
+        {{-- Ẩn khi chưa có biến thể; hiện khi có dòng hoặc bấm "Thêm biến thể" (product-form.js) --}}
+        <div data-variant-body @class(['hidden' => $variantRows->isEmpty() && ! $errors->has('variant_label')])>
         <div class="ant-card-body">
           <div class="ant-row ant-form-item{{ $hasError('variant_label') }}">
             <div class="ant-col ant-form-item-label"><label for="product_variant_label" title="Tên nhóm phân loại">Tên nhóm phân loại</label></div>
@@ -271,9 +263,70 @@
               </tbody>
             </table>
           </div></div>
-          <div data-repeater-empty @class(['ant-empty ant-empty-normal ant-empty-small py-6', 'hidden' => $variantRows->isNotEmpty()])><p class="ant-empty-description">Chưa có biến thể — sản phẩm bán một loại duy nhất.</p></div>
+        </div>
         </div>
         <template data-repeater-template>{{ $variantRow(['key' => '__INDEX__', 'active' => '1']) }}</template>
+      </div>
+
+      {{-- Hiển thị trên Google: xem trước (tên site, đường dẫn, tiêu đề, giá, mô tả); bút mở ô tiêu đề / mô tả SEO / đường dẫn --}}
+      <div class="ant-card ant-card-bordered" data-card="seo">
+        <div class="ant-card-head">
+          <div class="ant-card-head-wrapper">
+            <div class="ant-card-head-title">Hiển thị trên Google</div>
+            <div class="ant-card-extra">
+              <button type="button" class="ant-btn ant-btn-text ant-btn-icon-only" id="seo-edit" data-tooltip="Sửa tiêu đề, mô tả SEO, đường dẫn" aria-label="Sửa tiêu đề, mô tả SEO, đường dẫn" aria-expanded="{{ $seoOpen ? 'true' : 'false' }}" aria-controls="seo-fields">{{ ant_icon('edit') }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="ant-card-body">
+          <div class="seo-preview" aria-label="Xem trước kết quả tìm kiếm">
+            <div class="seo-preview-site">
+              <span class="seo-preview-favicon">@if ($favicon)<img src="{{ $favicon }}" alt="" />@else{{ ant_icon('shop') }}@endif</span>
+              <div class="min-w-0">
+                <div class="seo-preview-name">{{ ($site['site_name'] ?? null) ?: config('app.name') }}</div>
+                <div class="seo-preview-url" id="seo-preview-url" data-base="{{ url('/') }} › {{ Product::PATH }} › "></div>
+              </div>
+            </div>
+            <div class="seo-preview-title" id="seo-preview-title"></div>
+            <div class="seo-preview-description" id="seo-preview-description"></div>
+            <div class="mt-1 text-[rgba(0,0,0,0.65)] tabular-nums" id="seo-preview-price"></div>
+          </div>
+          <div @class(['mt-6', 'hidden' => ! $seoOpen]) id="seo-fields">
+            <div class="ant-row ant-form-item{{ $hasError('meta_title') }}">
+              <div class="ant-col ant-form-item-label"><label for="product_meta_title" title="Tiêu đề SEO">Tiêu đề SEO</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <input type="text" id="product_meta_title" name="meta_title" value="{{ $old('meta_title') }}" class="ant-input" maxlength="70" placeholder="Để trống thì dùng tên sản phẩm" />
+                </div></div>
+                {{ ant_form_error($errors->first('meta_title')) }}
+                <div class="ant-form-item-extra"><span data-counter-for="product_meta_title" data-max="70"></span></div>
+              </div>
+            </div>
+            <div class="ant-row ant-form-item{{ $hasError('meta_description') }}">
+              <div class="ant-col ant-form-item-label"><label for="product_meta_description" title="Mô tả SEO">Mô tả SEO</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <textarea id="product_meta_description" name="meta_description" class="ant-input" rows="3" maxlength="160" placeholder="Để trống thì dùng mô tả ngắn">{{ $old('meta_description') }}</textarea>
+                </div></div>
+                {{ ant_form_error($errors->first('meta_description')) }}
+                <div class="ant-form-item-extra"><span data-counter-for="product_meta_description" data-max="160"></span></div>
+              </div>
+            </div>
+            <div class="ant-row ant-form-item mb-0{{ $hasError('slug') }}">
+              <div class="ant-col ant-form-item-label"><label for="product_slug" title="Đường dẫn">Đường dẫn</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <span class="ant-input-group-wrapper"><span class="ant-input-wrapper ant-input-group"
+                    ><span class="ant-input-group-addon">{{ Product::PATH }}/</span
+                    ><input type="text" id="product_slug" name="slug" value="{{ $old('slug') }}" class="ant-input" maxlength="255" placeholder="tu-dong-theo-ten" @if ($old('slug') !== '') data-touched @endif /></span
+                  ></span>
+                </div></div>
+                {{ ant_form_error($errors->first('slug')) }}
+                <div class="ant-form-item-extra"><span class="break-all" id="seo-full-url" data-base="{{ $base }}"></span><br />Để trống thì tự tạo theo tên. Chỉ chữ thường không dấu, số và dấu “-”.</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

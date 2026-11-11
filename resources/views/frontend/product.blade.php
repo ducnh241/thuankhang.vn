@@ -29,8 +29,8 @@
     $rating = old('rating', $myReview?->rating);
 @endphp
 
-@section('title', $product->name)
-@section('description', (string) $product->short_description)
+@section('title', $product->meta_title ?: $product->name)
+@section('description', (string) ($product->meta_description ?: $product->short_description))
 @section('image', (string) $cover)
 
 @if ($preview)

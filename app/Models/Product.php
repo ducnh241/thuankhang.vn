@@ -29,7 +29,7 @@ class Product extends Model
 
     public const MAX_VARIANTS = 50;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'vat_rate', 'stock', 'variant_label', 'short_description', 'description', 'status', 'is_featured', 'sort_order'];
+    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'vat_rate', 'stock', 'variant_label', 'short_description', 'description', 'meta_title', 'meta_description', 'status', 'is_featured', 'sort_order'];
 
     protected $attributes = [
         'status' => true,

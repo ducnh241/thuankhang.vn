@@ -48,6 +48,27 @@ class ProductManagementTest extends TestCase
         return UploadedFile::fake()->image($name, 400, 400);
     }
 
+    public function test_seo_fields_and_form_layout(): void
+    {
+        $ops = $this->ops();
+        $this->actingAs($ops)->get('/backend/product/create')->assertOk()
+            ->assertSeeInOrder(['data-card="variants"', 'data-variant-body class="hidden"', 'data-card="seo"', 'id="product_meta_title"', 'id="product_slug"'], false);
+
+        $this->post('/backend/product', $this->form(['meta_title' => ' Vitamin C chính hãng ', 'meta_description' => 'Mua vitamin C giá tốt']))->assertSessionHasNoErrors();
+        $product = Product::sole();
+        $this->assertSame(['Vitamin C chính hãng', 'Mua vitamin C giá tốt'], [$product->meta_title, $product->meta_description]);
+        $this->get(route('backend.products.edit', $product))->assertSee('value="Vitamin C chính hãng"', false);
+        $this->put(route('backend.products.update', $product), $this->form(['slug' => $product->slug, 'meta_title' => str_repeat('a', 71)]))->assertSessionHasErrors('meta_title');
+
+        // Website dùng tiêu đề / mô tả SEO
+        $product->category->update(['status' => true]);
+        $this->get($product->url())->assertSee('<title>Vitamin C chính hãng', false)->assertSee('content="Mua vitamin C giá tốt"', false);
+
+        // Có biến thể: phần biến thể hiện sẵn
+        $product->variants()->create(['name' => 'Hộp 30 viên']);
+        $this->get(route('backend.products.edit', $product))->assertDontSee('data-variant-body class="hidden"', false)->assertSee('value="Hộp 30 viên"', false);
+    }
+
     public function test_brand_origin_and_stock_fields(): void
     {
         $ops = $this->ops();
