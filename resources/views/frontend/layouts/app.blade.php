@@ -73,8 +73,9 @@
           @endif
         </a>
         @if ($currentMember = auth('member')->user())
-          <a href="{{ route('member.account') }}" class="flex items-center gap-2 rounded-full border border-slate-200 py-1.5 pr-4 pl-1.5 font-medium text-slate-700 hover:border-brand-500 hover:text-brand-700" data-member-menu>
-            <span class="flex size-7 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">{{ mb_strtoupper(mb_substr($currentMember->full_name, 0, 1)) }}</span>
+          {{-- Điện thoại: chỉ hình tròn chữ cái đầu (tên ẩn); từ sm: viên thuốc có tên --}}
+          <a href="{{ route('member.account') }}" class="flex items-center gap-2 rounded-full font-medium text-slate-700 hover:text-brand-700 sm:border sm:border-slate-200 sm:py-1.5 sm:pr-4 sm:pl-1.5 sm:hover:border-brand-500" aria-label="Tài khoản: {{ $currentMember->full_name }}" data-member-menu>
+            <span class="flex size-8 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white sm:size-7 sm:text-xs">{{ mb_strtoupper(mb_substr($currentMember->full_name, 0, 1)) }}</span>
             <span class="max-w-32 truncate max-sm:hidden">{{ $currentMember->full_name }}</span>
           </a>
         @else

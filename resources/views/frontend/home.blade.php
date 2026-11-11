@@ -9,8 +9,9 @@
     {{-- Thẻ thành viên (đã đăng nhập) / lời mời tham gia --}}
     @if ($member)
       <section class="rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-emerald-500 p-5 text-white shadow-sm md:p-6" data-member-card>
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-4">
-          <div class="flex min-w-0 items-center gap-3">
+        {{-- Điện thoại: xếp dọc (chào → mã giới thiệu → 2 nút chia đôi); từ md: một hàng --}}
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+          <div class="flex min-w-0 items-center gap-3 md:flex-1">
             <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-lg font-bold">{{ mb_strtoupper(mb_substr($member->full_name, 0, 1)) }}</span>
             <div class="min-w-0">
               <div class="truncate font-semibold">Xin chào, {{ $member->full_name }}</div>
@@ -20,10 +21,12 @@
               </div>
             </div>
           </div>
-          <div class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 text-sm max-md:justify-start">
-            <span class="text-brand-50">Mã giới thiệu <strong class="font-mono text-white">{{ $member->referral_code }}</strong></span>
-            <button type="button" class="rounded-full bg-white px-4 py-1.5 font-semibold text-brand-800 hover:bg-brand-50" data-copy="{{ $member->referralLink() }}">Sao chép link mời</button>
-            <a href="{{ route('member.account') }}" class="rounded-full border border-white/60 px-4 py-1.5 font-semibold hover:bg-white/10">Đội nhóm</a>
+          <div class="flex flex-col gap-3 text-sm md:shrink-0 md:flex-row md:items-center">
+            <span class="whitespace-nowrap text-brand-50">Mã giới thiệu <strong class="font-mono text-base text-white">{{ $member->referral_code }}</strong></span>
+            <div class="flex gap-2">
+              <button type="button" class="flex-1 rounded-full bg-white px-4 py-2 font-semibold whitespace-nowrap text-brand-800 hover:bg-brand-50 md:flex-none md:py-1.5" data-copy="{{ $member->referralLink() }}">Sao chép link mời</button>
+              <a href="{{ route('member.account') }}" class="flex-1 rounded-full border border-white/60 px-4 py-2 text-center font-semibold whitespace-nowrap hover:bg-white/10 md:flex-none md:py-1.5">Đội nhóm</a>
+            </div>
           </div>
         </div>
         @if ($pendingOrders)
