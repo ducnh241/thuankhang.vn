@@ -79,6 +79,12 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   (`Order::takeStock()`, cờ `orders.stock_reserved`); hủy đơn (khách / admin / `orders:expire`) trả lại (`releaseStock()`,
   không trả hai lần); khôi phục đơn hủy thành đã thanh toán thì trừ lại (tồn có thể âm). Hết hàng: thẻ SP mờ + nút "+" khóa,
   trang SP "Hết hàng".
+- Biến thể: `products.variant_label` (tên nhóm, VD Màu sắc) + bảng `product_variants` (tên, SKU, giá NULL = giá SP, tồn NULL =
+  không theo dõi, bật / tắt), nhập ở thẻ "Biến thể" trong form sản phẩm admin (repeater; đồng bộ sửa / thêm / xóa, ghi nhật ký).
+  Có biến thể đang bán → khách bắt buộc chọn (trang SP chọn sẵn biến thể đầu còn hàng; thẻ SP "Từ X" + nút "+" mở trang SP),
+  giá / tồn theo biến thể, tồn của SP không dùng. Giỏ: khóa dòng `productId` hoặc `productId:variantId` (`Cart::key()`),
+  route `/gio-hang/{line}`. Đơn: `order_items.variant_id` (null khi biến thể bị xóa) + snapshot `variant_name`; giữ / trả tồn
+  theo biến thể.
 - Đánh giá sao: bảng `product_reviews` (1–5 sao + nhận xét, unique product + member, `is_visible`). Chỉ thành viên có đơn đã
   thanh toán chứa SP mới gửi được (`ProductReview::canReview`), gửi lại = sửa. Trang SP: điểm TB, phân bố sao, 20 đánh giá
   mới nhất; thẻ SP hiện ★ điểm TB. Admin /backend/review: lọc, ẩn / hiện (quyền `review`, `review/moderate` — Vận hành,

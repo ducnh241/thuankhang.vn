@@ -18,27 +18,32 @@
       <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div class="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
           @foreach ($lines as $line)
-            @php $product = $line['product']; @endphp
-            <div class="flex gap-4 p-4" data-cart-line="{{ $product->id }}">
+            @php
+                $product = $line['product'];
+                $owner = $line['variant'] ?? $product; // nơi giữ tồn kho
+                $slug = str_replace(':', '-', $line['key']);
+            @endphp
+            <div class="flex gap-4 p-4" data-cart-line="{{ $line['key'] }}">
               <a href="{{ $product->url() }}" class="size-20 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                 @if ($product->cover)<img src="{{ $product->cover->url() }}" alt="" class="size-full object-cover" />@endif
               </a>
               <div class="min-w-0 flex-1">
                 <a href="{{ $product->url() }}" class="line-clamp-2 font-medium text-slate-900 hover:text-brand-700">{{ $product->name }}</a>
-                <div class="mt-1 text-sm text-slate-500">{{ Money::format($product->price) }}đ</div>
-                @if ($product->tracksStock() && $line['qty'] > $product->stock)
-                  <div class="mt-1 text-xs font-medium text-rose-600" data-stock-warning>{{ $product->stock > 0 ? 'Chỉ còn '.$product->stock.' sản phẩm — giảm số lượng để đặt hàng' : 'Đã hết hàng — xóa khỏi giỏ để đặt hàng' }}</div>
+                @if ($line['variant'])<div class="mt-0.5 text-sm text-slate-600" data-cart-variant>{{ $product->variant_label ?: 'Phân loại' }}: <span class="font-medium">{{ $line['variant']->name }}</span></div>@endif
+                <div class="mt-1 text-sm text-slate-500">{{ Money::format($line['unit_price']) }}đ</div>
+                @if ($owner->tracksStock() && $line['qty'] > $owner->stock)
+                  <div class="mt-1 text-xs font-medium text-rose-600" data-stock-warning>{{ $owner->stock > 0 ? 'Chỉ còn '.$owner->stock.' sản phẩm — giảm số lượng để đặt hàng' : 'Đã hết hàng — xóa khỏi giỏ để đặt hàng' }}</div>
                 @endif
                 <div class="mt-3 flex flex-wrap items-center gap-3">
-                  <form method="POST" action="{{ route('shop.cart.update', $product->id) }}" class="flex items-center gap-2">
+                  <form method="POST" action="{{ route('shop.cart.update', $line['key']) }}" class="flex items-center gap-2">
                     @csrf
                     @method('PATCH')
-                    <label for="qty-{{ $product->id }}" class="sr-only">Số lượng</label>
-                    <input id="qty-{{ $product->id }}" type="number" name="qty" value="{{ $line['qty'] }}" min="1" max="{{ max(1, $product->maxOrderQty()) }}" data-autosubmit
+                    <label for="qty-{{ $slug }}" class="sr-only">Số lượng</label>
+                    <input id="qty-{{ $slug }}" type="number" name="qty" value="{{ $line['qty'] }}" min="1" max="{{ max(1, $owner->maxOrderQty()) }}" data-autosubmit
                       class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-center text-sm outline-none focus:border-brand-500" />
                     <noscript><button type="submit" class="text-sm text-brand-700">Cập nhật</button></noscript>
                   </form>
-                  <form method="POST" action="{{ route('shop.cart.destroy', $product->id) }}">
+                  <form method="POST" action="{{ route('shop.cart.destroy', $line['key']) }}">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-sm text-slate-500 hover:text-rose-600">Xóa</button>

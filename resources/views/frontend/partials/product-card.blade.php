@@ -5,6 +5,8 @@
     $sold = (int) ($product->sold_qty ?? 0);
     $ratingCount = (int) ($product->rating_count ?? 0);
     $soldOut = $product->isOutOfStock();
+    $hasVariants = $product->hasVariants();
+    [$minPrice, $maxPrice] = $product->priceRange();
 @endphp
 <div class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-lg" data-product="{{ $product->id }}">
   <a href="{{ $product->url() }}" class="relative block aspect-square overflow-hidden bg-slate-100" tabindex="-1" aria-hidden="true">
@@ -29,7 +31,13 @@
       <span data-sold>{{ $sold > 0 ? 'Đã bán '.\App\Support\Money::format($sold) : 'Mới' }}</span>
     </div>
     <div class="mt-auto flex items-end justify-between gap-2 pt-2">
-      <span class="text-base font-bold text-brand-700">{{ \App\Support\Money::format($product->price) }}đ</span>
+      <span class="text-base font-bold text-brand-700">@if ($minPrice !== $maxPrice)<span class="text-xs font-medium text-slate-500">Từ </span>@endif{{ \App\Support\Money::format($minPrice) }}đ</span>
+      @if ($hasVariants && ! $soldOut)
+        {{-- Có biến thể: phải chọn ở trang sản phẩm --}}
+        <a href="{{ $product->url() }}" class="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-sm transition hover:bg-brand-700" aria-label="Chọn {{ mb_strtolower($product->variant_label ?: 'phân loại') }} cho {{ $product->name }}" data-choose-variant>
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14M5 12h14" /></svg>
+        </a>
+      @else
       <form method="POST" action="{{ route('shop.cart.store') }}">
         @csrf
         <input type="hidden" name="product_id" value="{{ $product->id }}" />
@@ -37,6 +45,7 @@
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14M5 12h14" /></svg>
         </button>
       </form>
+      @endif
     </div>
   </div>
 </div>

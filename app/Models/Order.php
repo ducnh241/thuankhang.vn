@@ -194,7 +194,7 @@ class Order extends Model
             return;
         }
         foreach ($this->items as $item) {
-            Product::withTrashed()->whereKey($item->product_id)->whereNotNull('stock')->decrement('stock', $item->qty);
+            $this->stockQuery($item)->decrement('stock', $item->qty);
         }
         $this->forceFill(['stock_reserved' => true])->save();
     }
@@ -206,9 +206,17 @@ class Order extends Model
             return;
         }
         foreach ($this->items as $item) {
-            Product::withTrashed()->whereKey($item->product_id)->whereNotNull('stock')->increment('stock', $item->qty);
+            $this->stockQuery($item)->increment('stock', $item->qty);
         }
         $this->forceFill(['stock_reserved' => false])->save();
+    }
+
+    /** Dòng giữ tồn của một dòng đơn: biến thể (nếu đơn chọn biến thể) hoặc sản phẩm; chỉ khi có theo dõi tồn. */
+    private function stockQuery(OrderItem $item): Builder
+    {
+        return $item->variant_id
+            ? ProductVariant::whereKey($item->variant_id)->whereNotNull('stock')
+            : Product::withTrashed()->whereKey($item->product_id)->whereNotNull('stock');
     }
 
     public function isPickup(): bool

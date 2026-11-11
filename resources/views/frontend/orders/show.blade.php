@@ -81,6 +81,7 @@
               <span class="size-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">@if ($item->product?->cover)<img src="{{ $item->product->cover->url() }}" alt="" class="size-full object-cover" />@endif</span>
               <div class="min-w-0 flex-1 text-sm">
                 <div class="font-medium text-slate-900">{{ $item->product_name }}</div>
+                @if ($item->variant_name)<div class="text-slate-600" data-item-variant>{{ $item->variant_name }}</div>@endif
                 <div class="text-slate-500">{{ Money::format($item->unit_price) }}đ × {{ $item->qty }}</div>
               </div>
               <div class="shrink-0 text-sm font-semibold">{{ Money::format($item->line_amount) }}đ</div>

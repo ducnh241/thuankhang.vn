@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PickupPoint;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Support\AffiliateSettings;
 use App\Support\Cart;
 use Illuminate\Http\RedirectResponse;
@@ -57,11 +58,15 @@ class CheckoutController extends Controller
         $shipping = $ship ? (int) AffiliateSettings::get('shipping_fee') : 0;
 
         $order = DB::transaction(function () use ($request, $lines, $ship, $goods, $shipping) {
-            // Tồn kho: khóa các sản phẩm có theo dõi tồn rồi mới kiểm tra (hai khách đặt cùng lúc không bán quá số còn)
-            $stocks = Product::whereKey($lines->pluck('product.id'))->whereNotNull('stock')->lockForUpdate()->pluck('stock', 'id');
-            $short = $lines->filter(fn ($line) => $stocks->has($line['product']->id) && $line['qty'] > $stocks[$line['product']->id]);
+            // Tồn kho: khóa các dòng có theo dõi tồn (biến thể đã chọn, hoặc sản phẩm không biến thể) rồi mới kiểm tra —
+            // hai khách đặt cùng lúc không bán quá số còn
+            $plain = $lines->whereNull('variant');
+            $productStock = Product::whereKey($plain->pluck('product.id'))->whereNotNull('stock')->lockForUpdate()->pluck('stock', 'id');
+            $variantStock = ProductVariant::whereKey($lines->pluck('variant.id')->filter())->whereNotNull('stock')->lockForUpdate()->pluck('stock', 'id');
+            $left = fn ($line) => $line['variant'] ? $variantStock[$line['variant']->id] ?? null : $productStock[$line['product']->id] ?? null;
+            $short = $lines->filter(fn ($line) => $left($line) !== null && $line['qty'] > $left($line));
             if ($short->isNotEmpty()) {
-                return $short->map(fn ($line) => $line['product']->name.' (còn '.max(0, $stocks[$line['product']->id]).')')->implode(', ');
+                return $short->map(fn ($line) => $line['product']->name.($line['variant'] ? ' — '.$line['variant']->name : '').' (còn '.max(0, $left($line)).')')->implode(', ');
             }
 
             $order = Order::create([
@@ -82,9 +87,11 @@ class CheckoutController extends Controller
             ]);
             foreach ($lines as $line) {
                 $product = $line['product'];
+                $variant = $line['variant'];
                 $order->items()->create([
-                    'product_id' => $product->id, 'product_name' => $product->name, 'sku' => $product->sku, 'qty' => $line['qty'],
-                    'unit_price' => $product->price, 'vat_rate' => $product->vat_rate, 'line_amount' => $line['line_amount'],
+                    'product_id' => $product->id, 'variant_id' => $variant?->id, 'product_name' => $product->name, 'variant_name' => $variant?->name,
+                    'sku' => $variant?->sku ?? $product->sku, 'qty' => $line['qty'],
+                    'unit_price' => $line['unit_price'], 'vat_rate' => $product->vat_rate, 'line_amount' => $line['line_amount'],
                     'vat_amount' => OrderItem::vatOf($line['line_amount'], $product->vat_rate),
                 ]);
             }

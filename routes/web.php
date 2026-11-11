@@ -29,8 +29,9 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
     // Giỏ hàng (session; khách chưa đăng nhập vẫn dùng được)
     Route::get('gio-hang', [CartController::class, 'index'])->name('shop.cart');
     Route::post('gio-hang', [CartController::class, 'store'])->name('shop.cart.store');
-    Route::patch('gio-hang/{product}', [CartController::class, 'update'])->name('shop.cart.update')->whereNumber('product');
-    Route::delete('gio-hang/{product}', [CartController::class, 'destroy'])->name('shop.cart.destroy')->whereNumber('product');
+    // {line} = khóa dòng giỏ: "productId" hoặc "productId:variantId"
+    Route::patch('gio-hang/{line}', [CartController::class, 'update'])->name('shop.cart.update')->where('line', '\d+(:\d+)?');
+    Route::delete('gio-hang/{line}', [CartController::class, 'destroy'])->name('shop.cart.destroy')->where('line', '\d+(:\d+)?');
 
     // Thành viên (guard "member", bảng members — tách khỏi tài khoản quản trị)
     Route::middleware('guest:member')->group(function () {

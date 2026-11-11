@@ -110,7 +110,7 @@
         <h2 class="font-semibold text-slate-900">Đơn hàng ({{ $lines->sum('qty') }} sản phẩm)</h2>
         <ul class="mt-4 space-y-3 text-sm">
           @foreach ($lines as $line)
-            <li class="flex justify-between gap-3"><span class="min-w-0 text-slate-600"><span class="line-clamp-2">{{ $line['product']->name }}</span><span class="text-slate-400">× {{ $line['qty'] }}</span></span><span class="shrink-0 font-medium">{{ Money::format($line['line_amount']) }}đ</span></li>
+            <li class="flex justify-between gap-3"><span class="min-w-0 text-slate-600"><span class="line-clamp-2">{{ $line['product']->name }}{{ $line['variant'] ? ' — '.$line['variant']->name : '' }}</span><span class="text-slate-400">× {{ $line['qty'] }}</span></span><span class="shrink-0 font-medium">{{ Money::format($line['line_amount']) }}đ</span></li>
           @endforeach
         </ul>
         <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">

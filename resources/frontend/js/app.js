@@ -173,3 +173,26 @@ document.addEventListener('click', e => {
   input.value = Math.min(max, Math.max(min, (Number(input.value) || min) + Number(step.dataset.qtyStep)));
   syncQty(box);
 });
+
+// Chọn biến thể (trang sản phẩm): đổi giá, tên biến thể, dòng tồn kho và số lượng tối đa theo lựa chọn
+document.addEventListener('change', e => {
+  const radio = e.target.closest('[data-variants] input[name="variant_id"]');
+  if (!radio) return;
+  document.querySelectorAll('[data-variant-price]').forEach(el => (el.textContent = radio.dataset.price));
+  const name = document.querySelector('[data-variant-name]');
+  if (name) name.textContent = radio.dataset.name;
+  const stock = document.querySelector('[data-stock]');
+  if (stock) {
+    stock.textContent = radio.dataset.stockText;
+    stock.classList.toggle('text-rose-600', !!radio.dataset.stockLow);
+    stock.classList.toggle('font-medium', !!radio.dataset.stockLow);
+    stock.classList.toggle('text-slate-500', !radio.dataset.stockLow);
+  }
+  const qty = document.querySelector('[data-qty]');
+  if (qty) {
+    const input = qty.querySelector('input');
+    input.max = radio.dataset.max;
+    if (Number(input.value) > Number(input.max)) input.value = input.max;
+    syncQty(qty);
+  }
+});

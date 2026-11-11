@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
 {{-- Chi tiết sản phẩm (S2, kiểu Shoplife): ảnh (bấm ảnh nhỏ đổi ảnh chính), tên, mã / danh mục / lượt bán, giá đã gồm VAT,
-     mô tả ngắn, chọn số lượng (−/+) + Thêm vào giỏ / Mua ngay, Chat Zalo / gọi hotline, giới thiệu sản phẩm (thành viên đã
+     mô tả ngắn, chọn biến thể (nếu có — giá / tồn theo biến thể), chọn số lượng (−/+) + Thêm vào giỏ / Mua ngay, Chat Zalo / gọi hotline, giới thiệu sản phẩm (thành viên đã
      kích hoạt: link ?ref=, chưa kích hoạt / khách: lời nhắc), mô tả chi tiết (đã lọc HTML), sản phẩm cùng danh mục.
      Điện thoại: thanh mua hàng cố định phía dưới (nút gắn vào form chính qua form="buy-form"). --}}
 @php
@@ -18,7 +18,13 @@
     $description = RichText::clean($product->description);
     $sold = (int) ($product->sold_qty ?? 0);
     $soldOut = $product->isOutOfStock();
-    $maxQty = max(1, $product->maxOrderQty());
+    // Biến thể: chọn sẵn biến thể đầu tiên còn hàng; giá / tồn / số lượng tối đa theo biến thể đang chọn (JS đổi khi chọn khác)
+    $variants = $product->activeVariants;
+    $selected = $variants->first(fn ($v) => ! $v->isOutOfStock()) ?? $variants->first();
+    $stockOwner = $selected ?? $product;
+    $maxQty = max(1, $stockOwner->maxOrderQty());
+    $displayPrice = $selected ? $selected->effectivePrice($product) : $product->price;
+    $stockText = fn ($owner) => ! $owner->tracksStock() ? '' : ($owner->stock > 0 ? 'Còn '.Money::format($owner->stock).' sản phẩm' : 'Hết hàng');
     $stars = fn (float $value) => str_repeat('★', (int) round($value)).str_repeat('☆', 5 - (int) round($value));
     $rating = old('rating', $myReview?->rating);
 @endphp
@@ -89,7 +95,7 @@
         @endif
 
         <div class="mt-5 rounded-2xl bg-brand-50 p-5">
-          <div class="text-3xl font-bold text-brand-700">{{ Money::format($product->price) }}đ</div>
+          <div class="text-3xl font-bold text-brand-700" data-variant-price>{{ Money::format($displayPrice) }}đ</div>
           <div class="mt-1 text-xs text-slate-500">Giá đã gồm VAT {{ Percent::format($product->vat_rate) }}%, chưa gồm phí giao hàng</div>
         </div>
 
@@ -101,6 +107,22 @@
         <form method="POST" action="{{ route('shop.cart.store') }}" class="mt-6" id="buy-form" data-buy-form>
           @csrf
           <input type="hidden" name="product_id" value="{{ $product->id }}" />
+          @if ($variants->isNotEmpty())
+            <fieldset class="mb-5" data-variants>
+              <legend class="text-sm font-medium text-slate-700">{{ $product->variant_label ?: 'Phân loại' }}: <span class="font-semibold text-slate-900" data-variant-name>{{ $selected?->name }}</span></legend>
+              <div class="mt-2 flex flex-wrap gap-2">
+                @foreach ($variants as $variant)
+                  @php $out = $variant->isOutOfStock(); @endphp
+                  <label @class(['relative cursor-pointer rounded-lg border px-3.5 py-2 text-sm transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50 has-[:checked]:font-semibold has-[:checked]:text-brand-800 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-200', 'border-slate-300 hover:border-brand-500' => ! $out, 'cursor-not-allowed border-dashed border-slate-200 text-slate-400 line-through' => $out])>
+                    <input type="radio" name="variant_id" value="{{ $variant->id }}" class="sr-only" @checked($selected?->id === $variant->id) @disabled($out)
+                      data-price="{{ Money::format($variant->effectivePrice($product)) }}đ" data-name="{{ $variant->name }}" data-max="{{ max(1, $variant->maxOrderQty()) }}"
+                      data-stock-text="{{ $stockText($variant) }}" data-stock-low="{{ $variant->tracksStock() && $variant->stock <= 5 ? '1' : '' }}" />
+                    {{ $variant->name }}
+                  </label>
+                @endforeach
+              </div>
+            </fieldset>
+          @endif
           <div class="flex flex-wrap items-center gap-4">
             <label for="buy-qty" class="text-sm font-medium text-slate-700">Số lượng</label>
             <div class="flex items-center rounded-full border border-slate-300 bg-white" data-qty>
@@ -110,9 +132,9 @@
               <button type="button" class="flex size-10 items-center justify-center rounded-r-full text-lg text-slate-600 hover:text-brand-700 disabled:text-slate-300" data-qty-step="1" aria-label="Tăng số lượng">+</button>
             </div>
             @if ($soldOut)
-              <span class="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white" data-stock>Hết hàng</span>
-            @elseif ($product->tracksStock())
-              <span @class(['text-sm', 'font-medium text-rose-600' => $product->stock <= 5, 'text-slate-500' => $product->stock > 5]) data-stock>Còn {{ Money::format($product->stock) }} sản phẩm</span>
+              <span class="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">Hết hàng</span>
+            @else
+              <span @class(['text-sm', 'font-medium text-rose-600' => $stockOwner->tracksStock() && $stockOwner->stock <= 5, 'text-slate-500' => ! ($stockOwner->tracksStock() && $stockOwner->stock <= 5)]) data-stock>{{ $stockText($stockOwner) }}</span>
             @endif
           </div>
           <div class="mt-4 flex gap-3 max-md:hidden">
@@ -245,7 +267,7 @@
   <div class="h-16 md:hidden" aria-hidden="true"></div>
   <div class="fixed inset-x-0 bottom-16 z-30 border-t border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur md:hidden" data-mobile-buy>
     <div class="flex items-center gap-2">
-      <div class="min-w-0 flex-1"><div class="truncate text-xs text-slate-500">{{ $product->name }}</div><div class="font-bold text-brand-700">{{ Money::format($product->price) }}đ</div></div>
+      <div class="min-w-0 flex-1"><div class="truncate text-xs text-slate-500">{{ $product->name }}</div><div class="font-bold text-brand-700" data-variant-price>{{ Money::format($displayPrice) }}đ</div></div>
       @if ($soldOut)
         <span class="rounded-full bg-slate-300 px-5 py-2.5 text-sm font-semibold text-white">Hết hàng</span>
       @else

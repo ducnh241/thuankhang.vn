@@ -54,7 +54,7 @@ class StockAndReviewTest extends TestCase
         $this->get('/')->assertSee('Hết hàng');
 
         $product->update(['stock' => null, 'brand' => null, 'origin' => null]);
-        $this->get('/san-pham/dau-ca')->assertDontSee('data-stock', false)->assertDontSee('data-brand-origin', false);
+        $this->get('/san-pham/dau-ca')->assertDontSee('Còn ')->assertSee('data-stock></span>', false)->assertDontSee('data-brand-origin', false);
     }
 
     public function test_cart_respects_stock(): void

@@ -27,7 +27,9 @@ class Product extends Model
 
     public const MAX_IMAGES = 10;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'vat_rate', 'stock', 'short_description', 'description', 'status', 'is_featured', 'sort_order'];
+    public const MAX_VARIANTS = 50;
+
+    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'vat_rate', 'stock', 'variant_label', 'short_description', 'description', 'status', 'is_featured', 'sort_order'];
 
     protected $attributes = [
         'status' => true,
@@ -79,20 +81,54 @@ class Product extends Model
      */
     public function scopeForCard(Builder $query): void
     {
-        $query->with('cover')
+        $query->with(['cover', 'activeVariants'])
             ->withSum(['orderItems as sold_qty' => fn ($q) => $q->whereHas('order', fn ($o) => $o->whereNotNull('paid_at'))], 'qty')
             ->withAvg(['reviews as rating_avg' => fn ($q) => $q->where('is_visible', true)], 'rating')
             ->withCount(['reviews as rating_count' => fn ($q) => $q->where('is_visible', true)]);
     }
 
-    /** Có theo dõi tồn kho không (stock = NULL: không giới hạn số lượng bán). */
-    public function tracksStock(): bool
+    /** Tất cả biến thể (admin), theo thứ tự. */
+    public function variants(): HasMany
     {
-        return $this->stock !== null;
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    /** Biến thể đang bán (website). */
+    public function activeVariants(): HasMany
+    {
+        return $this->variants()->where('active', true);
+    }
+
+    /** Có biến thể đang bán → khách phải chọn một biến thể; giá / tồn kho tính theo biến thể. */
+    public function hasVariants(): bool
+    {
+        return $this->activeVariants->isNotEmpty();
+    }
+
+    /** [giá thấp nhất, giá cao nhất] của các biến thể đang bán (không có biến thể: giá sản phẩm). */
+    public function priceRange(): array
+    {
+        if (! $this->hasVariants()) {
+            return [$this->price, $this->price];
+        }
+        $prices = $this->activeVariants->map(fn (ProductVariant $v) => $v->effectivePrice($this));
+
+        return [$prices->min(), $prices->max()];
+    }
+
+    /** Có theo dõi tồn kho không (stock = NULL: không giới hạn số lượng bán). Sản phẩm có biến thể: theo từng biến thể. */
+    public function tracksStock(): bool
+    {
+        return $this->stock !== null && ! $this->hasVariants();
+    }
+
+    /** Hết hàng: sản phẩm thường hết tồn, hoặc mọi biến thể đang bán đều hết. */
     public function isOutOfStock(): bool
     {
+        if ($this->hasVariants()) {
+            return $this->activeVariants->every(fn (ProductVariant $v) => $v->isOutOfStock());
+        }
+
         return $this->tracksStock() && $this->stock <= 0;
     }
 

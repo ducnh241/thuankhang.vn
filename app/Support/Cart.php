@@ -3,12 +3,14 @@
 namespace App\Support;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Support\Collection;
 
 /**
- * Giỏ hàng lưu trong session (S4): [product_id => số lượng]. Khách chưa đăng nhập vẫn thêm được; bắt đăng nhập khi
- * thanh toán. Giá luôn lấy giá hiện tại của sản phẩm; sản phẩm không còn bán (ẩn / xóa / danh mục ẩn) tự bỏ khỏi giỏ.
+ * Giỏ hàng lưu trong session (S4): [khóa dòng => số lượng]. Khóa dòng = "productId" (sản phẩm không biến thể) hoặc
+ * "productId:variantId". Khách chưa đăng nhập vẫn thêm được; bắt đăng nhập khi thanh toán. Giá luôn lấy giá hiện tại;
+ * sản phẩm / biến thể không còn bán (ẩn / xóa / tắt / danh mục ẩn, hoặc sản phẩm nay đã có biến thể) tự bỏ khỏi giỏ.
  */
 class Cart
 {
@@ -20,43 +22,65 @@ class Cart
 
     public function __construct(private Session $session, private Catalog $catalog) {}
 
-    /** @return array<int, int> */
+    public static function key(int $productId, ?int $variantId = null): string
+    {
+        return $variantId ? "{$productId}:{$variantId}" : (string) $productId;
+    }
+
+    /** @return array{0: int, 1: ?int} [productId, variantId] */
+    public static function parseKey(int|string $key): array
+    {
+        [$product, $variant] = array_pad(explode(':', (string) $key, 2), 2, null);
+
+        return [(int) $product, $variant !== null ? (int) $variant : null];
+    }
+
+    /** @return array<int|string, int> */
     public function raw(): array
     {
         $items = $this->session->get(self::SESSION_KEY, []);
+        if (! is_array($items)) {
+            return [];
+        }
 
-        return is_array($items) ? array_filter(array_map('intval', $items), fn ($qty) => $qty > 0) : [];
+        return array_filter(array_map('intval', $items), fn ($qty, $key) => $qty > 0 && preg_match('/^\d+(:\d+)?$/', (string) $key), ARRAY_FILTER_USE_BOTH);
     }
 
-    public function add(int $productId, int $qty = 1): void
+    public function qtyOf(string $key): int
     {
+        return $this->raw()[$key] ?? 0;
+    }
+
+    public function add(int $productId, ?int $variantId, int $qty = 1): void
+    {
+        $key = self::key($productId, $variantId);
         $items = $this->raw();
-        if (! isset($items[$productId]) && count($items) >= self::MAX_LINES) {
+        if (! isset($items[$key]) && count($items) >= self::MAX_LINES) {
             return;
         }
-        $items[$productId] = min(self::MAX_QTY, ($items[$productId] ?? 0) + max(1, $qty));
+        $items[$key] = min(self::MAX_QTY, ($items[$key] ?? 0) + max(1, $qty));
         $this->session->put(self::SESSION_KEY, $items);
     }
 
-    public function set(int $productId, int $qty): void
+    public function set(string $key, int $qty): void
     {
         $items = $this->raw();
-        if (! isset($items[$productId])) {
+        if (! isset($items[$key])) {
             return;
         }
         if ($qty <= 0) {
-            $this->remove($productId);
+            $this->remove($key);
 
             return;
         }
-        $items[$productId] = min(self::MAX_QTY, $qty);
+        $items[$key] = min(self::MAX_QTY, $qty);
         $this->session->put(self::SESSION_KEY, $items);
     }
 
-    public function remove(int $productId): void
+    public function remove(string $key): void
     {
         $items = $this->raw();
-        unset($items[$productId]);
+        unset($items[$key]);
         $this->session->put(self::SESSION_KEY, $items);
     }
 
@@ -72,10 +96,10 @@ class Cart
     }
 
     /**
-     * Các dòng còn bán được, theo thứ tự thêm vào: [product, qty, line_amount]. Sản phẩm không còn bán bị bỏ khỏi giỏ;
-     * $removed nhận tên các sản phẩm đó để báo cho khách.
+     * Các dòng còn bán được, theo thứ tự thêm vào: [key, product, variant, qty, unit_price, line_amount]. Dòng không còn bán
+     * bị bỏ khỏi giỏ; $removed nhận tên các dòng đó để báo cho khách.
      *
-     * @return Collection<int, array{product: Product, qty: int, line_amount: int}>
+     * @return Collection<int, array{key: string, product: Product, variant: ?ProductVariant, qty: int, unit_price: int, line_amount: int}>
      */
     public function lines(?array &$removed = null): Collection
     {
@@ -84,16 +108,30 @@ class Cart
         if ($items === []) {
             return collect();
         }
-        $products = $this->catalog->products()->whereKey(array_keys($items))->with('cover')->get()->keyBy('id');
-        $missing = array_diff(array_keys($items), $products->keys()->all());
-        if ($missing !== []) {
-            $removed = Product::withTrashed()->whereKey($missing)->pluck('name')->all();
-            $this->session->put(self::SESSION_KEY, array_diff_key($items, array_flip($missing)));
+        $parsed = collect($items)->mapWithKeys(fn ($qty, $key) => [(string) $key => [...self::parseKey($key), $qty]]);
+        $products = $this->catalog->products()->whereKey($parsed->pluck(0)->unique()->all())->with(['cover', 'activeVariants'])->get()->keyBy('id');
+
+        $lines = collect();
+        $dropped = [];
+        foreach ($parsed as $key => [$productId, $variantId, $qty]) {
+            $product = $products[$productId] ?? null;
+            $variant = $product && $variantId ? $product->activeVariants->firstWhere('id', $variantId) : null;
+            // Còn bán: sản phẩm có, và (không biến thể + giỏ không chọn biến thể) hoặc (biến thể chọn còn bật)
+            $valid = $product && ($variantId ? $variant !== null : ! $product->hasVariants());
+            if (! $valid) {
+                $dropped[$key] = $productId;
+
+                continue;
+            }
+            $unit = $variant ? $variant->effectivePrice($product) : $product->price;
+            $lines->push(['key' => (string) $key, 'product' => $product, 'variant' => $variant, 'qty' => $qty, 'unit_price' => $unit, 'line_amount' => $unit * $qty]);
+        }
+        if ($dropped !== []) {
+            $removed = Product::withTrashed()->whereKey(array_unique($dropped))->pluck('name')->all();
+            $this->session->put(self::SESSION_KEY, array_diff_key($items, $dropped));
         }
 
-        return collect($items)->filter(fn ($qty, $id) => $products->has($id))
-            ->map(fn ($qty, $id) => ['product' => $products[$id], 'qty' => $qty, 'line_amount' => $products[$id]->price * $qty])
-            ->values();
+        return $lines;
     }
 
     public static function subtotal(Collection $lines): int

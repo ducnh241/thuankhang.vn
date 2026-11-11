@@ -63,6 +63,7 @@
                     @else
                       {{ $item->product_name }}
                     @endif
+                    @if ($item->variant_name)<div class="text-xs" data-item-variant>Phân loại: {{ $item->variant_name }}</div>@endif
                     @if ($item->sku)<div class="text-xs font-mono {{ $muted }}">{{ $item->sku }}</div>@endif
                   </td>
                   <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Money::format($item->unit_price) }} đ</td>

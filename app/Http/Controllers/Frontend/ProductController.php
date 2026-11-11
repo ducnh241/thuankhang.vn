@@ -31,7 +31,7 @@ class ProductController extends Controller
         }
         abort_unless($product, 404);
 
-        $product->load(['images', 'category'])
+        $product->load(['images', 'category', 'activeVariants'])
             ->loadSum(['orderItems as sold_qty' => fn ($q) => $q->whereHas('order', fn ($o) => $o->whereNotNull('paid_at'))], 'qty');
         $related = $catalog->products()->where('category_id', $product->category_id)->whereKeyNot($product->id)
             ->forCard()->orderBy('sort_order')->orderByDesc('id')->limit(8)->get();

@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** Dòng đơn hàng: snapshot tên / mã / đơn giá (đã gồm VAT) / VAT % lúc đặt. */
+/** Dòng đơn hàng: snapshot tên / tên biến thể / mã / đơn giá (đã gồm VAT) / VAT % lúc đặt. */
 class OrderItem extends Model
 {
-    protected $fillable = ['order_id', 'product_id', 'product_name', 'sku', 'qty', 'unit_price', 'vat_rate', 'line_amount', 'vat_amount'];
+    protected $fillable = ['order_id', 'product_id', 'variant_id', 'product_name', 'variant_name', 'sku', 'qty', 'unit_price', 'vat_rate', 'line_amount', 'vat_amount'];
 
     protected function casts(): array
     {
@@ -24,6 +24,17 @@ class OrderItem extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
+
+    /** Tên hiển thị: "Sản phẩm — Biến thể". */
+    public function displayName(): string
+    {
+        return $this->product_name.($this->variant_name ? ' — '.$this->variant_name : '');
     }
 
     public function product(): BelongsTo

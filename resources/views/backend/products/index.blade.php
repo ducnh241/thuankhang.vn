@@ -144,7 +144,10 @@
                     <td class="ant-table-cell tabular-nums whitespace-nowrap" data-col="price" style="text-align: right">{{ Money::format($product->price) }} đ</td>
                     <td class="ant-table-cell tabular-nums max-md:hidden" data-col="vat" style="text-align: right">{{ Percent::format($product->vat_rate) }}%</td>
                     <td class="ant-table-cell tabular-nums max-md:hidden" data-col="stock" style="text-align: right">
-                      @if (! $product->tracksStock())
+                      @if ($product->hasVariants())
+                        <span class="text-[rgba(0,0,0,0.45)]">{{ $product->activeVariants->count() }} biến thể</span>
+                        @if ($product->isOutOfStock())<span class="ant-tag ant-tag-red m-0">Hết hàng</span>@endif
+                      @elseif (! $product->tracksStock())
                         <span class="text-[rgba(0,0,0,0.45)]">—</span>
                       @elseif ($product->isOutOfStock())
                         <span class="ant-tag ant-tag-red m-0">Hết hàng</span>
