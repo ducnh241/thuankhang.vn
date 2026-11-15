@@ -123,12 +123,15 @@ class BackendLayoutTest extends TestCase
         $this->assertStringContainsString('<a href="'.route('backend.profile.edit').'" role="menuitem">', $menu);
         $this->assertStringContainsString('<a href="#" data-submit="logout-form" role="menuitem">Đăng xuất</a>', $menu);
         $this->assertStringNotContainsString('anticon', $menu); // mục menu chỉ có chữ, như template
+        $this->assertStringNotContainsString('Xem website', $menu); // đã chuyển thành nút trên header
         $this->assertMatchesRegularExpression('#<form id="logout-form" method="POST" action="'.preg_quote(route('backend.logout'), '#').'" class="hidden"><input type="hidden" name="_token"#', $html);
 
         // Header: nút thu gọn / mở sidebar (trên mobile mở drawer), logo về Dashboard chỉ hiện trên mobile; header nằm
         // trong vùng nội dung, trước thanh trang
         $this->assertMatchesRegularExpression('#<header class="app-header">\s*<a class="app-header-logo lg:hidden" href="'.preg_quote(route('backend.dashboard'), '#').'"#', $html);
         $this->assertMatchesRegularExpression('#<button type="button" class="app-header-toggle" data-sider-toggle aria-controls="app-sidebar" aria-expanded="true" aria-label="Thu gọn / mở rộng menu"\s*><span[^>]*aria-label="menu-fold"#', $html);
+        // Nút "Xem website" (tab mới) nằm ngay bên trái nút tài khoản
+        $this->assertMatchesRegularExpression('#<a class="app-header-action" href="'.preg_quote(config('app.frontend_url'), '#').'" target="_blank" rel="noopener" title="Mở website ở tab mới" aria-label="Xem website"\s*><span[^>]*aria-label="global".*?</span><span class="max-sm:hidden">Xem website</span></a\s*>\s*<button type="button" class="app-header-account"#', $html);
         $this->assertGreaterThan(strpos($html, '</aside>'), strpos($html, '<header class="app-header">'));
         $this->assertGreaterThan(strpos($html, '<header class="app-header">'), strpos($html, 'id="page-topbar"'));
     }

@@ -1,6 +1,6 @@
 {{-- Header theo layout Admin Pro của template (nhánh admin-pro: src/partials/pro-header.html): thanh trắng cao 48px ở đầu
      vùng nội dung. Bên trái là nút thu gọn / mở sidebar (trên mobile < 992px: logo + nút mở sidebar dạng drawer), bên phải
-     là avatar + tên người đang đăng nhập, bấm mở menu tài khoản (partials/account-menu). --}}
+     là nút "Xem website" rồi avatar + tên người đang đăng nhập, bấm mở menu tài khoản (partials/account-menu). --}}
 @php
     $user = auth()->user();
     $collapsed = request()->cookie('backend_sider') === 'collapsed';
@@ -13,6 +13,10 @@
     >{{ ant_icon($collapsed ? 'menu-unfold' : 'menu-fold') }}</button
   >
   <div class="app-header-spacer"></div>
+  {{-- Mở website ở tab mới (điện thoại chỉ hiện icon) --}}
+  <a class="app-header-action" href="{{ config('app.frontend_url') }}" target="_blank" rel="noopener" title="Mở website ở tab mới" aria-label="Xem website"
+    >{{ ant_icon('global') }}<span class="max-sm:hidden">Xem website</span></a
+  >
   <button type="button" class="app-header-account" aria-haspopup="menu" aria-expanded="false" aria-label="Menu tài khoản" title="{{ $user->name }} · {{ $user->email }}"
     >@include('backend.partials.avatar', ['user' => $user, 'size' => 'sm', 'placeholder' => true])<span class="app-header-account-name max-sm:hidden">{{ $user->name }}</span></button
   >

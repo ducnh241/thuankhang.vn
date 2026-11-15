@@ -217,6 +217,27 @@ h6 {
 .app-header-spacer {
   flex: 1 1 auto;
 }
+/* Header action (e.g. "Xem website"): icon + label, full header height, soft grey on hover like the account button */
+.app-header-action,
+.app-header-action:hover,
+.app-header-action:focus {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 12px;
+  color: rgba(0, 0, 0, 0.88);
+  white-space: nowrap;
+  transition: background 0.3s;
+}
+.app-header-action:hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+.app-header-action .anticon {
+  font-size: 16px;
+  line-height: 0;
+}
 .app-header-account {
   display: flex;
   flex: none;
@@ -246,6 +267,7 @@ h6 {
   text-overflow: ellipsis;
 }
 .app-header-toggle:focus-visible,
+.app-header-action:focus-visible,
 .app-header-account:focus-visible,
 .app-header-logo:focus-visible {
   outline: 2px solid #4da3ff;

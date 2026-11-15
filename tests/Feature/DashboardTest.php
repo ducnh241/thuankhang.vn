@@ -29,7 +29,7 @@ class DashboardTest extends TestCase
             ->assertSee('<span class="pro-sider-brand">'.config('app.name').'</span>', false)
             ->assertSee('src="'.asset('assets/backend/img/logo.svg').'"', false) // logo của template ở đầu sidebar và header mobile
             ->assertSee('aria-current="page"', false)
-            // Menu tài khoản: tài khoản, xem website (tab mới), đăng xuất bằng form POST
+            // Header: nút xem website (tab mới); menu tài khoản: tài khoản, đăng xuất bằng form POST
             ->assertSee('id="account-menu"', false)
             ->assertSee('href="'.route('backend.profile.edit').'"', false)
             ->assertSee('href="'.config('app.frontend_url').'" target="_blank" rel="noopener"', false)

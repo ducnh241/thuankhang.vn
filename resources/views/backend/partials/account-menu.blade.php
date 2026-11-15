@@ -1,5 +1,5 @@
-{{-- Menu tài khoản (dropdown Ant Design) mở từ avatar đầu sidebar, kể cả trong drawer mobile: resources/backend/js/layout.js
-     chép nội dung <template> này ra popup. Đăng xuất gửi form POST #logout-form (có CSRF). --}}
+{{-- Menu tài khoản (dropdown Ant Design) mở từ avatar + tên ở góc phải header: resources/backend/js/layout.js chép nội dung
+     <template> này ra popup. Đăng xuất gửi form POST #logout-form (có CSRF). "Xem website" là nút riêng trên header. --}}
 @php $user = auth()->user(); @endphp
 <template id="account-menu">
   <div class="ant-dropdown account-menu">
@@ -11,9 +11,6 @@
       <li class="ant-dropdown-menu-item-divider" role="separator"></li>
       <li class="ant-dropdown-menu-item" role="presentation">
         <a href="{{ route('backend.profile.edit') }}" role="menuitem">Tài khoản</a>
-      </li>
-      <li class="ant-dropdown-menu-item" role="presentation">
-        <a href="{{ config('app.frontend_url') }}" target="_blank" rel="noopener" role="menuitem">Xem website</a>
       </li>
       <li class="ant-dropdown-menu-item-divider" role="separator"></li>
       <li class="ant-dropdown-menu-item" role="presentation">

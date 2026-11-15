@@ -134,7 +134,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   trong `bootstrap/app.php`) để server dựng sẵn class `is-collapsed`. Logo: `config("app.logo")` (APP_LOGO), mặc định
   `public/assets/backend/img/logo.svg` = logo của template; khối logo + tên app theo đúng `.ant-pro-sider-logo`.
 - Header (`backend/partials/header`): thanh trắng 48px đầu vùng nội dung — nút thu gọn (mobile < 992px: logo + mở sidebar
-  dạng drawer), bên phải avatar + tên mở menu tài khoản. Desktop header cuộn theo trang; mobile header dính đầu trang.
+  dạng drawer), bên phải nút "Xem website" (tab mới) rồi avatar + tên mở menu tài khoản. Desktop header cuộn theo trang; mobile header dính đầu trang.
 - Breadcrumb = thanh trang `#page-topbar` (cùng màu nền với nội dung, dính đầu trang; cuộn xuống thì thanh mỏng lại
   (padding 8px 24px) và có đường kẻ mép dưới — class `is-stuck`): layout tự thêm cấp "Trang chủ" (trừ Dashboard),
   trang con vẫn khai báo `page-topbar-left` (crumb / `page-topbar-sep` là dấu `/` / title) + `page-topbar-right` như cũ.
