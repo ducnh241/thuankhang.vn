@@ -1,4 +1,4 @@
-{{-- Trang đăng nhập theo template ProCMS (login.html). Form gửi POST /backend/login; ô trống / email sai định dạng
+{{-- Trang đăng nhập: một cột, form căn giữa trang (không logo / tên hệ thống phía trên, © ở chân trang). Form gửi POST /backend/login; ô trống / email sai định dạng
      được kiểm tra ở trình duyệt (resources/backend/js/forms.js), lỗi đăng nhập do server trả về hiện ở khung báo lỗi. --}}
 @php
     $remember = (bool) old('remember');
@@ -12,17 +12,9 @@
   <body data-page="login">
     @include('backend.partials.sprite')
 
-    <div class="login-page grid min-h-full grid-cols-1 lg:grid-cols-2">
-      @include('auth.partials.brand')
-
-      {{-- Form --}}
-      <main class="flex items-center justify-center bg-white px-4 py-12 sm:px-6">
+    <div class="login-page flex min-h-full flex-col">
+      <main class="flex flex-1 items-center justify-center bg-white px-4 py-12 sm:px-6">
         <div class="w-full max-w-[360px]">
-          <div class="mb-8 flex items-center gap-3 text-xl font-semibold text-[rgba(0,0,0,0.85)] lg:hidden">
-            @include('backend.partials.logo', ['class' => 'size-7 rounded-md ring-1 ring-[#f0f0f0]'])
-            <span>{{ config('app.name') }}</span>
-          </div>
-
           <section id="login-view">
             <h1 class="mb-1 text-2xl font-semibold text-[rgba(0,0,0,0.85)]">Đăng nhập</h1>
             <p class="mb-6 text-[rgba(0,0,0,0.45)]">Chào mừng trở lại. Đăng nhập để vào trang quản trị.</p>
@@ -104,6 +96,7 @@
           </section>
         </div>
       </main>
+      <footer class="px-4 pb-6 text-center text-xs text-[rgba(0,0,0,0.45)]">© {{ date('Y') }} {{ config('app.name') }}</footer>
     </div>
   </body>
 </html>

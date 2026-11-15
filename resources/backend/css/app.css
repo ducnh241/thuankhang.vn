@@ -1260,9 +1260,6 @@ h1.page-topbar-title {
   min-height: 100vh;
   background: #fff;
 }
-.login-brand {
-  background: linear-gradient(135deg, #0050b3 0%, #007bff 100%);
-}
 
 /* Statistic numbers use the template font (Ant Design sets its own stack on them). */
 .ant-statistic-content {

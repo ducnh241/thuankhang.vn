@@ -9,16 +9,9 @@
   <body data-page="login">
     @include('backend.partials.sprite')
 
-    <div class="login-page grid min-h-full grid-cols-1 lg:grid-cols-2">
-      @include('auth.partials.brand')
-
-      <main class="flex items-center justify-center bg-white px-4 py-12 sm:px-6">
+    <div class="login-page flex min-h-full flex-col">
+      <main class="flex flex-1 items-center justify-center bg-white px-4 py-12 sm:px-6">
         <div class="w-full max-w-[360px]">
-          <div class="mb-8 flex items-center gap-3 text-xl font-semibold text-[rgba(0,0,0,0.85)] lg:hidden">
-            @include('backend.partials.logo', ['class' => 'size-7 rounded-md ring-1 ring-[#f0f0f0]'])
-            <span>{{ config('app.name') }}</span>
-          </div>
-
           <section id="login-view">
             <h1 class="mb-1 text-2xl font-semibold text-[rgba(0,0,0,0.85)]">Xác thực 2 lớp</h1>
             <p class="mb-6 text-[rgba(0,0,0,0.45)]">Mở ứng dụng xác thực trên điện thoại và nhập mã 6 số của tài khoản này.</p>
@@ -60,6 +53,7 @@
           </section>
         </div>
       </main>
+      <footer class="px-4 pb-6 text-center text-xs text-[rgba(0,0,0,0.45)]">© {{ date('Y') }} {{ config('app.name') }}</footer>
     </div>
   </body>
 </html>

@@ -64,9 +64,9 @@ class DashboardTest extends TestCase
     {
         $this->get('/backend/login')->assertOk()
             ->assertSee('<title>Đăng nhập - '.config('app.name').'</title>', false)
-            ->assertSee('Hệ thống quản trị bán hàng và affiliate.')
+            ->assertDontSee('login-brand', false) // không còn khối thương hiệu bên trái: form nằm giữa trang
             ->assertSee('© '.date('Y').' '.config('app.name'), false)
-            ->assertSee('src="'.config('app.logo').'"', false)
+            ->assertDontSee('src="'.config('app.logo').'"', false) // không hiện logo + tên hệ thống trên form
             ->assertDontSee('lucide-command', false)
             ->assertDontSee('Ready to launch')
             ->assertDontSee('ENG');
@@ -75,10 +75,12 @@ class DashboardTest extends TestCase
     public function test_logo_config(): void
     {
         // Đường dẫn trong public/ → asset(); bỏ trống → chỉ hiện chữ cái đầu tên app
+        // (trang đăng nhập không còn logo → kiểm tra ở logo của thanh bên trang quản trị)
+        $admin = User::factory()->superAdmin()->create();
         config(['app.logo' => 'assets/backend/img/logo.png']);
-        $this->get('/backend/login')->assertSee('src="'.asset('assets/backend/img/logo.png').'"', false);
+        $this->actingAs($admin)->get('/backend')->assertSee('src="'.asset('assets/backend/img/logo.png').'"', false);
 
         config(['app.logo' => '', 'app.name' => 'ProCMS']);
-        $this->get('/backend/login')->assertDontSee('<img src=', false)->assertSee('>P</span>', false);
+        $this->actingAs($admin)->get('/backend')->assertDontSee('src="'.asset('assets/backend/img/logo.png').'"', false)->assertSee('>P</span>', false);
     }
 }
