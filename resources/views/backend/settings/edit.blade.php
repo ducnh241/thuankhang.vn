@@ -284,6 +284,12 @@
           <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Mã theo dõi</div></div></div>
           <div class="ant-card-body">
             <p class="settings-card-desc">Dán nguyên đoạn mã dịch vụ cung cấp. Mã chạy trên mọi trang của website.</p>
+            @unless ($canEditCode)
+              <div class="ant-alert ant-alert-info mb-4" role="note">
+                <span class="ant-alert-icon">{{ ant_icon('exclamation-circle') }}</span>
+                <div class="ant-alert-content"><div class="ant-alert-message">Chỉ Root admin được sửa mã theo dõi — mã này chạy trên mọi trang, kể cả với người đang đăng nhập quản trị.</div></div>
+              </div>
+            @endunless
             @foreach ([
                 'code_head' => ['Trong &lt;head&gt;', 8, 'Chèn trước <code>&lt;/head&gt;</code> — vd Google Analytics, mã xác minh Search Console.'],
                 'code_body' => ['Đầu &lt;body&gt;', 4, 'Chèn ngay sau <code>&lt;body&gt;</code> — vd Google Tag Manager (noscript).'],
@@ -293,7 +299,7 @@
                 <div class="ant-col ant-form-item-label"><label for="{{ $name }}">{!! $label !!}</label></div>
                 <div class="ant-col ant-form-item-control">
                   <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                    <textarea id="{{ $name }}" name="{{ $name }}" class="ant-input settings-code" rows="{{ $rows }}" maxlength="20000" spellcheck="false">{{ $value($name) }}</textarea>
+                    <textarea id="{{ $name }}" name="{{ $name }}" @class(['ant-input settings-code', 'ant-input-disabled' => ! $canEditCode]) rows="{{ $rows }}" maxlength="20000" spellcheck="false" @disabled(! $canEditCode)>{{ $value($name) }}</textarea>
                   </div></div>
                   {!! $error($name) !!}
                   <div class="ant-form-item-extra">{!! $hint !!}</div>

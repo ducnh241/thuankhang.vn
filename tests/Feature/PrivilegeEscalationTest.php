@@ -16,7 +16,9 @@ class PrivilegeEscalationTest extends TestCase
     use RefreshDatabase;
 
     private Group $editorGroup;
+
     private Group $adminGroup;
+
     private User $editor;
 
     protected function setUp(): void
@@ -48,7 +50,7 @@ class PrivilegeEscalationTest extends TestCase
     {
         $this->actingAs($this->editor)->post('/backend/users', [
             'name' => 'Phe ta', 'email' => 'pheta@example.com',
-            'password' => 'matkhau123', 'password_confirmation' => 'matkhau123',
+            'password' => 'matkhau-123456', 'password_confirmation' => 'matkhau-123456',
             'group_id' => $this->adminGroup->id, 'status' => '1',
         ])->assertSessionHasErrors('group_id');
 
@@ -62,12 +64,12 @@ class PrivilegeEscalationTest extends TestCase
         // Không mở được form, không đổi được mật khẩu, không xóa được
         $this->actingAs($this->editor)->get("/backend/users/{$admin->id}/edit")->assertForbidden();
         $this->actingAs($this->editor)->put("/backend/users/{$admin->id}", $this->userPayload($admin, [
-            'password' => 'chiemquyen1', 'password_confirmation' => 'chiemquyen1',
+            'password' => 'chiemquyen-2026', 'password_confirmation' => 'chiemquyen-2026',
         ]))->assertForbidden();
         $this->actingAs($this->editor)->delete("/backend/users/{$admin->id}")->assertForbidden();
 
         $this->assertModelExists($admin);
-        $this->assertFalse(\Hash::check('chiemquyen1', $admin->fresh()->password));
+        $this->assertFalse(\Hash::check('chiemquyen-2026', $admin->fresh()->password));
     }
 
     public function test_editor_can_still_manage_equal_or_weaker_users(): void

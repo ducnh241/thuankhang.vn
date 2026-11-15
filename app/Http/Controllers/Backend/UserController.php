@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\StoreUserRequest;
 use App\Http\Requests\Backend\UpdateUserRequest;
+use App\Models\AuditLog;
 use App\Models\Group;
 use App\Models\User;
+use App\Services\TwoFactor;
 use App\Support\AvatarUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -156,6 +158,21 @@ class UserController extends Controller
         return ($toList ? redirect()->route('backend.users.index') : back())->with('success', "Đã xóa người dùng {$user->name}.");
     }
 
+    /** Người dùng mất thiết bị xác thực và hết mã khôi phục: tắt xác thực 2 lớp giúp (họ đăng nhập bằng mật khẩu rồi bật lại). */
+    public function resetTwoFactor(Request $request, User $user, TwoFactor $twoFactor): RedirectResponse
+    {
+        $this->ensureCanManage($user);
+        if ($user->is($request->user())) {
+            return back()->with('error', 'Tắt xác thực 2 lớp của chính mình ở trang Tài khoản (cần mật khẩu).');
+        }
+        if ($user->hasTwoFactor()) {
+            $twoFactor->disable($user);
+            AuditLog::record('updated', $user, null, "Tắt xác thực 2 lớp của {$user->name}");
+        }
+
+        return redirect()->route('backend.users.edit', $user)->with('success', "Đã tắt xác thực 2 lớp của {$user->name}.");
+    }
+
     /** Các nhóm user hiện tại được phép gán (không mạnh hơn quyền của mình). */
     protected function assignableGroups()
     {
@@ -186,5 +203,4 @@ class UserController extends Controller
 
         return $request->boolean('is_super_admin');
     }
-
 }

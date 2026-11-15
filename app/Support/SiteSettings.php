@@ -34,6 +34,12 @@ class SiteSettings
 
     public const IMAGE_KEYS = ['site_logo', 'site_favicon'];
 
+    /**
+     * Mã theo dõi (tab Tracking): in nguyên văn vào mọi trang website — cùng tên miền với trang quản trị, nên ai sửa được
+     * các ô này là chạy được JavaScript tùy ý trong phiên của người quản trị khác. Chỉ Root admin được sửa.
+     */
+    public const CODE_KEYS = ['code_head', 'code_body', 'code_bottom'];
+
     public static function socialKeys(): array
     {
         return array_map(fn ($key) => 'social_'.$key, array_keys(self::SOCIALS));

@@ -7,18 +7,24 @@ use App\Http\Requests\Backend\UpdatePasswordRequest;
 use App\Http\Requests\Backend\UpdateProfileRequest;
 use App\Models\ApiToken;
 use App\Models\AuditLog;
+use App\Services\TwoFactor;
 use App\Support\AvatarUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): View
+    public function edit(Request $request, TwoFactor $twoFactor): View
     {
+        $user = $request->user();
+
         return view('backend.profile.edit', [
-            'user' => $request->user()->load('group'),
+            'user' => $user->load('group'),
+            // Đang ở bước quét mã (đã tạo khóa, chưa xác nhận): mã QR tạo ngay trên máy chủ
+            'twoFactorQr' => $user->two_factor_secret && ! $user->hasTwoFactor() ? $twoFactor->qrSvg($user) : null,
             'tokens' => ApiToken::where('user_id', $request->user()->id)->latest('id')->get(),
         ]);
     }
@@ -50,6 +56,68 @@ class ProfileController extends Controller
         Auth::logoutOtherDevices($request->validated('password'));
 
         return redirect()->route('backend.profile.edit')->with('success', 'Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.');
+    }
+
+    /** Xác thực 2 lớp — bước 1: xác nhận mật khẩu, tạo khóa bí mật (chưa có hiệu lực) rồi hiện mã QR để quét. */
+    public function enableTwoFactor(Request $request, TwoFactor $twoFactor): RedirectResponse
+    {
+        $this->confirmPassword($request);
+        if (! $request->user()->hasTwoFactor()) {
+            $twoFactor->begin($request->user());
+        }
+
+        return $this->backToTwoFactor();
+    }
+
+    /** Bước 2: nhập mã 6 số từ ứng dụng → bật, hiện các mã khôi phục một lần. */
+    public function confirmTwoFactor(Request $request, TwoFactor $twoFactor): RedirectResponse
+    {
+        $data = $request->validateWithBag('twofactor', ['code' => ['required', 'string', 'max:10']], ['code.required' => 'Nhập mã 6 số từ ứng dụng xác thực.']);
+        $codes = $twoFactor->confirm($request->user(), $data['code']);
+        if ($codes === null) {
+            throw ValidationException::withMessages(['code' => 'Mã không đúng. Kiểm tra giờ trên điện thoại rồi nhập mã mới nhất.'])->errorBag('twofactor');
+        }
+        AuditLog::record('updated', $request->user(), null, 'Bật xác thực 2 lớp');
+
+        return $this->backToTwoFactor()->with('recovery_codes', $codes)->with('success', 'Đã bật xác thực 2 lớp. Lưu các mã khôi phục ở nơi an toàn.');
+    }
+
+    public function regenerateRecoveryCodes(Request $request, TwoFactor $twoFactor): RedirectResponse
+    {
+        $this->confirmPassword($request);
+        abort_unless($request->user()->hasTwoFactor(), 404);
+        $codes = $twoFactor->regenerateRecoveryCodes($request->user());
+        AuditLog::record('updated', $request->user(), null, 'Tạo lại mã khôi phục xác thực 2 lớp');
+
+        return $this->backToTwoFactor()->with('recovery_codes', $codes)->with('success', 'Đã tạo mã khôi phục mới. Các mã cũ không còn dùng được.');
+    }
+
+    /** Tắt (cần mật khẩu). Đang ở bước quét mã mà chưa xác nhận thì chỉ là hủy thiết lập — không cần mật khẩu. */
+    public function disableTwoFactor(Request $request, TwoFactor $twoFactor): RedirectResponse
+    {
+        $wasOn = $request->user()->hasTwoFactor();
+        if ($wasOn) {
+            $this->confirmPassword($request);
+        }
+        $twoFactor->disable($request->user());
+        if ($wasOn) {
+            AuditLog::record('updated', $request->user(), null, 'Tắt xác thực 2 lớp');
+        }
+
+        return $this->backToTwoFactor()->with('success', $wasOn ? 'Đã tắt xác thực 2 lớp.' : 'Đã hủy thiết lập xác thực 2 lớp.');
+    }
+
+    /** Thao tác nhạy cảm với xác thực 2 lớp: phải gõ lại mật khẩu (phiên bị chiếm cũng không tự bật / tắt được). */
+    private function confirmPassword(Request $request): void
+    {
+        $request->validateWithBag('twofactor', ['current_password' => ['required', 'string', 'current_password']], [
+            'current_password.required' => 'Nhập mật khẩu để xác nhận.', 'current_password.current_password' => 'Mật khẩu không đúng.',
+        ]);
+    }
+
+    private function backToTwoFactor(): RedirectResponse
+    {
+        return redirect()->to(route('backend.profile.edit').'#two-factor');
     }
 
     /** Tạo token API (hiện chuỗi token một lần qua flash). Token mang quyền của chính tài khoản này. */

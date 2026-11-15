@@ -41,7 +41,7 @@
     $imageOptions = fn (string $selected) => '<option value="">Ảnh đại diện</option>'.$images->values()->map(fn ($img, $i) =>
         '<option value="'.$img->id.'"'.($selected === (string) $img->id ? ' selected' : '').'>Ảnh '.($i + 1).'</option>')->implode('');
     $variantRow = function (array $row) use ($cell, $imageOptions) {
-        $k = $row['key'];
+        $k = preg_replace('/[^A-Za-z0-9_]/', '', (string) $row['key']); // khóa lấy từ dữ liệu gửi lên → không tin
         $n = fn ($f) => 'variants['.$k.']['.$f.']';
         $e = fn ($f) => "variants.{$k}.{$f}";
         $v = fn ($f) => e($row[$f] ?? '');
@@ -53,7 +53,7 @@
             .'<td class="ant-table-cell align-top">'.$cell($e('price'), '<input type="text" inputmode="numeric" data-money name="'.$n('price').'" value="'.$v('price').'" class="ant-input ant-input-sm tabular-nums" style="text-align: right" placeholder="Giá SP" aria-label="Giá biến thể" />').'</td>'
             .'<td class="ant-table-cell align-top">'.$cell($e('image_id'), '<select name="'.$n('image_id').'" class="ant-input ant-input-sm" aria-label="Ảnh biến thể">'.$imageOptions($row['image_id'] ?? '').'</select>').'</td>'
             .'<td class="ant-table-cell align-top">'.$cell($e('stock'), '<input type="text" inputmode="numeric" name="'.$n('stock').'" value="'.$v('stock').'" class="ant-input ant-input-sm tabular-nums" style="text-align: right" placeholder="—" aria-label="Tồn kho biến thể" />').'</td>'
-            .'<td class="ant-table-cell align-top text-center"><input type="hidden" name="'.$n('active').'" value="0" /><input type="checkbox" name="'.$n('active').'" value="1" class="mt-1.5 size-4 accent-[#1677ff]" aria-label="Đang bán"'.(($row['active'] ?? '1') === '1' ? ' checked' : '').' /></td>'
+            .'<td class="ant-table-cell align-top text-center"><input type="hidden" name="'.$n('active').'" value="0" /><input type="checkbox" name="'.$n('active').'" value="1" class="mt-1.5 size-4 accent-[#1890ff]" aria-label="Đang bán"'.(($row['active'] ?? '1') === '1' ? ' checked' : '').' /></td>'
             .'<td class="ant-table-cell align-top" style="text-align: right"><button type="button" class="ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only ant-btn-dangerous" data-repeater-remove aria-label="Bỏ biến thể">'.ant_icon('delete').'</button></td>'
             .'</tr>');
     };

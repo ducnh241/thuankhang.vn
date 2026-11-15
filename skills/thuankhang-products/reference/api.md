@@ -15,6 +15,7 @@
 | 404 | Không tìm thấy |
 | 409 | Không xóa được (danh mục còn sản phẩm / danh mục con) — `{"message"}` |
 | 422 | Dữ liệu không hợp lệ — `{"message", "errors": {"trường": ["lỗi"]}}` |
+| 429 | Quá giới hạn tần suất, hoặc gửi sai token quá 20 lần / phút từ một IP — đợi theo header `Retry-After` |
 
 ## Kiểm tra token
 
@@ -73,7 +74,8 @@ mềm (đơn hàng cũ vẫn giữ tên / giá đã mua).
 | `variants` | mảng ≤ 50 | **danh sách đầy đủ** biến thể (đồng bộ) |
 
 **Phần tử ảnh** (`images` / `add_images`), một trong:
-- `"https://…"` hoặc `{"url": "https://…"}` — website tự tải về (chỉ link công khai; chặn địa chỉ nội bộ);
+- `"https://…"` hoặc `{"url": "https://…"}` — website tự tải về (chỉ link công khai tới tên miền / IPv4; chặn địa chỉ nội bộ, kể cả
+  qua chuyển hướng; tối đa 3 lần chuyển hướng);
 - `{"base64": "<dữ liệu>", "filename": "a.webp"}` — có thể kèm tiền tố `data:image/…;base64,`;
 - `{"id": 18}` — giữ ảnh đang có (chỉ dùng trong `images` khi sửa).
 

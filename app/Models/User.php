@@ -3,21 +3,25 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 
 #[Fillable(['name', 'email', 'phone', 'avatar', 'password', 'is_super_admin', 'status', 'group_id'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /** Mật khẩu tài khoản quản trị: tối thiểu 12 ký tự (áp dụng khi đặt / đổi mật khẩu; mật khẩu cũ vẫn đăng nhập được). */
+    public const PASSWORD_MIN = 12;
 
     /** Giá trị mặc định khi tạo model mới (khớp default của migration). */
     protected $attributes = [
@@ -32,7 +36,21 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
             'status' => 'boolean',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public static function passwordRule(): Password
+    {
+        return Password::min(self::PASSWORD_MIN);
+    }
+
+    /** Đã bật xác thực 2 lớp (đã xác nhận bằng mã từ ứng dụng) — đăng nhập phải nhập thêm mã. */
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && filled($this->two_factor_secret);
     }
 
     public function group(): BelongsTo

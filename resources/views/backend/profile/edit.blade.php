@@ -110,11 +110,11 @@
             </div>
           </div>
           <div class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
-            <div class="ant-row ant-form-item{{ $pwHasError('password') }}" data-required="Nhập mật khẩu mới." data-min="8" data-min-message="Mật khẩu ít nhất 8 ký tự.">
+            <div class="ant-row ant-form-item{{ $pwHasError('password') }}" data-required="Nhập mật khẩu mới." data-min="{{ \App\Models\User::PASSWORD_MIN }}" data-min-message="Mật khẩu ít nhất {{ \App\Models\User::PASSWORD_MIN }} ký tự.">
               <div class="ant-col ant-form-item-label"><label for="password" class="ant-form-item-required" title="Mật khẩu mới">Mật khẩu mới</label></div>
               <div class="ant-col ant-form-item-control">
                 <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                  <span class="ant-input-affix-wrapper ant-input-password"><input type="password" id="password" name="password" class="ant-input" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" /><span class="ant-input-suffix">{{ $eye }}</span></span>
+                  <span class="ant-input-affix-wrapper ant-input-password"><input type="password" id="password" name="password" class="ant-input" autocomplete="new-password" placeholder="Ít nhất {{ \App\Models\User::PASSWORD_MIN }} ký tự" /><span class="ant-input-suffix">{{ $eye }}</span></span>
                 </div></div>
                 {!! $pwError('password') !!}
               </div>
@@ -134,6 +134,110 @@
         </div>
       </div>
     </form>
+
+    {{-- Xác thực 2 lớp (TOTP): tắt → [mật khẩu] Bật → quét QR + nhập mã xác nhận → đang bật (mã khôi phục, tắt). Lỗi ở túi "twofactor". --}}
+    @php
+        $tf = $errors->getBag('twofactor');
+        $tfError = fn (string $field) => $tf->has($field) ? '<div class="ant-form-item-explain ant-form-item-explain-error"><div role="alert">'.e($tf->first($field)).'</div></div>' : '';
+        $tfOn = $user->hasTwoFactor();
+        $tfPending = ! $tfOn && $twoFactorQr;
+        $recoveryLeft = count($user->two_factor_recovery_codes ?? []);
+    @endphp
+    <div class="ant-card ant-card-bordered" id="two-factor" data-card="two-factor">
+      <div class="ant-card-head"><div class="ant-card-head-wrapper">
+        <div class="ant-card-head-title">Xác thực 2 lớp</div>
+        <div class="ant-card-extra">
+          @if ($tfOn)<span class="ant-tag ant-tag-green m-0">Đang bật</span>@elseif ($tfPending)<span class="ant-tag ant-tag-orange m-0">Chờ xác nhận</span>@else<span class="ant-tag m-0">Chưa bật</span>@endif
+        </div>
+      </div></div>
+      <div class="ant-card-body">
+        @if (session('recovery_codes'))
+          <div class="ant-alert ant-alert-warning mb-4" role="status" data-recovery-codes>
+            <div class="ant-alert-content">
+              <div class="ant-alert-message font-medium">Mã khôi phục — lưu lại ngay, sẽ không hiện lại</div>
+              {{-- Không dùng .ant-alert-description: lớp đó chỉ hiện khi alert có .ant-alert-with-description --}}
+              <div class="mt-1">
+                Mỗi mã dùng được một lần để đăng nhập khi không có điện thoại.
+                <ul class="my-2 grid list-none grid-cols-2 gap-x-6 gap-y-1 p-0 font-mono tabular-nums">
+                  @foreach (session('recovery_codes') as $code)<li>{{ $code }}</li>@endforeach
+                </ul>
+                <button type="button" class="ant-btn ant-btn-sm" data-copy-text="{{ implode("\n", session('recovery_codes')) }}">{{ ant_icon('copy') }}<span>Sao chép tất cả</span></button>
+              </div>
+            </div>
+          </div>
+        @endif
+
+        @if ($tfOn)
+          <p class="settings-card-desc">Bật từ {{ $user->two_factor_confirmed_at->format('d/m/Y H:i') }}. Mỗi lần đăng nhập cần thêm mã 6 số từ ứng dụng xác thực.
+            Còn <strong>{{ $recoveryLeft }}</strong> mã khôi phục{{ $recoveryLeft <= 2 ? ' — nên tạo lại' : '' }}.</p>
+          <form method="POST" action="{{ route('backend.profile.two-factor.recovery') }}" class="ant-form ant-form-vertical" novalidate autocomplete="off">
+            @csrf
+            <div class="ant-row ant-form-item{{ $tf->has('current_password') ? ' ant-form-item-has-error ant-form-item-with-help' : '' }}">
+              <div class="ant-col ant-form-item-label"><label for="tf_password" title="Mật khẩu hiện tại">Mật khẩu hiện tại</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <span class="ant-input-affix-wrapper ant-input-password max-w-[320px]"><input type="password" id="tf_password" name="current_password" class="ant-input" autocomplete="current-password" /><span class="ant-input-suffix">{{ $eye }}</span></span>
+                </div></div>
+                {!! $tfError('current_password') !!}
+                <div class="ant-form-item-extra">Cần mật khẩu để tạo lại mã khôi phục hoặc tắt xác thực 2 lớp.</div>
+              </div>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+              <button type="submit" class="ant-btn">{{ ant_icon('reload') }}<span>Tạo lại mã khôi phục</span></button>
+              <button type="submit" class="ant-btn ant-btn-dangerous" formaction="{{ route('backend.profile.two-factor.disable') }}" name="_method" value="DELETE"
+                onclick="return confirm('Tắt xác thực 2 lớp? Tài khoản sẽ chỉ còn được bảo vệ bằng mật khẩu.')">Tắt xác thực 2 lớp</button>
+            </div>
+          </form>
+        @elseif ($tfPending)
+          <p class="settings-card-desc">1. Mở ứng dụng xác thực (Google Authenticator, Microsoft Authenticator, Authy…) và quét mã QR. 2. Nhập mã 6 số ứng dụng hiện ra để xác nhận.</p>
+          <div class="flex flex-col gap-6 sm:flex-row">
+            <div class="shrink-0 self-center rounded-lg border border-[#f0f0f0] bg-white p-2 sm:self-start" data-two-factor-qr>{!! $twoFactorQr !!}</div>
+            <div class="min-w-0 flex-1">
+              <div class="mb-4">
+                <div class="{{ $muted }}">Không quét được? Nhập khóa này vào ứng dụng (loại: theo thời gian):</div>
+                <div class="mt-1 flex flex-wrap items-center gap-2">
+                  <code class="break-all font-mono text-[13px]">{{ implode(' ', str_split($user->two_factor_secret, 4)) }}</code>
+                  <button type="button" class="ant-btn ant-btn-sm" data-copy-text="{{ $user->two_factor_secret }}">{{ ant_icon('copy') }}<span>Sao chép</span></button>
+                </div>
+              </div>
+              <form method="POST" action="{{ route('backend.profile.two-factor.confirm') }}" class="ant-form ant-form-vertical" novalidate autocomplete="off">
+                @csrf
+                <div class="ant-row ant-form-item{{ $tf->has('code') ? ' ant-form-item-has-error ant-form-item-with-help' : '' }}">
+                  <div class="ant-col ant-form-item-label"><label for="tf_code" class="ant-form-item-required" title="Mã xác nhận">Mã xác nhận</label></div>
+                  <div class="ant-col ant-form-item-control">
+                    <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                      <input type="text" id="tf_code" name="code" class="ant-input max-w-[160px] tabular-nums" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" />
+                    </div></div>
+                    {!! $tfError('code') !!}
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button type="submit" class="ant-btn ant-btn-primary">{{ ant_icon('safety-certificate') }}<span>Xác nhận và bật</span></button>
+                  <button type="submit" class="ant-btn" formaction="{{ route('backend.profile.two-factor.disable') }}" name="_method" value="DELETE" formnovalidate>Hủy</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        @else
+          <p class="settings-card-desc">Thêm một lớp bảo vệ: ngoài mật khẩu, đăng nhập cần mã 6 số từ ứng dụng xác thực trên điện thoại của bạn. Kẻ lấy được mật khẩu vẫn không vào được tài khoản.</p>
+          <form method="POST" action="{{ route('backend.profile.two-factor.enable') }}" class="ant-form ant-form-vertical" novalidate autocomplete="off">
+            @csrf
+            <div class="ant-row ant-form-item{{ $tf->has('current_password') ? ' ant-form-item-has-error ant-form-item-with-help' : '' }}">
+              <div class="ant-col ant-form-item-label"><label for="tf_password" class="ant-form-item-required" title="Mật khẩu hiện tại">Mật khẩu hiện tại</label></div>
+              <div class="ant-col ant-form-item-control">
+                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                  <span class="ant-input-affix-wrapper ant-input-password max-w-[320px]"><input type="password" id="tf_password" name="current_password" class="ant-input" autocomplete="current-password" /><span class="ant-input-suffix">{{ $eye }}</span></span>
+                </div></div>
+                {!! $tfError('current_password') !!}
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <button type="submit" class="ant-btn ant-btn-primary">{{ ant_icon('safety-certificate') }}<span>Bật xác thực 2 lớp</span></button>
+            </div>
+          </form>
+        @endif
+      </div>
+    </div>
   </div>
 
   {{-- Cột phụ: chỉ xem (đổi quyền / trạng thái ở trang Người dùng, do người có quyền làm) --}}

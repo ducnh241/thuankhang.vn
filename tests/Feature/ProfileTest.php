@@ -74,28 +74,28 @@ class ProfileTest extends TestCase
         // Sai mật khẩu hiện tại: báo lỗi ở form đổi mật khẩu (túi lỗi riêng) — form thông tin không bị coi là "chưa lưu"
         $html = $this->actingAs($user)->from('/backend/profile')->followingRedirects()->put('/backend/profile/password', [
             'current_password' => 'sai-roi',
-            'password' => 'matkhaumoi1',
-            'password_confirmation' => 'matkhaumoi1',
+            'password' => 'matkhaumoi-2026',
+            'password_confirmation' => 'matkhaumoi-2026',
         ])->assertOk()->getContent();
         $this->assertStringContainsString('Mật khẩu hiện tại không đúng.', $html);
         $this->assertStringNotContainsString('data-dirty', $html);
-        $this->assertStringNotContainsString('value="matkhaumoi1"', $html); // không điền lại mật khẩu
+        $this->assertStringNotContainsString('value="matkhaumoi-2026"', $html); // không điền lại mật khẩu
         $this->assertStringContainsString('id="name" name="name" value="'.$user->name.'"', $html);
         $this->actingAs($user)->from('/backend/profile')->put('/backend/profile/password', [
             'current_password' => 'password', 'password' => 'ngan', 'password_confirmation' => 'ngan',
         ])->assertSessionHasErrorsIn('password', 'password');
         $this->actingAs($user)->from('/backend/profile')->put('/backend/profile/password', [
-            'current_password' => 'password', 'password' => 'matkhaumoi1', 'password_confirmation' => 'khac12345',
+            'current_password' => 'password', 'password' => 'matkhaumoi-2026', 'password_confirmation' => 'khac12345',
         ])->assertSessionHasErrorsIn('password', 'password');
         $this->assertTrue(Hash::check('password', $user->fresh()->password));
 
         $this->actingAs($user)->put('/backend/profile/password', [
             'current_password' => 'password',
-            'password' => 'matkhaumoi1',
-            'password_confirmation' => 'matkhaumoi1',
+            'password' => 'matkhaumoi-2026',
+            'password_confirmation' => 'matkhaumoi-2026',
         ])->assertRedirect('/backend/profile')->assertSessionHas('success');
 
-        $this->assertTrue(Hash::check('matkhaumoi1', $user->fresh()->password));
+        $this->assertTrue(Hash::check('matkhaumoi-2026', $user->fresh()->password));
     }
 
     public function test_profile_errors_redisplay_submitted_values(): void

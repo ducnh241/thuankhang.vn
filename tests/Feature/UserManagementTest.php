@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\AssertionFailedError;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -57,8 +58,8 @@ class UserManagementTest extends TestCase
             'name' => 'Nhân viên',
             'email' => 'nv@example.com',
             'phone' => '0900000000',
-            'password' => 'matkhau123',
-            'password_confirmation' => 'matkhau123',
+            'password' => 'matkhau-123456',
+            'password_confirmation' => 'matkhau-123456',
             'group_id' => $group->id,
             'status' => '1',
             'is_super_admin' => '0',
@@ -67,7 +68,7 @@ class UserManagementTest extends TestCase
 
         $user = User::where('email', 'nv@example.com')->firstOrFail();
         $response->assertRedirect(route('backend.users.edit', $user));
-        $this->assertTrue(Hash::check('matkhau123', $user->password));
+        $this->assertTrue(Hash::check('matkhau-123456', $user->password));
         $this->assertSame($group->id, $user->group_id);
         $this->assertFalse($user->is_super_admin);
         $this->assertTrue($user->status);
@@ -391,7 +392,7 @@ class UserManagementTest extends TestCase
         ] as $file) {
             try {
                 $put(['avatar' => $file])->assertSessionHasErrors('avatar');
-            } catch (\PHPUnit\Framework\AssertionFailedError $e) {
+            } catch (AssertionFailedError $e) {
                 $this->fail('Không báo lỗi với tệp '.$file->getClientOriginalName());
             }
         }

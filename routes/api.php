@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * API quản trị sản phẩm / danh mục (tiền tố /api). Xác thực: "Authorization: Bearer tk_…" (tạo ở Hồ sơ trong admin).
- * Tài liệu: docs/api-san-pham.md — skill Claude: skills/thuankhang-products.
+ * Tài liệu: skills/thuankhang-products/reference/api.md — skill Claude: skills/thuankhang-products.
  */
 Route::prefix('v1')->middleware([AuthenticateApiToken::class, 'throttle:120,1'])->group(function () {
     // Kiểm tra token: tài khoản + các quyền sản phẩm

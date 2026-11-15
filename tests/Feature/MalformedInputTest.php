@@ -22,7 +22,7 @@ class MalformedInputTest extends TestCase
 
         foreach (['name', 'email', 'phone', 'group_id'] as $field) {
             $this->actingAs($root)->from($create)
-                ->post('/backend/users', ['name' => 'A', 'email' => 'a@b.vn', 'password' => 'secret-123', 'password_confirmation' => 'secret-123', $field => ['x']])
+                ->post('/backend/users', ['name' => 'A', 'email' => 'a@b.vn', 'password' => 'secret-123456', 'password_confirmation' => 'secret-123456', $field => ['x']])
                 ->assertRedirect($create)->assertSessionHasErrors($field);
             $this->actingAs($root)->get($create)->assertOk();
         }

@@ -3,6 +3,7 @@
 // Route khu vực quản trị (/backend). Được nạp qua bootstrap/app.php với middleware group 'web'.
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Backend\Affiliate\AffiliateSettingController;
 use App\Http\Controllers\Backend\Affiliate\CommissionRateController;
 use App\Http\Controllers\Backend\Affiliate\KpiTierController;
@@ -32,6 +33,9 @@ Route::prefix('backend')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('login', [LoginController::class, 'create'])->name('login');
         Route::post('login', [LoginController::class, 'store'])->name('login.store');
+        // Bước 2 khi tài khoản bật xác thực 2 lớp: nhập mã từ ứng dụng xác thực / mã khôi phục
+        Route::get('login/two-factor', [TwoFactorChallengeController::class, 'create'])->name('login.two-factor');
+        Route::post('login/two-factor', [TwoFactorChallengeController::class, 'store'])->name('login.two-factor.store')->middleware('throttle:20,1');
     });
 
     Route::middleware(['auth', 'backend.access'])->name('backend.')->group(function () {
@@ -42,6 +46,11 @@ Route::prefix('backend')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+        // Xác thực 2 lớp của chính mình: bật (tạo khóa) → xác nhận bằng mã → tạo lại mã khôi phục / tắt (đều cần mật khẩu)
+        Route::post('profile/two-factor', [ProfileController::class, 'enableTwoFactor'])->name('profile.two-factor.enable')->middleware('throttle:10,1');
+        Route::post('profile/two-factor/confirm', [ProfileController::class, 'confirmTwoFactor'])->name('profile.two-factor.confirm')->middleware('throttle:10,1');
+        Route::post('profile/two-factor/recovery-codes', [ProfileController::class, 'regenerateRecoveryCodes'])->name('profile.two-factor.recovery')->middleware('throttle:10,1');
+        Route::delete('profile/two-factor', [ProfileController::class, 'disableTwoFactor'])->name('profile.two-factor.disable')->middleware('throttle:10,1');
         // Token API của chính tài khoản (dùng cho skill Claude / công cụ ngoài đăng sản phẩm)
         Route::post('profile/api-tokens', [ProfileController::class, 'createToken'])->name('profile.tokens.store')->middleware('throttle:10,1');
         Route::delete('profile/api-tokens/{token}', [ProfileController::class, 'revokeToken'])->name('profile.tokens.destroy')->whereNumber('token');
@@ -140,6 +149,8 @@ Route::prefix('backend')->group(function () {
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->can('user/edit');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->can('user/edit');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->can('user/delete');
+        // Người dùng mất thiết bị xác thực: người quản lý được tài khoản đó tắt xác thực 2 lớp giúp
+        Route::delete('users/{user}/two-factor', [UserController::class, 'resetTwoFactor'])->name('users.two-factor.reset')->can('user/edit');
 
         // Nhóm quyền (quyền: group, group/add, group/edit, group/delete)
         Route::get('groups', [GroupController::class, 'index'])->name('groups.index')->can('group');

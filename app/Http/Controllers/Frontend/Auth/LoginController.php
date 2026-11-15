@@ -18,6 +18,11 @@ class LoginController extends Controller
 
     private const DECAY_SECONDS = 60;
 
+    /** Số lần sai tối đa từ MỘT IP (bất kể số điện thoại nào) trong IP_DECAY_SECONDS — chặn dò mật khẩu trên nhiều tài khoản. */
+    public const IP_MAX_ATTEMPTS = 30;
+
+    private const IP_DECAY_SECONDS = 600;
+
     public function create(): View
     {
         return view('frontend.auth.login');
@@ -32,12 +37,17 @@ class LoginController extends Controller
 
         $phone = Member::normalizePhone($request->input('phone')) ?? trim($request->input('phone'));
         $key = 'member-login|'.$phone.'|'.$request->ip();
-        if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
-            throw ValidationException::withMessages(['phone' => 'Bạn đã thử quá nhiều lần. Vui lòng đợi '.RateLimiter::availableIn($key).' giây.']);
+        $ipKey = 'member-login-ip|'.$request->ip();
+        foreach ([[$key, self::MAX_ATTEMPTS], [$ipKey, self::IP_MAX_ATTEMPTS]] as [$limitKey, $max]) {
+            if (RateLimiter::tooManyAttempts($limitKey, $max)) {
+                $seconds = RateLimiter::availableIn($limitKey);
+                throw ValidationException::withMessages(['phone' => 'Bạn đã thử quá nhiều lần. Vui lòng đợi '.($seconds > 90 ? ceil($seconds / 60).' phút' : $seconds.' giây').'.']);
+            }
         }
 
         if (! Auth::guard('member')->attempt(['phone' => $phone, 'password' => $request->input('password')], $request->boolean('remember'))) {
             RateLimiter::hit($key, self::DECAY_SECONDS);
+            RateLimiter::hit($ipKey, self::IP_DECAY_SECONDS);
             throw ValidationException::withMessages(['phone' => 'Số điện thoại hoặc mật khẩu không đúng.']);
         }
 

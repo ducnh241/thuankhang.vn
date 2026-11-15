@@ -134,3 +134,20 @@ Xác nhận thanh toán (admin, quyền `order/confirm_payment` — mặc địn
 - Việc kèm theo khi sang `paid` (Step 7–8, TODO trong `OrderController::confirmPayment`): kích hoạt tài khoản, cộng doanh số /
   lên cấp, ghi hoa hồng F1 / F2 — cùng transaction.
 - Nhóm quyền đã tạo trên DB trước thay đổi này phải tick thêm quyền `order/confirm_payment` (RoleSeeder không ghi đè).
+
+## Bảo mật (rà soát 15/11/2026 — nhánh `security/hardening`)
+- **Đăng nhập**: giới hạn theo email/SĐT + IP (5 lần / phút) **và** theo IP (admin 20, thành viên 30 lần sai / 10 phút).
+  API: sai token 20 lần / phút / IP → 429 (`AuthenticateApiToken`).
+- **Xác thực 2 lớp (TOTP)** cho tài khoản quản trị — tự bật ở Tài khoản (cần mật khẩu): `App\Support\Totp` (RFC 6238),
+  `App\Services\TwoFactor`, cột `users.two_factor_*` (khóa mã hóa, mã khôi phục chỉ lưu SHA-256, `two_factor_last_step`
+  chống dùng lại mã). Đăng nhập: `LoginController` chỉ kiểm tra mật khẩu → `TwoFactorChallengeController`
+  (`/backend/login/two-factor`, hạn 10 phút, sai 5 lần khóa 15 phút) mới `Auth::login`. Mất thiết bị: mã khôi phục, hoặc
+  người có quyền `user/edit` bấm "Tắt giúp" ở trang sửa người dùng. Các cột này lưu `saveQuietly` + ghi `AuditLog` tay.
+- **Mật khẩu quản trị** tối thiểu `User::PASSWORD_MIN` = 12 ký tự (`User::passwordRule()`); thành viên website: 8 ký tự, có chữ + số.
+- **Mã theo dõi** (`SiteSettings::CODE_KEYS`): chỉ Root admin sửa được — mã chạy cùng tên miền với trang quản trị.
+- **Đơn chưa thanh toán**: tối đa `Order::MAX_OPEN_UNPAID` = 3 đơn (mới còn hạn / chờ xác nhận) mỗi thành viên — chống giữ tồn
+  kho bằng đơn ảo (`Order::openLimitReached`, khóa dòng thành viên khi đặt).
+- **API tải ảnh từ link** (`ProductImageImporter`): chỉ IPv4 công khai, ghim IP đã kiểm tra (`CURLOPT_RESOLVE`), tự xử lý
+  chuyển hướng (≤ 3, kiểm tra lại từng bước), hủy tải khi quá 4 MB.
+- Còn mở (chưa làm): OTP / CAPTCHA khi đăng ký thành viên; hạn dùng token API; Content-Security-Policy. Khi deploy:
+  `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, HTTPS, `trustProxies` nếu đứng sau proxy / Cloudflare.

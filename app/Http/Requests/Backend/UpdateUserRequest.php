@@ -3,9 +3,9 @@
 namespace App\Http\Requests\Backend;
 
 use App\Models\Group;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -21,7 +21,7 @@ class UpdateUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
             'phone' => ['nullable', 'string', 'max:30'],
-            'password' => ['nullable', 'confirmed', Password::min(8)],
+            'password' => ['nullable', 'confirmed', User::passwordRule()],
             'group_id' => ['bail', 'nullable', 'integer', 'exists:groups,id', function (string $attribute, mixed $value, \Closure $fail) {
                 if ($value && ! $this->user()->canAssignGroup(Group::find($value))) {
                     $fail('Bạn không được gán nhóm có quyền cao hơn quyền của mình.');

@@ -54,6 +54,12 @@ class Order extends Model
 
     public const CANCEL_SOURCES = [self::CANCEL_CUSTOMER => 'Khách tự hủy', self::CANCEL_ADMIN => 'Quản trị hủy', self::CANCEL_EXPIRED => 'Quá hạn thanh toán'];
 
+    /**
+     * Số đơn chưa thanh toán (mới còn hạn / chờ xác nhận) tối đa của một thành viên. Đơn chưa thanh toán vẫn giữ tồn kho,
+     * nên không giới hạn thì một tài khoản đặt hàng loạt đơn ảo là khóa hết hàng của người khác.
+     */
+    public const MAX_OPEN_UNPAID = 3;
+
     public const DELIVERY_SHIP = 'ship';
 
     public const DELIVERY_PICKUP = 'pickup';
@@ -164,6 +170,19 @@ class Order extends Model
     public function nextStatus(): ?string
     {
         return self::TRANSITIONS[$this->status] ?? null;
+    }
+
+    /** Đơn chưa thanh toán còn hiệu lực: mới (chưa quá hạn) hoặc khách đã báo chuyển khoản, chờ kế toán xác nhận. */
+    public function scopeOpenUnpaid(Builder $query): void
+    {
+        $query->where(fn (Builder $q) => $q->where('status', self::STATUS_AWAITING)
+            ->orWhere(fn (Builder $n) => $n->where('status', self::STATUS_NEW)->where('expires_at', '>', now())));
+    }
+
+    /** Thành viên đã chạm giới hạn đơn chưa thanh toán chưa (không đặt thêm được). */
+    public static function openLimitReached(int $memberId): bool
+    {
+        return self::where('member_id', $memberId)->openUnpaid()->count() >= self::MAX_OPEN_UNPAID;
     }
 
     /** Khách: bấm "Tôi đã chuyển khoản" / tự hủy — chỉ khi đơn mới còn hạn. */

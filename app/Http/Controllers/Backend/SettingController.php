@@ -38,6 +38,7 @@ class SettingController extends Controller
             'settings' => SiteSettings::all(),
             'tab' => $tab,
             'canEdit' => $request->user()->can('setting/edit'),
+            'canEditCode' => $request->user()->isSuperAdmin(),
         ]);
     }
 

@@ -117,14 +117,14 @@
         <div class="ant-card-body">
           <p class="settings-card-desc">{{ $editing ? 'Để trống cả hai ô nếu không đổi mật khẩu.' : 'Mật khẩu dùng để đăng nhập.' }}</p>
           <div class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
-            <div class="ant-row ant-form-item{{ $hasError('password') }}" @unless ($editing) data-required="Đặt mật khẩu." @endunless data-min="8" data-min-message="Mật khẩu ít nhất 8 ký tự.">
+            <div class="ant-row ant-form-item{{ $hasError('password') }}" @unless ($editing) data-required="Đặt mật khẩu." @endunless data-min="{{ \App\Models\User::PASSWORD_MIN }}" data-min-message="Mật khẩu ít nhất {{ \App\Models\User::PASSWORD_MIN }} ký tự.">
               <div class="ant-col ant-form-item-label"><label for="password" @class(['ant-form-item-required' => ! $editing]) title="Mật khẩu mới">{{ $editing ? 'Mật khẩu mới' : 'Mật khẩu' }}</label></div>
               <div class="ant-col ant-form-item-control">
                 <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                  <span class="ant-input-affix-wrapper ant-input-password"><input type="password" id="password" name="password" class="ant-input" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" /><span class="ant-input-suffix">{{ ant_icon('eye-invisible', 'ant-input-password-icon') }}</span></span>
+                  <span class="ant-input-affix-wrapper ant-input-password"><input type="password" id="password" name="password" class="ant-input" autocomplete="new-password" placeholder="Ít nhất {{ \App\Models\User::PASSWORD_MIN }} ký tự" /><span class="ant-input-suffix">{{ ant_icon('eye-invisible', 'ant-input-password-icon') }}</span></span>
                 </div></div>
                 {!! $error('password') !!}
-                <div class="ant-form-item-extra">Ít nhất 8 ký tự.</div>
+                <div class="ant-form-item-extra">Ít nhất {{ \App\Models\User::PASSWORD_MIN }} ký tự.</div>
               </div>
             </div>
             <div class="ant-row ant-form-item" data-match="#password" data-match-message="Hai mật khẩu chưa khớp nhau.">
@@ -152,6 +152,20 @@
               <span><span class="block text-[rgba(0,0,0,0.85)]">Kích hoạt</span><span class="block {{ $muted }}">Tài khoản bị khóa không đăng nhập được.</span></span>
             </label>
           </div>
+          @if ($editing)
+            <div class="mt-4 flex flex-wrap items-center gap-2" data-two-factor-status>
+              <span>Xác thực 2 lớp:</span>
+              @if ($user->hasTwoFactor())
+                <span class="ant-tag ant-tag-green m-0">Đang bật</span>
+                @unless ($user->is(auth()->user()))
+                  <button type="submit" form="two-factor-reset-form" class="ant-btn ant-btn-link ant-btn-sm ant-btn-dangerous px-0"
+                    onclick="return confirm('Tắt xác thực 2 lớp của người này? Chỉ làm khi họ mất thiết bị xác thực — sau đó họ đăng nhập bằng mật khẩu và nên bật lại.')">Tắt giúp</button>
+                @endunless
+              @else
+                <span class="ant-tag m-0">Chưa bật</span>
+              @endif
+            </div>
+          @endif
           <div class="mt-4 {{ $muted }}" id="user-meta">
             @if ($editing)
               Tạo ngày {{ $user->created_at?->format('d/m/Y') ?? '—' }}<br />Cập nhật {{ $user->updated_at?->format('d/m/Y H:i') ?? '—' }}
@@ -198,4 +212,10 @@
     </div>
   </div>
 </form>
+@if ($editing && $user->hasTwoFactor())
+  <form method="POST" id="two-factor-reset-form" action="{{ route('backend.users.two-factor.reset', $user) }}" class="hidden">
+    @csrf
+    @method('DELETE')
+  </form>
+@endif
 @endsection

@@ -80,11 +80,16 @@ class SettingRequest extends FormRequest
         }
     }
 
-    /** Giá trị lưu vào bảng settings (logo / favicon xử lý riêng ở controller). Ô trống → null. */
+    /** Giá trị lưu vào bảng settings (logo / favicon xử lý riêng ở controller). Ô trống → null. Mã theo dõi: chỉ Root admin. */
     public function settings(): array
     {
         $data = [];
+        $canEditCode = $this->user()->isSuperAdmin();
         foreach ([...SiteSettings::TEXT_KEYS, ...SiteSettings::socialKeys()] as $key) {
+            // Mã theo dõi: không phải Root admin thì giữ nguyên giá trị đang lưu, kể cả khi tự gửi ô này lên
+            if (! $canEditCode && in_array($key, SiteSettings::CODE_KEYS, true)) {
+                continue;
+            }
             $value = $this->validated($key);
             $data[$key] = is_string($value) && $value !== '' ? $value : null;
         }

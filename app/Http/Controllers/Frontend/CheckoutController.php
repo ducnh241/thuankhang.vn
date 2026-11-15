@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\CheckoutRequest;
+use App\Models\Member;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PickupPoint;
@@ -19,12 +20,15 @@ use Illuminate\View\View;
 /**
  * Checkout (S5, Step 5): bắt buộc đăng nhập thành viên. Chọn giao tận nơi (khách trả phí ship — Tham số chung) hoặc nhận
  * tại VP tỉnh (ship = 0). Tạo đơn "Chờ thanh toán", mã = tiền tố (Tham số chung) + 8 ký tự, hạn thanh toán theo Tham số chung; giá lấy giá hiện
- * tại của sản phẩm và lưu snapshot vào order_items.
+ * tại của sản phẩm và lưu snapshot vào order_items. Mỗi thành viên tối đa Order::MAX_OPEN_UNPAID đơn chưa thanh toán.
  */
 class CheckoutController extends Controller
 {
     public function show(Request $request, Cart $cart): View|RedirectResponse
     {
+        if (Order::openLimitReached($request->user('member')->id)) {
+            return $this->limitReached();
+        }
         $lines = $cart->lines($removed);
         if ($lines->isEmpty()) {
             return redirect()->route('shop.cart')->with('error', 'Giỏ hàng đang trống.');
@@ -58,6 +62,12 @@ class CheckoutController extends Controller
         $shipping = $ship ? (int) AffiliateSettings::get('shipping_fee') : 0;
 
         $order = DB::transaction(function () use ($request, $lines, $ship, $goods, $shipping) {
+            // Khóa dòng thành viên rồi mới đếm: gửi nhiều yêu cầu cùng lúc cũng không vượt giới hạn đơn chưa thanh toán
+            Member::whereKey($request->user('member')->id)->lockForUpdate()->first();
+            if (Order::openLimitReached($request->user('member')->id)) {
+                return false;
+            }
+
             // Tồn kho: khóa các dòng có theo dõi tồn (biến thể đã chọn, hoặc sản phẩm không biến thể) rồi mới kiểm tra —
             // hai khách đặt cùng lúc không bán quá số còn
             $plain = $lines->whereNull('variant');
@@ -99,11 +109,20 @@ class CheckoutController extends Controller
 
             return $order;
         });
+        if ($order === false) {
+            return $this->limitReached();
+        }
         if (is_string($order)) {
             return redirect()->route('shop.cart')->with('error', 'Không đủ hàng: '.$order.'. Vui lòng giảm số lượng.');
         }
         $cart->clear();
 
         return redirect()->route('member.orders.show', $order)->with('success', "Đã đặt đơn {$order->code}. Vui lòng chuyển khoản để hoàn tất.");
+    }
+
+    private function limitReached(): RedirectResponse
+    {
+        return redirect()->route('member.orders.index')->with('error', 'Bạn đang có '.Order::MAX_OPEN_UNPAID
+            .' đơn chưa thanh toán. Vui lòng thanh toán hoặc hủy bớt đơn cũ trước khi đặt đơn mới.');
     }
 }
