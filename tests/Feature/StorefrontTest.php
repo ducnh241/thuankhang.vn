@@ -198,6 +198,15 @@ class StorefrontTest extends TestCase
         $this->get('/san-pham/tra-gung')->assertDontSee('data-chat', false)->assertDontSee('javascript:alert', false);
     }
 
+    public function test_title_with_special_characters_is_escaped_once(): void
+    {
+        $this->product(['name' => 'Dầu gội & dầu xả <b>"Biotin"</b>', 'slug' => 'goi-xa', 'short_description' => 'Gội & xả']);
+        $this->get('/san-pham/goi-xa')->assertOk()
+            ->assertSee('<title>Dầu gội &amp; dầu xả &lt;b&gt;&quot;Biotin&quot;&lt;/b&gt; - Thuận Khang</title>', false)
+            ->assertSee('<meta name="description" content="Gội &amp; xả" />', false)
+            ->assertDontSee('&amp;amp;', false)->assertDontSee('<b>"Biotin"</b>', false);
+    }
+
     public function test_frontend_and_backend_load_their_own_assets(): void
     {
         // Website: chỉ build frontend (vite.frontend.config.js); trang quản trị: chỉ build admin

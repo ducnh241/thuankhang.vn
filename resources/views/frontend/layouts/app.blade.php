@@ -7,9 +7,11 @@
     $siteName = $site['site_name'] ?: config('app.name');
     $logo = SiteSettings::imageUrl($site['site_logo'] ?? null);
     $favicon = SiteSettings::imageUrl($site['site_favicon'] ?? null);
-    $title = trim($__env->yieldContent('title'));
-    $description = trim($__env->yieldContent('description')) ?: ($site['seo_description'] ?: null);
-    $image = trim($__env->yieldContent('image')) ?: $logo;
+    // @section('x', $giá_trị) đã mã hóa HTML sẵn → giải mã để {{ }} bên dưới chỉ mã hóa một lần (tránh "&amp;amp;")
+    $yield = fn (string $name) => html_entity_decode(trim($__env->yieldContent($name)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $title = $yield('title');
+    $description = $yield('description') ?: ($site['seo_description'] ?: null);
+    $image = $yield('image') ?: $logo;
     $socials = collect(SiteSettings::SOCIALS)->filter(fn ($s, $key) => ($site['social_'.$key] ?? '') !== '');
     $q = is_string(request('q')) ? request('q') : '';
 @endphp
@@ -54,13 +56,8 @@
       <button type="button" class="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" data-nav-toggle aria-controls="mobile-nav" aria-expanded="false" aria-label="Mở menu">
         <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
       </button>
-      <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2" aria-label="{{ $siteName }} — Trang chủ">
-        @if ($logo)
-          <img src="{{ $logo }}" alt="{{ $siteName }}" class="h-9 w-auto" />
-        @else
-          <span class="flex size-9 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white">{{ mb_strtoupper(mb_substr($siteName, 0, 1)) }}</span>
-          <span class="text-lg font-bold text-slate-900">{{ $siteName }}</span>
-        @endif
+      <a href="{{ route('home') }}" class="flex min-w-0 shrink items-center" aria-label="{{ $siteName }} — Trang chủ">
+        @include('frontend.partials.logo', ['size' => 'header'])
       </a>
       {{-- Tài khoản thành viên (guard "member") --}}
       <div class="ml-auto flex shrink-0 items-center gap-2 text-sm md:order-last md:ml-0">
@@ -88,7 +85,7 @@
         @endif
       </div>
       {{-- Điện thoại: ô tìm xuống dòng riêng, đủ rộng --}}
-      <form action="{{ route('shop.search') }}" method="GET" role="search" class="order-last w-full md:order-none md:ml-auto md:max-w-md">
+      <form action="{{ route('shop.search') }}" method="GET" role="search" class="order-last w-full md:order-none md:ml-auto md:w-auto md:min-w-0 md:max-w-md md:flex-1">
         <label class="relative block">
           <span class="sr-only">Tìm sản phẩm</span>
           <svg class="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path stroke-linecap="round" d="m20 20-3.5-3.5" /></svg>
@@ -121,13 +118,8 @@
     <div class="absolute inset-0 bg-slate-900/40 opacity-0 transition-opacity duration-300 [[data-mobile-nav].is-open_&]:opacity-100" data-nav-close></div>
     <nav id="mobile-nav" class="absolute inset-y-0 left-0 flex w-[82%] max-w-xs -translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300 ease-out [[data-mobile-nav].is-open_&]:translate-x-0" aria-label="Menu">
       <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-        <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-2">
-          @if ($logo)
-            <img src="{{ $logo }}" alt="{{ $siteName }}" class="h-8 w-auto" />
-          @else
-            <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 font-bold text-white">{{ mb_strtoupper(mb_substr($siteName, 0, 1)) }}</span>
-            <span class="truncate font-bold text-slate-900">{{ $siteName }}</span>
-          @endif
+        <a href="{{ route('home') }}" class="flex min-w-0 items-center" aria-label="{{ $siteName }} — Trang chủ">
+          @include('frontend.partials.logo', ['size' => 'drawer'])
         </a>
         <button type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100" data-nav-close aria-label="Đóng menu">
           <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
@@ -178,7 +170,7 @@
   <footer class="mt-16 border-t border-slate-200 bg-white">
     <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
       <div class="lg:col-span-2">
-        <div class="text-lg font-bold text-slate-900">{{ $siteName }}</div>
+        <a href="{{ route('home') }}" class="inline-flex" aria-label="{{ $siteName }} — Trang chủ">@include('frontend.partials.logo', ['size' => 'footer'])</a>
         @if ($site['site_address'])<p class="mt-2 text-sm text-slate-600">{{ $site['site_address'] }}</p>@endif
         @if ($site['site_hotline'])<p class="mt-1 text-sm text-slate-600">Hotline: <a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['site_hotline']) }}" class="font-medium text-brand-700">{{ $site['site_hotline'] }}</a></p>@endif
         @if ($site['site_email'])<p class="mt-1 text-sm text-slate-600">Email: <a href="mailto:{{ $site['site_email'] }}" class="text-brand-700">{{ $site['site_email'] }}</a></p>@endif
