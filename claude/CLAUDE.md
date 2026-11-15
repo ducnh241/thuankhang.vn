@@ -115,6 +115,14 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   favicon (`settings/`), lọc theo "Nguồn", ghi đang dùng ở sản phẩm / trang nào ("Không còn dùng" nếu không ai tham chiếu).
   File ngoài thư viện chỉ xem / lấy link — không xóa ở đây. Avatar không liệt kê. Lọc + phân trang trong bộ nhớ.
   Chưa theo dõi link của file thư viện đang được chèn ở đâu.
+- Chèn ảnh trong trình soạn thảo (mô tả sản phẩm, nội dung trang, chân trang — `resources/backend/js/editor.js`, Tiptap
+  `@tiptap/extension-image`): nút "Chèn ảnh", dán hoặc kéo thả ảnh → `POST /backend/file/editor-image` (ai có một trong
+  `FileUpload::EDITOR_ABILITIES` đều gọi được) lưu vào thư viện, chèn `<img src="/storage/uploads/…">` (link tương đối).
+  Nút chỉ hiện khi trang có `<meta name="editor-upload">` (backend/partials/head). Không nhận ảnh data URL.
+  Chọn ảnh rồi dùng thanh công cụ: nút Căn lề → `data-align="center|right"` trên `<img>`; nút Link → gắn link cho ảnh
+  (`<a href><img></a>`, node ảnh có thuộc tính `href` / `target`). Bấm đúp ảnh (hoặc nút Chèn ảnh khi đang chọn ảnh) mở
+  hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
+  `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
 ## Trạng thái đơn hàng (đã chốt 04/11/2026)
 `App\Models\Order`, cột `status`. Mọi lần đổi trạng thái chạy trong transaction có `lockForUpdate` và ghi `AuditLog` tay

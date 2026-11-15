@@ -553,6 +553,82 @@ h6 {
 .rich-editor-prose a {
   text-decoration: underline;
 }
+.rich-editor-prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.rich-editor-prose img[data-align='center'] {
+  margin-right: auto;
+  margin-left: auto;
+}
+.rich-editor-prose img[data-align='right'] {
+  margin-left: auto;
+}
+/* Ảnh có gắn link: <a> bọc ảnh, ôm sát ảnh, căn theo data-align của ảnh; nhãn "Link" ở góc để nhận ra */
+.rich-editor-prose > a {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  cursor: default;
+}
+/* Ảnh rộng 100% có link: <a> cũng phải rộng hết khung (không thì ảnh co theo <a> ôm sát) */
+.rich-editor-prose > a:has(> img[width='100%']) {
+  width: 100%;
+}
+.rich-editor-prose > a:has(> img[data-align='center']) {
+  margin-right: auto;
+  margin-left: auto;
+}
+.rich-editor-prose > a:has(> img[data-align='right']) {
+  margin-left: auto;
+}
+.rich-editor-prose > a::after {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 0 6px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  content: 'Link';
+  pointer-events: none;
+}
+.rich-editor-prose > a.ProseMirror-selectednode > img {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+/* Ảnh xem trước trong hộp "Sửa ảnh" */
+.rich-editor-image-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.rich-editor-image-preview img {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+}
+.rich-editor-prose img.ProseMirror-selectednode {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+/* Đang tải ảnh chèn vào nội dung: nút Chèn ảnh mờ + con trỏ chờ */
+.rich-editor.is-uploading [data-command='image'] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.rich-editor.is-uploading .rich-editor-content {
+  cursor: progress;
+}
 .rich-editor-prose code {
   margin: 0 0.2em;
   padding: 0.2em 0.4em 0.1em;

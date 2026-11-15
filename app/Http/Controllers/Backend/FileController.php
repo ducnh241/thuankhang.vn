@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\FileUpload;
 use App\Support\FileLibrary;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -95,22 +96,11 @@ class FileController extends Controller
             throw ValidationException::withMessages($errors ?: ['files' => 'Chưa chọn file nào.']);
         }
 
-        $directory = FileUpload::DIRECTORY.'/'.now()->format('Y/m');
         $stored = [];
         try {
-            DB::transaction(function () use ($request, $directory, &$stored) {
+            DB::transaction(function () use ($request, &$stored) {
                 foreach ($request->file('files') as $file) {
-                    // Tên trên đĩa ngẫu nhiên, đuôi lấy theo nội dung file (đã qua rule mimes) — không dùng tên người gửi
-                    $path = $file->store($directory, 'public');
-                    $stored[] = $path;
-                    FileUpload::create([
-                        'user_id' => $request->user()->id,
-                        'name' => $this->cleanName($file->getClientOriginalName()),
-                        'path' => $path,
-                        'extension' => strtolower(pathinfo($path, PATHINFO_EXTENSION)),
-                        'mime' => (string) $file->getMimeType(),
-                        'size' => $file->getSize(),
-                    ]);
+                    $stored[] = $this->save($file, $request)->path;
                 }
             });
         } catch (\Throwable $e) {
@@ -119,6 +109,41 @@ class FileController extends Controller
         }
 
         return redirect()->route('backend.files.index')->with('success', 'Đã tải lên '.count($stored).' file.');
+    }
+
+    /**
+     * Ảnh chèn từ trình soạn thảo (nút "Chèn ảnh", dán, kéo thả — resources/backend/js/editor.js): lưu vào thư viện như
+     * file tải ở màn này, trả link tương đối để chèn vào nội dung. Ai soạn được sản phẩm / trang / cài đặt đều tải được.
+     */
+    public function editorImage(Request $request): JsonResponse
+    {
+        abort_unless(FileUpload::canUploadFromEditor($request->user()), 403);
+        $max = FileUpload::maxKilobytes();
+        $request->validate(['image' => ['required', 'file', 'mimes:'.implode(',', FileUpload::TYPES['image']), 'max:'.$max]], [
+            'image.mimes' => 'Chỉ chèn được ảnh JPG, PNG, WEBP, GIF.',
+            'image.max' => 'Ảnh vượt quá '.FileUpload::formatSize($max * 1024).'.',
+            'image.*' => 'Ảnh tải lên bị lỗi (có thể vượt quá '.FileUpload::formatSize($max * 1024).').',
+        ]);
+
+        $file = $this->save($request->file('image'), $request);
+
+        return response()->json(['url' => $file->relativeUrl(), 'name' => $file->name], 201);
+    }
+
+    /** Lưu một file đã kiểm tra vào uploads/năm/tháng + ghi bảng file_uploads. */
+    private function save(UploadedFile $file, Request $request): FileUpload
+    {
+        // Tên trên đĩa ngẫu nhiên, đuôi lấy theo nội dung file (đã qua rule mimes) — không dùng tên người gửi
+        $path = $file->store(FileUpload::DIRECTORY.'/'.now()->format('Y/m'), 'public');
+
+        return FileUpload::create([
+            'user_id' => $request->user()->id,
+            'name' => $this->cleanName($file->getClientOriginalName()),
+            'path' => $path,
+            'extension' => strtolower(pathinfo($path, PATHINFO_EXTENSION)),
+            'mime' => (string) $file->getMimeType(),
+            'size' => $file->getSize(),
+        ]);
     }
 
     public function destroy(FileUpload $file): RedirectResponse

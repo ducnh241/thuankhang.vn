@@ -29,6 +29,9 @@ class FileUpload extends Model
         'document' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'zip'],
     ];
 
+    /** Quyền nào cũng được tải ảnh từ trình soạn thảo (mô tả sản phẩm, nội dung trang, chân trang) vào thư viện. */
+    public const EDITOR_ABILITIES = ['file/upload', 'product/add', 'product/edit', 'page/add', 'page/edit', 'setting/edit'];
+
     protected $fillable = ['user_id', 'name', 'path', 'extension', 'mime', 'size'];
 
     protected function casts(): array
@@ -39,6 +42,17 @@ class FileUpload extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public static function canUploadFromEditor(?User $user): bool
+    {
+        return $user !== null && $user->canAny(self::EDITOR_ABILITIES);
+    }
+
+    /** Đường dẫn tương đối (/storage/uploads/…) để chèn vào nội dung: không dính tên miền của máy đang soạn. */
+    public function relativeUrl(): string
+    {
+        return parse_url($this->url(), PHP_URL_PATH) ?: $this->url();
     }
 
     /** @return list<string> */

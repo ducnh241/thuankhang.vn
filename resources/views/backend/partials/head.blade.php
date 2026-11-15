@@ -9,4 +9,8 @@
 {{-- Không nạp font Inter từ Google: link font của template (cú pháp "|" cũ) bị Google trả lỗi 400, nên template thực tế
      hiển thị bằng font hệ thống (San Francisco trên Mac, Segoe UI trên Windows; Inter chỉ khi máy có cài sẵn).
      Nạp Inter thật thì chữ rộng / cao hơn template. --}}
+{{-- Trình soạn thảo (editor.js) tải ảnh chèn vào nội dung lên đây; không có thẻ này thì nút "Chèn ảnh" không hiện --}}
+@if (\App\Models\FileUpload::canUploadFromEditor(auth()->user()))
+  <meta name="editor-upload" content="{{ route('backend.files.editor-image') }}" data-max-bytes="{{ \App\Models\FileUpload::maxKilobytes() * 1024 }}" />
+@endif
 @vite(['resources/backend/css/app.css', 'resources/backend/js/app.js'], 'assets/backend/build')

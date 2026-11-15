@@ -52,6 +52,27 @@
 .rich-text img {
   @apply h-auto max-w-full rounded-lg;
 }
+/* Ảnh có gắn link trong trình soạn thảo: <a> bọc ảnh thành một khối ôm sát ảnh, căn theo data-align của ảnh */
+.rich-text > a:has(> img) {
+  @apply block w-fit max-w-full;
+}
+/* Ảnh rộng 100% (width="100%") có link: <a> cũng rộng hết khung */
+.rich-text > a:has(> img[width='100%']) {
+  @apply w-full;
+}
+.rich-text > a:has(> img[data-align='center']) {
+  @apply mx-auto;
+}
+.rich-text > a:has(> img[data-align='right']) {
+  @apply ml-auto;
+}
+/* Ảnh căn giữa / phải trong trình soạn thảo (data-align) */
+.rich-text img[data-align='center'] {
+  @apply mx-auto block;
+}
+.rich-text img[data-align='right'] {
+  @apply ml-auto block;
+}
 .rich-text blockquote {
   @apply border-l-4 border-brand-100 pl-4 italic text-slate-600;
 }

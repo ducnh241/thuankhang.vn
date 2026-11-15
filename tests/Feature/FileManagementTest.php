@@ -10,6 +10,7 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\RichText;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -225,6 +226,79 @@ class FileManagementTest extends TestCase
         $this->actingAs($root)->get('/backend/file?page=2')->assertSee('Hiển thị 31–31 / 31 file');
         $this->actingAs($root)->get('/backend/file?page=9')->assertRedirect(route('backend.files.index', ['page' => 2]));
         $this->actingAs($root)->get('/backend/file?page=abc&tab=document')->assertOk()->assertSee('Không tìm thấy file nào');
+    }
+
+    public function test_editor_image_upload_goes_to_library_and_returns_relative_link(): void
+    {
+        $root = $this->root();
+        $post = fn (User $user, array $data) => $this->actingAs($user)->postJson('/backend/file/editor-image', $data);
+
+        $response = $post($root, ['image' => UploadedFile::fake()->image('Hướng dẫn dùng.png', 30, 30)])->assertCreated();
+        $file = FileUpload::firstOrFail();
+        $response->assertExactJson(['url' => '/storage/'.$file->path, 'name' => 'Hướng dẫn dùng.png']);
+        $this->assertMatchesRegularExpression('#^uploads/\d{4}/\d{2}/[A-Za-z0-9]{40}\.png$#', $file->path);
+        $this->assertSame($root->id, $file->user_id);
+        Storage::disk('public')->assertExists($file->path);
+        // Ảnh chèn từ trình soạn thảo hiện ở màn Quản lý file như file của thư viện
+        $this->actingAs($root)->get('/backend/file?source=library')->assertSee('Hướng dẫn dùng.png');
+
+        // Chỉ nhận ảnh, đúng dung lượng
+        $post($root, ['image' => UploadedFile::fake()->create('a.pdf', 10, 'application/pdf')])->assertStatus(422)->assertJsonPath('errors.image.0', 'Chỉ chèn được ảnh JPG, PNG, WEBP, GIF.');
+        $post($root, ['image' => UploadedFile::fake()->create('a.svg', 10, 'image/svg+xml')])->assertStatus(422);
+        $post($root, ['image' => UploadedFile::fake()->create('to.png', FileUpload::maxKilobytes() + 1, 'image/png')])->assertStatus(422);
+        $post($root, [])->assertStatus(422);
+        $post($root, ['image' => 'abc'])->assertStatus(422);
+        $this->assertSame(1, FileUpload::count());
+
+        // Ai soạn được sản phẩm / trang / cài đặt đều chèn được ảnh; người khác thì không
+        $image = fn () => ['image' => UploadedFile::fake()->image('x.jpg', 10, 10)];
+        foreach (['product/edit', 'product/add', 'page/edit', 'setting/edit', 'file/upload'] as $ability) {
+            $post($this->userWith(strtok($ability, '/'), $ability), $image())->assertCreated();
+        }
+        foreach (['product', 'file', 'order'] as $ability) {
+            $post($this->userWith($ability), $image())->assertForbidden();
+        }
+        $this->post('/backend/logout');
+        $this->postJson('/backend/file/editor-image', $image())->assertUnauthorized();
+    }
+
+    public function test_editor_pages_expose_upload_endpoint_only_to_allowed_users(): void
+    {
+        $category = Category::factory()->create(['type' => Category::TYPE_PRODUCT]);
+        $meta = '<meta name="editor-upload" content="'.route('backend.files.editor-image').'" data-max-bytes="'.(FileUpload::maxKilobytes() * 1024).'"';
+
+        $this->actingAs($this->root())->get('/backend/product/create')->assertOk()->assertSee($meta, false);
+        $this->actingAs($this->userWith('page', 'page/add'))->get('/backend/page/create')->assertOk()->assertSee($meta, false);
+        $this->actingAs($this->userWith('order'))->get('/backend')->assertOk()->assertDontSee('name="editor-upload"', false);
+        $this->post('/backend/logout');
+        $this->get('/backend/login')->assertOk()->assertDontSee('name="editor-upload"', false);
+
+        // Website hiển thị ảnh trong mô tả; ảnh nhúng data URL và thuộc tính lạ bị lọc
+        Product::factory()->create(['category_id' => $category->id, 'status' => true, 'slug' => 'co-anh',
+            'description' => '<p>Mô tả</p><img src="/storage/uploads/2026/11/a.png" alt="Ảnh minh họa" onerror="alert(1)"><img src="data:image/png;base64,AAAA" alt="nhung">']);
+        $this->get('/san-pham/co-anh')->assertOk()
+            ->assertSee('<img src="/storage/uploads/2026/11/a.png" alt="Ảnh minh họa"', false)
+            ->assertDontSee('onerror', false)->assertDontSee('data:image/png', false);
+
+        // Căn lề soạn trong trình soạn thảo còn nguyên trên website: ảnh (data-align) và chữ (text-align → align);
+        // style khác và data-* lạ vẫn bị bỏ
+        $clean = RichText::clean('<p style="text-align: center;">Giữa</p><h2 style="text-align: right">Phải</h2><p style="color: red; position: fixed">x</p>'
+            .'<img src="/a.png" alt="A" data-align="center" data-x="1"><img src="/b.png" data-align="right">');
+        $this->assertStringContainsString('<p align="center">Giữa</p>', $clean);
+        $this->assertStringContainsString('<h2 align="right">Phải</h2>', $clean);
+        $this->assertStringContainsString('<p>x</p>', $clean);
+        $this->assertStringContainsString('<img src="/a.png" alt="A" data-align="center" />', $clean);
+        $this->assertStringContainsString('<img src="/b.png" data-align="right" />', $clean);
+        // Ảnh đặt chiều rộng + gắn link (<a> bọc ảnh): giữ nguyên; link javascript: bị bỏ
+        $clean .= RichText::clean('<a href="/san-pham/x"><img src="/c.png" alt="C" width="300" data-align="center"></a>'
+            .'<a href="https://example.com" target="_blank" rel="noopener noreferrer"><img src="/d.png" width="120"></a>'
+            .'<a href="javascript:alert(1)"><img src="/e.png"></a><img src="/f.png" width="100%">');
+        $this->assertStringContainsString('<img src="/f.png" width="100%" />', $clean);
+        $this->assertStringContainsString('<a href="/san-pham/x" rel="noopener noreferrer nofollow"><img src="/c.png" alt="C" width="300" data-align="center" /></a>', $clean);
+        $this->assertStringContainsString('<a href="https://example.com" target="_blank" rel="noopener noreferrer nofollow"><img src="/d.png" width="120" /></a>', $clean);
+        $this->assertStringNotContainsString('javascript:', $clean);
+        $this->assertStringNotContainsString('style=', $clean);
+        $this->assertStringNotContainsString('data-x', $clean);
     }
 
     public function test_permissions(): void

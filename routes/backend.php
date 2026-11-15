@@ -115,6 +115,8 @@ Route::prefix('backend')->group(function () {
         // Quản lý file tải lên (quyền: file, file/upload, file/delete) — ảnh / tài liệu lấy link dùng ở trang, mô tả sản phẩm
         Route::get('file', [FileController::class, 'index'])->name('files.index')->can('file');
         Route::post('file', [FileController::class, 'store'])->name('files.store')->can('file/upload');
+        // Ảnh chèn từ trình soạn thảo: ai soạn được sản phẩm / trang / cài đặt đều gọi được (controller kiểm FileUpload::EDITOR_ABILITIES)
+        Route::post('file/editor-image', [FileController::class, 'editorImage'])->name('files.editor-image')->middleware('throttle:60,1');
         Route::post('file/bulk-destroy', [FileController::class, 'bulkDestroy'])->name('files.bulk-destroy')->can('file/delete');
         Route::delete('file/{file}', [FileController::class, 'destroy'])->name('files.destroy')->can('file/delete')->whereNumber('file');
 
