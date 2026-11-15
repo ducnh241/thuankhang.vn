@@ -118,6 +118,13 @@ return [
                     'can' => 'menu',
                     'icon' => 'container',
                 ],
+                [
+                    'label' => 'Files',
+                    'route' => 'backend.files.index',
+                    'active' => 'backend.files.*',
+                    'can' => 'file',
+                    'icon' => 'paper-clip',
+                ],
             ],
         ],
         [

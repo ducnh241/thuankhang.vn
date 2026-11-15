@@ -15,13 +15,14 @@ class RoleSeeder extends Seeder
         // A2–A5, A14 + mọi màn hình khác. Quyền khai báo thêm về sau phải tick thêm cho nhóm này (hoặc dùng Root admin).
         'Super admin' => '*',
 
-        // A6 Sản phẩm, A7 VP tỉnh, A8 Đơn hàng, A10 Thành viên, A11 KYC
+        // A6 Sản phẩm, A7 VP tỉnh, A8 Đơn hàng, A10 Thành viên, A11 KYC, Quản lý file
         'Vận hành' => [
             'backend_access',
             'product', 'product/add', 'product/edit', 'product/delete',
             'pickup_point', 'pickup_point/add', 'pickup_point/edit', 'pickup_point/delete',
             'order', 'order/status', 'order/cancel',
             'review', 'review/moderate',
+            'file', 'file/upload', 'file/delete',
             'member', 'member/lock', 'member/activate', 'member/referrer',
             'kyc', 'kyc/view_document', 'kyc/review',
         ],

@@ -43,6 +43,14 @@ return [
             'delete' => 'Xóa',
         ],
     ],
+    'file' => [
+        'label' => 'Quản lý file',
+        'section' => 'Website',
+        'items' => [
+            'upload' => 'Tải lên',
+            'delete' => 'Xóa',
+        ],
+    ],
 
     /*
      | Affiliate Phase 1 (đặc tả mục 6.1, màn hình A2–A14). Khai báo sẵn từ Step 0 để chốt ma trận vai trò

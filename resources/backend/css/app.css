@@ -2970,3 +2970,17 @@ a.project-thumb:hover {
 .product-gallery [data-gallery-item][data-new] [data-gallery-cover] {
   display: none;
 }
+
+/* Quản lý file (backend/files/index): ô đuôi file thay ảnh thu nhỏ, viền nét đứt khi kéo file vào trang */
+.file-ext {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.file-manager.is-dragover > .ant-card {
+  outline: 2px dashed #007bff;
+  outline-offset: -2px;
+  background: #f0f7ff;
+}

@@ -11,6 +11,7 @@ use App\Http\Controllers\Backend\Affiliate\LevelController;
 use App\Http\Controllers\Backend\AuditLogController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\FileController;
 use App\Http\Controllers\Backend\GroupController;
 use App\Http\Controllers\Backend\MemberController;
 use App\Http\Controllers\Backend\MenuController;
@@ -110,6 +111,12 @@ Route::prefix('backend')->group(function () {
         Route::get('page/{page}/edit', [PageController::class, 'edit'])->name('pages.edit')->can('page/edit');
         Route::put('page/{page}', [PageController::class, 'update'])->name('pages.update')->can('page/edit');
         Route::delete('page/{page}', [PageController::class, 'destroy'])->name('pages.destroy')->can('page/delete');
+
+        // Quản lý file tải lên (quyền: file, file/upload, file/delete) — ảnh / tài liệu lấy link dùng ở trang, mô tả sản phẩm
+        Route::get('file', [FileController::class, 'index'])->name('files.index')->can('file');
+        Route::post('file', [FileController::class, 'store'])->name('files.store')->can('file/upload');
+        Route::post('file/bulk-destroy', [FileController::class, 'bulkDestroy'])->name('files.bulk-destroy')->can('file/delete');
+        Route::delete('file/{file}', [FileController::class, 'destroy'])->name('files.destroy')->can('file/delete')->whereNumber('file');
 
         // Menu website (quyền: menu, menu/add|edit|delete): vị trí cố định trong code (Menu::POSITIONS), một trang cây
         // + form như Danh mục — /menu?position=main&id=3 (&new: thêm mới); kéo thả: POST menu/item/{item}/move

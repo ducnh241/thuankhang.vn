@@ -5,6 +5,7 @@ use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Tải file vượt post_max_size của PHP: request bị bỏ trước khi có phiên (không flash được) → về màn Quản lý file
+        // kèm ?too_large=1 để báo lỗi dễ hiểu thay cho trang 413.
+        $exceptions->render(fn (PostTooLargeException $e, Request $request) => $request->is('backend/file') && ! $request->expectsJson()
+            ? redirect()->route('backend.files.index', ['too_large' => 1])
+            : null);
 
         // Ô chữ bị gửi dạng mảng (request sửa tay, vd name[]=x): validate đã báo lỗi, nhưng nạp lại mảng vào form thì
         // Blade escape lỗi → trang 500. Bỏ các ô đó khỏi dữ liệu nạp lại; ô nào có rule 'array' (tags, permission…) giữ.

@@ -46,6 +46,7 @@ class AuditLog extends Model
         ProductReview::class => 'Đánh giá sản phẩm',
         ApiToken::class => 'Token API',
         ProductImage::class => 'Ảnh sản phẩm',
+        FileUpload::class => 'File tải lên',
     ];
 
     /** Loại trong SUBJECTS nhưng không gắn observer: controller tự ghi một dòng tóm tắt (vd cả phiên bản tỉ lệ). */

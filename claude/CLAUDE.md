@@ -105,6 +105,17 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Skill: `skills/thuankhang-products` (SKILL.md + `scripts/tk_api.py` + quy tắc nội dung), đóng gói `skills/build.sh`
   → `skills/dist/*.zip` (gitignore; `config.json` chứa token cũng gitignore).
 
+## Quản lý file (15/11/2026)
+- Màn /backend/file (menu Files, quyền `file`, `file/upload`, `file/delete` — mặc định nhóm Vận hành; nhóm quyền cũ trên DB
+  phải tick thêm): tải ảnh / tài liệu lên lấy link, tab Ảnh / Tài liệu, tìm theo tên, sao chép link, xóa từng file / hàng loạt.
+- Bảng `file_uploads` (model `FileUpload`), file ở disk public `uploads/YYYY/MM/<ngẫu nhiên>.<đuôi theo nội dung>`. Chỉ nhận
+  `FileUpload::TYPES` (không SVG / HTML — cùng tên miền với website); ≤ 10 MB / file (hoặc `upload_max_filesize` của PHP nếu
+  thấp hơn — container local đang 2 MB), 10 file / lần. Gửi quá `post_max_size` → về lại màn hình kèm `?too_large=1`.
+- Danh sách đọc từ đĩa (`App\Support\FileLibrary`): thư viện + ảnh sản phẩm (`products/`), ảnh trang (`pages/`), logo /
+  favicon (`settings/`), lọc theo "Nguồn", ghi đang dùng ở sản phẩm / trang nào ("Không còn dùng" nếu không ai tham chiếu).
+  File ngoài thư viện chỉ xem / lấy link — không xóa ở đây. Avatar không liệt kê. Lọc + phân trang trong bộ nhớ.
+  Chưa theo dõi link của file thư viện đang được chèn ở đâu.
+
 ## Trạng thái đơn hàng (đã chốt 04/11/2026)
 `App\Models\Order`, cột `status`. Mọi lần đổi trạng thái chạy trong transaction có `lockForUpdate` và ghi `AuditLog` tay
 (Order thuộc `AuditLog::MANUAL_SUBJECTS`).

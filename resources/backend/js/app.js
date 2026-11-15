@@ -20,6 +20,7 @@ import initLinkPickers from './link-picker';
 import initTableExpand from './table-expand';
 import initRepeaters from './repeater';
 import initCopyText from './copy-text';
+import initFileManager from './file-manager';
 
 /*
  * JS của giao diện admin (template ProCMS: Ant Design 4 + Tailwind + jQuery). Mỗi module tự kiểm tra trang hiện tại
@@ -48,4 +49,5 @@ $(() => {
   initTableExpand();
   initRepeaters();
   initCopyText();
+  initFileManager();
 });
