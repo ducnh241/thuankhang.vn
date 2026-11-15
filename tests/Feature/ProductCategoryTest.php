@@ -35,7 +35,7 @@ class ProductCategoryTest extends TestCase
         $ops = $this->role('Vận hành');
 
         // Menu Categories hiện; trang mở thẳng loại sản phẩm, chưa có gì thì mở form thêm
-        $this->actingAs($ops)->get('/backend')->assertSee('<a href="'.route('backend.categories.index').'" ><span class="mr-auto">Categories</span></a>', false);
+        $this->actingAs($ops)->get('/backend')->assertSee('<a href="'.route('backend.categories.index').'" role="menuitem" data-label="Categories"', false);
         $this->actingAs($ops)->get('/backend/category')->assertOk()
             ->assertSee('Danh mục sản phẩm')->assertSee('Chưa có danh mục nào')->assertSee('VD: Thực phẩm chức năng')
             ->assertSee('action="'.route('backend.categories.store', 'product').'"', false);

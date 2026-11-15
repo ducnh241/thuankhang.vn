@@ -289,10 +289,10 @@ class CategoryManagementTest extends TestCase
         $url = route('backend.categories.index');
 
         $this->actingAs($pageOnly)->get('/backend')->assertSee(route('backend.pages.index'))->assertDontSee('>Categories<', false);
-        $this->actingAs($newsOnly)->get('/backend')->assertSee('<a href="'.$url.'" ><span class="mr-auto">Categories</span></a>', false);
-        $this->actingAs($this->root())->get('/backend')->assertSee('<a href="'.$url.'" ><span class="mr-auto">Categories</span></a>', false);
+        $this->actingAs($newsOnly)->get('/backend')->assertSee('<a href="'.$url.'" role="menuitem" data-label="Categories"', false);
+        $this->actingAs($this->root())->get('/backend')->assertSee('<a href="'.$url.'" role="menuitem" data-label="Categories"', false);
         // Đang ở trang danh mục (bất kỳ loại nào): mục được chọn
-        $this->assertMatchesRegularExpression('#<a href="'.preg_quote($url, '#').'"\s+aria-current="page"\s*><span class="mr-auto">Categories</span></a>#',
+        $this->assertMatchesRegularExpression('#<a href="'.preg_quote($url, '#').'" role="menuitem" data-label="Categories"\s+aria-current="page"\s*>.*?<span class="pro-menu-text">Categories</span></a#',
             $this->actingAs($this->root())->get($this->page('type=news'))->getContent());
     }
 

@@ -24,7 +24,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <span class="page-topbar-crumb">Tài khoản</span>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $user->name }}</h1>
     @if ($user->isSuperAdmin())
       <span class="ant-tag ant-tag-gold">Root admin</span>

@@ -28,7 +28,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.pickup-points.index') }}" class="page-topbar-crumb" title="Về danh sách điểm nhận hàng">Điểm nhận hàng</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $editing ? $point->name : 'Thêm điểm nhận hàng' }}</h1>
     @if ($editing && ! $point->active)<span class="ant-tag">Đang tắt</span>@endif
   </div>

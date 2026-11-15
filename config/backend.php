@@ -5,7 +5,8 @@
 | Menu sidebar backend
 |--------------------------------------------------------------------------
 |
-| Mỗi group có 'label' và danh sách 'items'. Mỗi item:
+| Mỗi group có 'label' và danh sách 'items'. Sidebar (layout Admin Pro) xếp các item liền nhau, không hiện tên nhóm:
+| 'label' của group chỉ để người đọc file dễ theo dõi. Mỗi item:
 |   'label'    tên hiển thị
 |   'icon'     tên icon Ant Design trong sprite (resources/views/backend/partials/sprite.blade.php),
 |              vd 'fund' → <use href="#i-fund">

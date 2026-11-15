@@ -32,7 +32,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <span class="page-topbar-crumb">Cài đặt</span>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title" id="page-title">{{ $tabs[$tab] }}</h1>
   </div>
   @if ($canEdit)

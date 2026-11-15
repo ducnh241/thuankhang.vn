@@ -76,13 +76,13 @@ class BackendAccessTest extends TestCase
 
         $this->actingAs($user)->get('/backend/groups')
             ->assertOk()
-            ->assertSee('SYSTEM')
+            ->assertSee('<span class="pro-menu-text">Users</span>', false)
             ->assertSee(route('backend.groups.index'))
             ->assertDontSee(route('backend.users.index'));
 
-        // Không có quyền con nào → không hiện cả menu cha lẫn nhóm SYSTEM
+        // Không có quyền con nào → không hiện menu cha
         $plain = User::factory()->create(['group_id' => Group::factory()->create()->id]);
-        $this->actingAs($plain)->get('/backend')->assertOk()->assertDontSee('SYSTEM');
+        $this->actingAs($plain)->get('/backend')->assertOk()->assertDontSee('<span class="pro-menu-text">Users</span>', false);
     }
 
     /** Admin đặt lại mật khẩu (vd tài khoản bị lộ) → phiên cũ của tài khoản đó bị đăng xuất ngay. */

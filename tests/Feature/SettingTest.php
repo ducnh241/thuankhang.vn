@@ -41,9 +41,9 @@ class SettingTest extends TestCase
         $this->actingAs($other)->get('/backend/setting')->assertForbidden();
         $this->actingAs($other)->put('/backend/setting', $this->valid())->assertForbidden();
         $this->actingAs($other)->get('/backend')->assertDontSee(route('backend.settings.edit'));
-        // Menu: Settings nằm trong nhóm SYSTEM, sau Users
+        // Menu: Settings nằm sau Users / Groups
         $this->actingAs($this->root())->get('/backend')
-            ->assertSeeInOrder(['SYSTEM', route('backend.users.index'), route('backend.groups.index'), route('backend.settings.edit')], false);
+            ->assertSeeInOrder([route('backend.users.index'), route('backend.groups.index'), route('backend.settings.edit')], false);
 
         // Chỉ xem: các ô khóa (inert), không có dải lưu, gửi form bị chặn
         $this->actingAs($viewer)->get('/backend/setting')->assertOk()

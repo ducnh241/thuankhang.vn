@@ -1,69 +1,68 @@
-{{-- Sidebar theo template ProCMS (src/partials/sidebar.html): nền tối, trên cùng là avatar (mở menu tài khoản) + tên app,
-     bên dưới là menu lấy từ config('backend.menu') đã lọc theo quyền. Mục đang mở được đánh dấu ngay từ server
-     (ant-menu-item-selected + aria-current), menu cha có mục con đang mở thì mở sẵn. Trên mobile resources/backend/js/layout.js
-     chép phần ruột sidebar vào drawer. --}}
+{{-- Sidebar theo layout Admin Pro của template (nhánh admin-pro: src/partials/pro-sidebar.html, src/css/pro.css): nền tối
+     #001529 rộng 208px, trên cùng là logo + tên app, giữa là menu lấy từ config('backend.menu') đã lọc theo quyền (xếp
+     liền nhau như template, không hiện tên nhóm), dưới cùng là nút thu gọn còn 48px (chỉ icon; rê chuột hiện menu con / tên mục).
+     Trạng thái thu gọn nhớ bằng cookie backend_sider nên server dựng sẵn đúng bề rộng, không giật khi tải trang.
+     Mục đang mở được đánh dấu từ server (pro-menu-item-selected + aria-current), menu cha có mục con đang mở thì mở sẵn.
+     Trên mobile (< 992px) sidebar ẩn; resources/backend/js/layout.js chép .pro-sider-body vào drawer. --}}
 @php
     $user = auth()->user();
-    // Lọc menu theo quyền: bỏ item/con không có Gate; menu cha không còn con thì bỏ; group rỗng thì bỏ
+    // Menu xếp liền nhau như template (không hiện tên nhóm; nhóm trong config chỉ để sắp xếp). Lọc theo quyền: bỏ
+    // item/con không có Gate; menu cha không còn con thì bỏ
     $allowed = fn ($item) => empty($item['can']) || $user->canAny((array) $item['can']);
-    $menu = collect(config('backend.menu'))->map(function ($group) use ($allowed) {
-        $group['items'] = collect($group['items'])
-            ->filter($allowed)
-            ->map(function ($item) use ($allowed) {
-                if (isset($item['children'])) {
-                    $item['children'] = array_values(array_filter($item['children'], $allowed));
-                }
-                return $item;
-            })
-            ->filter(fn ($item) => ! isset($item['children']) || count($item['children']) > 0)
-            ->values()->all();
-        return $group;
-    })->filter(fn ($group) => count($group['items']) > 0);
+    $menu = collect(config('backend.menu'))->flatMap(fn ($group) => $group['items'])
+        ->filter($allowed)
+        ->map(function ($item) use ($allowed) {
+            if (isset($item['children'])) {
+                $item['children'] = array_values(array_filter($item['children'], $allowed));
+            }
+            return $item;
+        })
+        ->filter(fn ($item) => ! isset($item['children']) || count($item['children']) > 0)
+        ->values();
     // Item có 'params' (vd. danh mục theo loại) chỉ active khi URL hiện tại có đúng các tham số đó
     $isActive = fn ($item) => isset($item['route']) && request()->routeIs($item['active'] ?? $item['route'])
         && collect($item['params'] ?? [])->every(fn ($value, $key) => (string) request()->route($key) === (string) $value);
     $url = fn ($item) => route($item['route'], $item['params'] ?? []);
+    $collapsed = request()->cookie('backend_sider') === 'collapsed';
 @endphp
-<div class="app-sidebar">
-  <aside class="ant-layout-sider ant-layout-sider-light max-lg:hidden" style="flex: 0 0 220px; max-width: 220px; min-width: 220px; width: 220px">
-    <div class="ant-layout-sider-children">
-      <div class="sidebar-user">
-        <button type="button" class="sidebar-user-button" aria-haspopup="menu" aria-expanded="false" aria-label="Menu tài khoản" title="{{ $user->name }} · {{ $user->email }}">
-          @include('backend.partials.avatar', ['user' => $user, 'placeholder' => true])
-        </button>
-        <a class="sidebar-user-brand" href="{{ route('backend.dashboard') }}">{{ config('app.name') }}</a>
+<div @class(['app-sidebar max-lg:hidden', 'is-collapsed' => $collapsed]) id="app-sidebar">
+  <aside class="pro-sider" aria-label="Menu chính">
+    <div class="pro-sider-body">
+      <div class="pro-sider-logo">
+        <a href="{{ route('backend.dashboard') }}" title="{{ config('app.name') }}"
+          >@include('backend.partials.logo', ['class' => 'size-8', 'textClass' => 'text-lg'])<span class="pro-sider-brand">{{ config('app.name') }}</span></a
+        >
       </div>
-      <ul class="ant-menu ant-menu-light border-0 overflow-x-hidden overflow-y-auto sidebar ant-menu-root ant-menu-inline" role="menu" style="flex: 1 1 0%; height: 100%">
-        @foreach ($menu as $group)
-          <li class="ant-menu-item-group" role="presentation">
-            <div class="ant-menu-item-group-title" title="{{ $group['label'] }}">{{ $group['label'] }}</div>
-            <ul class="ant-menu-item-group-list" role="group">
-              @foreach ($group['items'] as $item)
-                @if (isset($item['children']))
-                  @php $open = collect($item['children'])->contains($isActive); @endphp
-                  <li @class(['ant-menu-submenu ant-menu-submenu-inline', 'ant-menu-submenu-open ant-menu-submenu-selected' => $open]) role="menuitem">
-                    <div class="ant-menu-submenu-title" role="button" tabindex="0" aria-expanded="{{ $open ? 'true' : 'false' }}" aria-haspopup="true" style="padding-left: 24px"
-                      >{{ ant_icon($item['icon'], '', 'font-size: 16px') }}<span><span>{{ $item['label'] }}</span></span><i class="ant-menu-submenu-arrow"></i></div>
-                    <ul @class(['ant-menu ant-menu-sub ant-menu-inline', 'ant-menu-hidden' => ! $open]) role="menu">
-                      @foreach ($item['children'] as $child)
-                        <li @class(['ant-menu-item ant-menu-item-only-child', 'ant-menu-item-selected' => $isActive($child)]) role="menuitem" style="padding-left: 48px">
-                          <a href="{{ $url($child) }}" @if ($isActive($child)) aria-current="page" @endif><span class="mr-auto">{{ $child['label'] }}</span></a>
-                        </li>
-                      @endforeach
-                    </ul>
-                  </li>
-                @else
-                  <li @class(['ant-menu-item', 'ant-menu-item-selected' => $isActive($item)]) role="menuitem" style="padding-left: 24px">
-                    {{ ant_icon($item['icon'], 'ant-menu-item-icon', 'font-size: 16px') }}<span
-                      ><a href="{{ $url($item) }}" @if ($isActive($item)) aria-current="page" @endif><span class="mr-auto">{{ $item['label'] }}</span></a></span
-                    >
-                  </li>
-                @endif
-              @endforeach
-            </ul>
-          </li>
-        @endforeach
-      </ul>
+      <nav class="pro-sider-menu">
+        <ul class="pro-menu" role="menu">
+          @foreach ($menu as $item)
+            @if (isset($item['children']))
+              @php $open = collect($item['children'])->contains($isActive); @endphp
+              <li @class(['pro-menu-submenu', 'pro-menu-submenu-open pro-menu-submenu-selected' => $open]) role="none">
+                <button type="button" class="pro-menu-title" role="menuitem" aria-haspopup="true" aria-expanded="{{ $open ? 'true' : 'false' }}"
+                  >{{ ant_icon($item['icon']) }}<span class="pro-menu-text">{{ $item['label'] }}</span><i class="pro-menu-arrow" aria-hidden="true"></i></button
+                >
+                <ul class="pro-menu-sub" role="menu" @if (! $open) hidden @endif>
+                  @foreach ($item['children'] as $child)
+                    <li @class(['pro-menu-item', 'pro-menu-item-selected' => $isActive($child)]) role="none">
+                      <a href="{{ $url($child) }}" role="menuitem" @if ($isActive($child)) aria-current="page" @endif><span class="pro-menu-text">{{ $child['label'] }}</span></a>
+                    </li>
+                  @endforeach
+                </ul>
+              </li>
+            @else
+              <li @class(['pro-menu-item', 'pro-menu-item-selected' => $isActive($item)]) role="none">
+                <a href="{{ $url($item) }}" role="menuitem" data-label="{{ $item['label'] }}" @if ($isActive($item)) aria-current="page" @endif
+                  >{{ ant_icon($item['icon']) }}<span class="pro-menu-text">{{ $item['label'] }}</span></a
+                >
+              </li>
+            @endif
+          @endforeach
+        </ul>
+      </nav>
     </div>
+    <button type="button" class="pro-sider-toggle" data-sider-toggle aria-controls="app-sidebar" aria-expanded="{{ $collapsed ? 'false' : 'true' }}" aria-label="Thu gọn / mở rộng menu"
+      >{{ ant_icon($collapsed ? 'menu-unfold' : 'menu-fold') }}</button
+    >
   </aside>
 </div>

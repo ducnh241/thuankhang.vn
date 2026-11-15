@@ -103,43 +103,6 @@ h6 {
 }
 
 /* Ant Design tweaks shared by the whole template */
-.ant-menu-vertical .ant-menu-item,
-.ant-menu-vertical-left .ant-menu-item,
-.ant-menu-vertical-right .ant-menu-item,
-.ant-menu-inline .ant-menu-item,
-.ant-menu-vertical .ant-menu-submenu-title,
-.ant-menu-vertical-left .ant-menu-submenu-title,
-.ant-menu-vertical-right .ant-menu-submenu-title,
-.ant-menu-inline .ant-menu-submenu-title,
-.ant-menu-vertical .ant-menu-item:not(:last-child),
-.ant-menu-vertical-left .ant-menu-item:not(:last-child),
-.ant-menu-vertical-right .ant-menu-item:not(:last-child),
-.ant-menu-inline .ant-menu-item:not(:last-child) {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-.ant-menu-submenu-open.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::before {
-  transform: rotate(45deg) translateX(3px);
-}
-.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::before {
-  transform: rotate(-45deg) translateX(3px);
-}
-.ant-menu-submenu-open.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
-  transform: rotate(-45deg) translateX(-3px);
-}
-.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
-  transform: rotate(45deg) translateX(-3px);
-}
-.ant-menu-submenu-vertical > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
-.ant-menu-submenu-vertical-left > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
-.ant-menu-submenu-vertical-right > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
-.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
-.ant-menu-submenu-vertical > .ant-menu-submenu-title .ant-menu-submenu-arrow::after,
-.ant-menu-submenu-vertical-left > .ant-menu-submenu-title .ant-menu-submenu-arrow::after,
-.ant-menu-submenu-vertical-right > .ant-menu-submenu-title .ant-menu-submenu-arrow::after,
-.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
-  height: 1px;
-}
 .ant-card-bordered {
   box-shadow: rgba(0, 0, 0, 0.1) 0 0 1px;
   background-clip: padding-box;
@@ -147,13 +110,6 @@ h6 {
 }
 .ant-card-head-title {
   font-weight: 700;
-}
-.ant-layout-sider-children {
-  background: #fff;
-  overflow: hidden;
-  flex: 1 1 auto;
-  flex-direction: column;
-  display: flex;
 }
 
 /* Demo cards: spacing between buttons and paragraphs */
@@ -181,7 +137,8 @@ h6 {
   color: #777;
 }
 
-/* Page shell */
+/* Page shell (Admin Pro layout of the template, branch admin-pro: src/css/pro.css). The dark sider sits on the left;
+   the column next to it scrolls as a whole: white header (48px), then the page bar and the content. */
 .page {
   display: flex;
   flex-direction: column;
@@ -192,7 +149,7 @@ h6 {
   background-color: #f0f0f0;
 }
 .page .workspace {
-  height: calc(100vh - 60px);
+  height: 100vh;
   max-height: -webkit-fill-available;
   width: 100%;
   display: flex;
@@ -204,145 +161,449 @@ h6 {
 }
 .page .workspace > .ant-layout {
   overflow-x: hidden;
+  background: #f0f0f0;
   /* ProCMS: luôn chừa chỗ thanh cuộn — trang ngắn / dài (đổi tab, lọc danh sách) không làm nội dung rộng ra hẹp lại
      khi thanh cuộn hiện / ẩn (máy tắt thanh cuộn nổi, vd Windows, macOS "luôn hiện thanh cuộn") */
   scrollbar-gutter: stable;
+}
+/* Header and content keep their own height inside the scrolling column */
+.page .workspace > .ant-layout > .ant-layout-content {
+  flex: none;
 }
 .page-inner {
   margin: 0 auto;
   padding: 1.5rem;
   position: relative;
   background-color: #f0f0f0;
-  min-height: calc(100vh - 60px);
-}
-/* Desktop has no top header (brand and account live in the sidebar): the workspace takes the full height.
-   The content sits in a panel with rounded top corners, below a thin strip in the sidebar colour; the top bar is
-   8px shorter so its bottom line stays level with the sidebar's account row (60px). */
-@media (min-width: 992px) {
-  .page .workspace {
-    height: 100vh;
-    background: #142139;
-  }
-  .page .workspace > .ant-layout {
-    margin-top: 8px;
-    border-radius: 12px 12px 0 0;
-    background: #f0f0f0;
-    /* border-radius alone does not round the scrollbar track of a scrolling page: clip it too */
-    clip-path: inset(0 round 12px 12px 0 0);
-  }
-  .page-inner {
-    min-height: calc(100vh - 8px);
-  }
-  .page .page-topbar {
-    padding: 9px 16px 10px;
-  }
-  .page .page-topbar-inner {
-    min-height: 32px;
-  }
+  min-height: calc(100vh - 48px);
 }
 
-/* Header */
-.app-header .ant-layout-header {
+/* Header (pro-header.html): white bar, 48px. Left: the sider toggle (on mobile: logo + the button that opens the
+   sider as a drawer). Right: avatar + name of the signed-in user, opens the account menu. */
+.app-header {
   position: relative;
-  flex-flow: row;
-  display: flex;
-  align-items: center;
-  min-height: 60px;
   z-index: 11;
-  padding: 0 0.3rem;
-  box-shadow:
-    rgba(0, 0, 0, 0.02) 0 2px 2px,
-    rgba(0, 0, 0, 0.02) 0 1px 0;
-}
-.app-header .brand {
-  display: flex;
-  align-items: center;
-  font-size: 1.25rem;
-  white-space: nowrap;
-  margin: 0;
-  color: #007bff;
-  justify-content: center;
-}
-.app-header .ant-menu {
-  width: 100%;
-  display: flex;
-  font-family: inherit;
-  line-height: 36px;
-  box-shadow: none;
-  border: 0;
-  margin-bottom: 1px;
-}
-.app-header .ant-menu-horizontal {
-  line-height: inherit;
-}
-.app-header .ant-menu-item,
-.app-header .ant-menu-submenu-title {
-  padding: 0 1rem;
-}
-.app-header .ant-menu-item,
-.app-header .ant-menu-submenu {
-  top: 2px;
-}
-.app-header .trigger {
-  display: inline-block;
-  transform: rotate(90deg);
-}
-/* Mobile bar: brand name in black, like the page top bar text */
-.app-header .brand strong {
-  color: #000;
-}
-
-/* Sidebar */
-.app-sidebar {
-  height: 100%;
-  display: flex;
-}
-/* Signed-in user on top, menu below (scrolls) */
-.app-sidebar .ant-layout-sider-children,
-.drawer-sidebar {
-  display: flex;
-  flex-direction: column;
-}
-.app-sidebar .sidebar {
-  min-height: 0;
-}
-/* Top row of the sidebar: avatar (opens the account menu) + brand; 60px with a bottom line, level with the
-   page top bar */
-.sidebar-user {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 12px;
-  height: 60px;
+  height: 48px;
   padding: 0 16px;
-  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  box-shadow: 0 1px 4px 0 rgba(0, 21, 41, 0.08);
 }
-.sidebar-user-button {
+.app-header-logo {
   display: flex;
   flex: none;
-  padding: 0;
+  align-items: center;
+}
+.app-header-toggle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  align-self: stretch;
+  margin-left: 4px;
+  padding: 0 4px;
   border: 0;
-  border-radius: 50%;
   background: none;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 20px;
+  line-height: 0;
   cursor: pointer;
-  transition: box-shadow 0.3s;
+  transition: color 0.3s;
 }
-.sidebar-user-button:hover,
-.sidebar-user-button[aria-expanded='true'] {
-  box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.45);
+.app-header-toggle:hover {
+  color: #007bff;
 }
-.sidebar-user-button:focus-visible {
-  outline: 2px solid #4da3ff;
-  outline-offset: 2px;
+.app-header-spacer {
+  flex: 1 1 auto;
 }
-.sidebar-user-brand {
+.app-header-account {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  max-width: 60vw;
+  height: 48px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: #007bff;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.app-header-account:hover,
+.app-header-account[aria-expanded='true'] {
+  background: rgba(0, 0, 0, 0.025);
+}
+.app-header-account .ant-avatar {
+  flex: none;
+}
+.app-header-account-name {
   overflow: hidden;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: 1.25rem;
-  font-weight: 600;
+  max-width: 220px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.app-header-toggle:focus-visible,
+.app-header-account:focus-visible,
+.app-header-logo:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: -2px;
+}
+/* Below 992px the sider is a drawer opened from the header, so the header stays in view (the page bar sticks
+   right under it) */
+@media (max-width: 991px) {
+  .app-header {
+    position: sticky;
+    top: 0;
+  }
+  .page .page-topbar {
+    top: 48px;
+    padding: 12px 16px;
+  }
+  .page .page-topbar.is-stuck {
+    margin-bottom: calc(0.5rem + 8px);
+    padding: 8px 16px;
+  }
+}
+
+/* Sider (pro-sidebar.html): dark (#001529), 208px; logo + app name on top, the menu (scrolls), the collapse button at
+   the bottom. Collapsed: 48px, icons only. The same body is copied into the mobile drawer. */
+.app-sidebar {
+  position: relative;
+  z-index: 12;
+  flex: none;
+  width: 208px;
+  height: 100%;
+  transition: width 0.2s;
+}
+.app-sidebar.is-collapsed {
+  width: 48px;
+}
+.app-sidebar-drawer {
+  width: 100%;
+}
+.pro-sider {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #001529;
+  box-shadow: 2px 0 8px 0 rgba(29, 35, 41, 0.05);
+}
+.pro-sider-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Logo row, as .ant-pro-sider-logo of the template: 16px around, a 32px logo (the image as is, no tile), then the
+   app name 12px away in white 18px / 600 on a 32px line. Text renders like the template too: system font (no Inter)
+   and the browser's default smoothing (the rest of the admin uses antialiased, which looks thinner on dark). */
+.pro-sider-logo {
+  flex: none;
+  padding: 16px;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji';
+  line-height: 32px;
+  -webkit-font-smoothing: auto;
+  transition: padding 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.pro-sider-logo > a {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  border-radius: 6px;
+}
+.pro-sider-brand {
+  overflow: hidden;
+  height: 32px;
+  margin-left: 12px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  animation: pro-sider-brand-in 0.2s;
+}
+@keyframes pro-sider-brand-in {
+  from {
+    opacity: 0;
+  }
+}
+/* Logo (backend/partials/logo): the image as is; without an image (or when it fails to load) the app's initial on a
+   white rounded tile */
+.app-logo {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+.app-logo > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.app-logo-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  background: #fff;
+  color: #007bff;
+  font-weight: 600;
+  line-height: 1;
+}
+.app-logo-letter[hidden],
+.app-logo > img[hidden] {
+  display: none;
+}
+.is-collapsed .pro-sider-logo {
+  padding: 16px 8px;
+}
+.is-collapsed .pro-sider-brand {
+  display: none;
+}
+.pro-sider-menu {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Sider menu (Ant Design 5 dark inline menu): 40px rows with 4px around, 8px corners; the open page is a solid
+   primary block; sub menus sit on a darker strip (#000c17). */
+.pro-menu,
+.pro-menu-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+.pro-menu {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+}
+.pro-menu-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pro-menu-sub {
+  overflow: hidden;
+  margin: 0 -4px;
+  background: #000c17;
+}
+.pro-menu-item > a,
+.pro-menu-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 24px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: rgba(255, 255, 255, 0.65);
+  font: inherit;
+  line-height: 40px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.3s,
+    background 0.3s,
+    padding 0.1s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.pro-menu-title {
+  padding-right: 34px;
+}
+.pro-menu-sub .pro-menu-item > a {
+  padding-left: 48px;
+}
+.pro-menu .anticon {
+  flex: none;
+  min-width: 14px;
+  font-size: 14px;
+  line-height: 0;
+  transition: font-size 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.pro-menu .anticon + .pro-menu-text {
+  margin-left: 10px;
+}
+.pro-menu-text {
+  flex: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pro-menu-item > a:hover,
+.pro-menu-title:hover,
+.pro-menu-submenu-open > .pro-menu-title,
+.pro-menu-submenu-selected > .pro-menu-title {
+  color: #fff;
+}
+.pro-menu-item-selected > a,
+.pro-menu-item-selected > a:hover {
+  background: #007bff;
+  color: #fff;
+}
+.pro-menu-item > a:focus-visible,
+.pro-menu-title:focus-visible,
+.pro-sider-toggle:focus-visible,
+.pro-sider-logo > a:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: -2px;
+}
+/* Chevron of a parent item: two 6px strokes, flips when the sub menu opens */
+.pro-menu-arrow {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 10px;
+  transform: translateY(-50%);
+}
+.pro-menu-arrow::before,
+.pro-menu-arrow::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 1.5px;
+  border-radius: 6px;
+  background-color: currentcolor;
+  content: '';
+  transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+.pro-menu-arrow::before {
+  transform: rotate(-45deg) translateX(2.5px);
+}
+.pro-menu-arrow::after {
+  transform: rotate(45deg) translateX(-2.5px);
+}
+.pro-menu-submenu-open > .pro-menu-title .pro-menu-arrow::before {
+  transform: rotate(45deg) translateX(2.5px);
+}
+.pro-menu-submenu-open > .pro-menu-title .pro-menu-arrow::after {
+  transform: rotate(-45deg) translateX(-2.5px);
+}
+
+/* Collapse button at the bottom of the sider */
+.pro-sider-toggle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 40px;
+  margin: 4px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 16px;
+  line-height: 0;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+.pro-sider-toggle:hover {
+  color: #fff;
+}
+
+/* Collapsed sider: icons only (16px, centred in the 40px row); sub menus open as a popup on the right */
+.is-collapsed .pro-menu-item > a,
+.is-collapsed .pro-menu-title {
+  padding: 0 12px;
+}
+.is-collapsed .pro-menu .anticon {
+  font-size: 16px;
+}
+.is-collapsed .pro-menu-text,
+.is-collapsed .pro-menu-arrow,
+.is-collapsed .pro-menu-sub {
+  display: none !important;
+}
+.is-collapsed .pro-sider-toggle {
+  justify-content: center;
+  padding: 0;
+}
+.pro-menu-popup {
+  position: fixed;
+  z-index: 1050;
+  min-width: 160px;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  border-radius: 8px;
+  background: #001529;
+  box-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+}
+.pro-menu-popup .pro-menu-item > a {
+  padding: 0 16px;
+  border-radius: 4px;
+}
+.pro-menu-tip {
+  position: fixed;
+  z-index: 1070;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  color: #fff;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pro-menu-tip::before {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  margin-top: -8px;
+  border: 8px solid transparent;
+  border-left-width: 0;
+  border-right-color: rgba(0, 0, 0, 0.85);
+  content: '';
+}
+
+/* Mobile drawer that holds the sider */
+.sider-drawer .ant-drawer-header,
+.sider-drawer .ant-drawer-body {
+  padding: 0;
+}
+.sider-drawer .ant-drawer-body {
+  height: 100%;
+}
+.sider-drawer .ant-drawer-content {
+  background: #001529;
+}
+
 /* Account menu: Ant Design menu item spacing */
 .account-menu .ant-dropdown-menu {
   min-width: 180px;
@@ -351,57 +612,6 @@ h6 {
 .account-menu .ant-dropdown-menu-item {
   padding: 8px 16px;
   font-size: 14px;
-}
-.chat-drawer .ant-drawer-header,
-.chat-drawer .ant-drawer-body {
-  padding: 0;
-}
-.drawer-sidebar {
-  overflow: hidden;
-  flex: 1 1 auto;
-  flex-direction: column;
-  display: flex;
-  height: 100vh;
-  max-height: -webkit-fill-available;
-}
-.app-sidebar .ant-layout-sider {
-  box-shadow:
-    rgba(0, 0, 0, 0.02) 0 0 3px,
-    rgba(0, 0, 0, 0.05) 0 0 1px;
-  z-index: 10;
-}
-.app-sidebar .ant-menu-item > a {
-  display: flex;
-  align-items: center;
-}
-.app-sidebar .ant-menu-item .anticon,
-.app-sidebar .ant-menu-submenu-title .anticon {
-  margin-right: 0.5rem;
-}
-.app-sidebar .ant-menu-inline .ant-menu-item,
-.app-sidebar .ant-menu-inline .ant-menu-submenu-title {
-  width: 100%;
-}
-/* Section titles in the sidebar (e.g. SYSTEM) */
-.app-sidebar .ant-menu-item-group-title {
-  margin-top: 12px;
-  padding: 8px 24px 4px;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.app-sidebar .ant-menu-item-group-list {
-  margin: 0;
-  padding: 0;
-}
-.app-sidebar .sidebar .ant-badge {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
-.app-sidebar .sidebar .ant-badge.right {
-  right: 16px;
 }
 
 /* Popups created by jQuery */
@@ -762,65 +972,95 @@ h6 {
   display: none;
 }
 
-/* Page top bar (products.html, product-edit.html): sticks to the top of the scrolling content, full width.
-   Title or breadcrumb on the left, page actions on the right. On the edit page, while there are unsaved changes, a
-   Save / Discard bar shows in the centre (on small screens it covers the whole bar). */
+/* Page bar (Admin Pro layout: projects.html, project-edit.html): the band under the header, in the colour of the
+   page body, that sticks to the top of the scrolling content. Breadcrumb on the left, page actions on the right. On
+   the edit page, while there are unsaved changes, a Save / Discard bar shows in the centre (on small screens it
+   covers the whole bar). Once content scrolls under it (.is-stuck, set by layout.js) a thin line marks its edge. */
 .page-topbar {
   position: sticky;
   top: 0;
   z-index: 10;
-  margin: -1.5rem -1.5rem 1.5rem;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin: -1.5rem -1.5rem 0.5rem;
+  padding: 16px 24px;
+  border-bottom: 1px solid transparent;
   background: #f0f0f0;
+  transition:
+    border-color 0.2s,
+    padding 0.2s,
+    margin 0.2s;
+}
+/* Stuck: a slimmer bar (8px above and below). The 16px it loses go to the margin under it, so the content below
+   does not jump (and the page height stays the same, no flicker at the scroll threshold). */
+.page-topbar.is-stuck {
+  margin-bottom: calc(0.5rem + 16px);
+  padding: 8px 24px;
+  border-bottom-color: rgba(0, 0, 0, 0.08);
 }
 .page-topbar-inner {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  min-height: 39px; /* 60px bar, level with the brand row of the sidebar */
+  min-height: 32px;
+}
+/* First level, added by the layout on every page but the dashboard */
+.page-topbar-home {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-right: -4px;
 }
 .page-topbar-left {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  margin-right: auto;
 }
-/* Breadcrumb, the same on every page: parent levels (links or plain text) in grey, a small chevron between levels,
-   the current page in dark semibold; all 16px on one line. The current page shrinks with "…" when space runs out. */
+/* Breadcrumb (Ant Design 5, as in the template): parent levels in grey (links get a soft grey pill on hover), "/"
+   between levels, the current page in dark text; all 14px on one line. The current page shrinks with "…" when
+   space runs out. */
 .page-topbar-crumb,
 h1.page-topbar-crumb {
   flex: none;
   margin: 0;
   color: rgba(0, 0, 0, 0.45);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 22px;
   white-space: nowrap;
 }
 a.page-topbar-crumb {
-  transition: color 0.3s;
+  margin: 0 -4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  transition:
+    color 0.2s,
+    background 0.2s;
 }
 a.page-topbar-crumb:hover {
-  color: #007bff;
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.88);
+}
+a.page-topbar-crumb:focus-visible {
+  outline: 2px solid #4da3ff;
+  outline-offset: 1px;
 }
 .page-topbar-sep {
-  display: inline-flex;
   flex: none;
-  color: rgba(0, 0, 0, 0.25);
-  font-size: 11px;
-  line-height: 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  line-height: 22px;
 }
 .page-topbar-title,
 h1.page-topbar-title {
   overflow: hidden;
   margin: 0;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 24px;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -1774,68 +2014,6 @@ button.product-metric:focus-visible {
   font-size: 12px;
 }
 
-/* Dark sidebar (#142139): desktop sider and the mobile drawer. Selected item: a soft blue tint with a blue
-   bar on the left, so it stands out without a full primary-blue block. */
-.app-sidebar .ant-layout-sider,
-.app-sidebar .ant-layout-sider-children,
-.chat-drawer .ant-drawer-content,
-.app-sidebar .sidebar,
-.app-sidebar .sidebar .ant-menu-sub {
-  background: #142139;
-}
-.app-sidebar .sidebar {
-  border-right: 0;
-}
-.app-sidebar .sidebar .ant-menu-sub {
-  background: #0e1a2f;
-}
-.app-sidebar .sidebar .ant-menu-item,
-.app-sidebar .sidebar .ant-menu-item > a,
-.app-sidebar .sidebar .ant-menu-item > span > a,
-.app-sidebar .sidebar .ant-menu-submenu-title {
-  color: rgba(255, 255, 255, 0.65);
-}
-.app-sidebar .sidebar .ant-menu-item:hover,
-.app-sidebar .sidebar .ant-menu-item:hover a,
-.app-sidebar .sidebar .ant-menu-submenu-title:hover,
-.app-sidebar .sidebar .ant-menu-submenu-selected > .ant-menu-submenu-title {
-  color: #fff;
-}
-/* The sub menu arrow follows the title colour (Ant Design gives it its own dark / blue colours) */
-.app-sidebar .sidebar .ant-menu-submenu-arrow,
-.app-sidebar .sidebar .ant-menu-submenu:hover > .ant-menu-submenu-title > .ant-menu-submenu-arrow {
-  color: inherit;
-}
-.app-sidebar .sidebar .ant-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.04);
-}
-.app-sidebar .sidebar .ant-menu-item-selected {
-  background-color: rgba(77, 163, 255, 0.16) !important;
-  box-shadow: inset 3px 0 0 #4da3ff;
-}
-.app-sidebar .sidebar .ant-menu-item-selected .anticon {
-  color: #4da3ff;
-}
-.app-sidebar .sidebar .ant-menu-item-selected,
-.app-sidebar .sidebar .ant-menu-item-selected > a,
-.app-sidebar .sidebar .ant-menu-item-selected > span > a,
-.app-sidebar .sidebar .ant-menu-item:hover > span > a {
-  color: #fff;
-}
-.app-sidebar .sidebar .ant-menu-item::after {
-  display: none;
-}
-.app-sidebar .ant-menu-item-group-title {
-  color: rgba(255, 255, 255, 0.45);
-}
-.app-sidebar .sidebar-user {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-.app-sidebar .sidebar-user-brand,
-.app-sidebar .sidebar-user-brand:hover {
-  color: #fff;
-}
-
 /* Settings page (settings.html) */
 .settings-nav {
   display: flex;
@@ -2506,17 +2684,6 @@ button.product-metric:focus-visible {
 .account-menu .ant-dropdown-menu-item > a:focus-visible {
   outline: none;
   background: #f5f5f5;
-}
-/* Tiêu đề menu cha trong sidebar nhận focus bằng bàn phím */
-.app-sidebar .sidebar .ant-menu-submenu-title:focus-visible,
-.app-sidebar .sidebar .ant-menu-item a:focus-visible {
-  outline: 2px solid #4da3ff;
-  outline-offset: -2px;
-}
-/* antd.css 4.9.2 viết `height: 1.5715` (thiếu đơn vị) cho tiêu đề nhóm menu: trình duyệt bỏ qua, nhưng khi build,
-   Lightning CSS đổi thành 1.5715px làm tiêu đề nhóm (OVERVIEW, SYSTEM…) bẹp lại đè lên mục đầu. Trả về chiều cao tự nhiên. */
-.ant-menu-item-group-title {
-  height: auto;
 }
 /* Tooltip biểu đồ: rộng hơn mức 250px của Ant Design (tooltip theo tháng có dòng "Thu mới … · gia hạn …"), nhưng không
    rộng quá khung biểu đồ (tooltip nằm trong khung, position: absolute) */

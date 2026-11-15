@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
 
+        // Cookie nhớ sidebar trang quản trị đang thu gọn hay mở: JS ghi thẳng (không mã hóa) để server dựng sẵn đúng bề rộng
+        $middleware->encryptCookies(except: ['backend_sider']);
+
         // Đổi mật khẩu (tự đổi hoặc admin đặt lại) → mọi phiên đăng nhập khác của tài khoản đó bị đăng xuất
         $middleware->web(append: [AuthenticateSession::class]);
 

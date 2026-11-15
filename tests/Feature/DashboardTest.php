@@ -21,13 +21,13 @@ class DashboardTest extends TestCase
             ->assertSee($user->email)
             ->assertSee('Nguyễn Đức')
             ->assertDontSee('Arham')
-            // Khung trang mới (template Ant Design): sidebar tối, header chỉ trên mobile, thanh trên cùng có tiêu đề
-            ->assertSee('<div class="app-sidebar">', false)
-            ->assertSee('<div class="app-header lg:hidden">', false)
+            // Khung trang theo layout Admin Pro của template: sidebar tối (thu gọn được), header trắng, thanh trang có tiêu đề
+            ->assertSee('<div class="app-sidebar max-lg:hidden" id="app-sidebar">', false)
+            ->assertSee('<header class="app-header">', false)
             ->assertSee('<title>Dashboard - '.config('app.name').'</title>', false)
             ->assertSee('<h1 class="page-topbar-title">Chào buổi', false) // thanh trên cùng: lời chào + ngày
-            ->assertSee('<a class="sidebar-user-brand" href="'.route('backend.dashboard').'">'.config('app.name').'</a>', false)
-            ->assertSee('src="'.config('app.logo').'"', false) // logo ở header mobile
+            ->assertSee('<span class="pro-sider-brand">'.config('app.name').'</span>', false)
+            ->assertSee('src="'.asset('assets/backend/img/logo.svg').'"', false) // logo của template ở đầu sidebar và header mobile
             ->assertSee('aria-current="page"', false)
             // Menu tài khoản: tài khoản, xem website (tab mới), đăng xuất bằng form POST
             ->assertSee('id="account-menu"', false)
@@ -66,7 +66,7 @@ class DashboardTest extends TestCase
             ->assertSee('<title>Đăng nhập - '.config('app.name').'</title>', false)
             ->assertDontSee('login-brand', false) // không còn khối thương hiệu bên trái: form nằm giữa trang
             ->assertSee('© '.date('Y').' '.config('app.name'), false)
-            ->assertDontSee('src="'.config('app.logo').'"', false) // không hiện logo + tên hệ thống trên form
+            ->assertDontSee('assets/backend/img/logo.svg', false) // không hiện logo + tên hệ thống trên form
             ->assertDontSee('lucide-command', false)
             ->assertDontSee('Ready to launch')
             ->assertDontSee('ENG');
@@ -80,7 +80,15 @@ class DashboardTest extends TestCase
         config(['app.logo' => 'assets/backend/img/logo.png']);
         $this->actingAs($admin)->get('/backend')->assertSee('src="'.asset('assets/backend/img/logo.png').'"', false);
 
+        // URL đầy đủ thì dùng nguyên
+        config(['app.logo' => 'https://cdn.example.com/logo.png']);
+        $this->actingAs($admin)->get('/backend')->assertSee('src="https://cdn.example.com/logo.png"', false);
+
         config(['app.logo' => '', 'app.name' => 'ProCMS']);
-        $this->actingAs($admin)->get('/backend')->assertDontSee('src="'.asset('assets/backend/img/logo.png').'"', false)->assertSee('>P</span>', false);
+        $this->actingAs($admin)->get('/backend')->assertDontSee('<img src="'.asset('assets/backend/img/logo.png').'"', false)
+            ->assertSee('<span class="app-logo-letter text-lg" >P</span>', false);
+        // Mặc định: logo của template Admin Pro, có sẵn trong public/
+        $this->assertSame('assets/backend/img/logo.svg', (require config_path('app.php'))['logo'] ?? null);
+        $this->assertFileExists(public_path('assets/backend/img/logo.svg'));
     }
 }

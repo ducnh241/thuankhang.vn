@@ -70,7 +70,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.products.index') }}" class="page-topbar-crumb" title="Về danh sách sản phẩm">Sản phẩm</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $editing ? $product->name : 'Thêm sản phẩm' }}</h1>
     @if ($editing && ! $product->status)<span class="ant-tag">Đang ẩn</span>@endif
   </div>

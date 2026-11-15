@@ -69,7 +69,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.menus.index', ['position' => $position]) }}" class="page-topbar-crumb" data-tree-nav>Menu</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $title }}</h1>
     @if ($editing && ! $item->is_visible)
       <span class="ant-tag">Ẩn</span>

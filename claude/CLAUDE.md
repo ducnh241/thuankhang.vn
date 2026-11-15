@@ -124,6 +124,22 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
+## Khung trang quản trị – layout Admin Pro (15/11/2026)
+- Nguồn: repo template `template-admin`, nhánh **`admin-pro`** (`src/partials/pro-sidebar.html`, `pro-header.html`,
+  `src/css/pro.css`, `src/js/pro.js`). Chỉ chuyển **sidebar, header, breadcrumb**; nội dung trang vẫn là Ant Design 4
+  (`vendor/antd.css`) nên sidebar dùng class riêng `pro-*`, không dùng `ant-menu*` (tránh đụng CSS Ant 4).
+- Sidebar (`backend/partials/sidebar`): nền `#001529`, 208px; logo + tên app, menu theo `config('backend.menu')` (xếp liền
+  nhau như template, không hiện tên nhóm OVERVIEW / SHOP…), nút thu gọn ở cuối. Thu gọn còn 48px (chỉ icon): rê chuột / bấm menu cha hiện mục con bên
+  phải, mục thường hiện tên. Trạng thái nhớ bằng cookie `backend_sider` (JS ghi, không mã hóa — `encryptCookies(except:)`
+  trong `bootstrap/app.php`) để server dựng sẵn class `is-collapsed`. Logo: `config("app.logo")` (APP_LOGO), mặc định
+  `public/assets/backend/img/logo.svg` = logo của template; khối logo + tên app theo đúng `.ant-pro-sider-logo`.
+- Header (`backend/partials/header`): thanh trắng 48px đầu vùng nội dung — nút thu gọn (mobile < 992px: logo + mở sidebar
+  dạng drawer), bên phải avatar + tên mở menu tài khoản. Desktop header cuộn theo trang; mobile header dính đầu trang.
+- Breadcrumb = thanh trang `#page-topbar` (cùng màu nền với nội dung, dính đầu trang; cuộn xuống thì thanh mỏng lại
+  (padding 8px 24px) và có đường kẻ mép dưới — class `is-stuck`): layout tự thêm cấp "Trang chủ" (trừ Dashboard),
+  trang con vẫn khai báo `page-topbar-left` (crumb / `page-topbar-sep` là dấu `/` / title) + `page-topbar-right` như cũ.
+- JS: `resources/backend/js/layout.js`; test: `tests/Feature/BackendLayoutTest.php`.
+
 ## Trạng thái đơn hàng (đã chốt 04/11/2026)
 `App\Models\Order`, cột `status`. Mọi lần đổi trạng thái chạy trong transaction có `lockForUpdate` và ghi `AuditLog` tay
 (Order thuộc `AuditLog::MANUAL_SUBJECTS`).

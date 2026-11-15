@@ -22,7 +22,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.members.index') }}" class="page-topbar-crumb" title="Về danh sách thành viên">Thành viên</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $member->full_name }}</h1>
     {!! $statusTag($member) !!}
   </div>

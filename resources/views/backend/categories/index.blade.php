@@ -33,7 +33,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.categories.index', ['type' => $kind]) }}" class="page-topbar-crumb" data-tree-nav>Danh mục</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $title }}</h1>
     @if ($editing)
       <span @class(['ant-tag', 'ant-tag-green' => $category->status])>{{ $category->status ? 'Hiển thị' : 'Ẩn' }}</span>

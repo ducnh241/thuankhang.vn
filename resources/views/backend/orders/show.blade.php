@@ -30,7 +30,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.orders.index') }}" class="page-topbar-crumb" title="Về danh sách đơn hàng">Đơn hàng</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title font-mono">{{ $order->code }}</h1>
     <span class="ant-tag ant-tag-{{ Order::STATUS_COLORS[$status] }} m-0" id="order-status">{{ $order->statusLabel() }}</span>
   </div>

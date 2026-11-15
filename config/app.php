@@ -54,9 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    // Logo (ảnh vuông, hiện dạng avatar ở sidebar và trang đăng nhập): URL đầy đủ hoặc đường dẫn trong public/,
-    // vd "assets/backend/img/logo.png"
-    'logo' => env('APP_LOGO', 'https://ducnh.com/backend_assets/images/logo.png'),
+    // Logo trang quản trị (ảnh vuông, hiện 32px ở đầu sidebar và trên header mobile): URL đầy đủ hoặc đường dẫn trong
+    // public/. Mặc định là logo của template Admin Pro; đổi bằng APP_LOGO, vd "assets/backend/img/logo.png".
+    'logo' => env('APP_LOGO', 'assets/backend/img/logo.svg'),
 
     // Địa chỉ website (frontend) cho nút "Xem website" ở header backend
     'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),

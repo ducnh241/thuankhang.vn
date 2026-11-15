@@ -50,10 +50,10 @@
   <div class="page-topbar-left">
     @can('user')
       <a href="{{ route('backend.users.index') }}" class="page-topbar-crumb max-md:hidden" title="Về danh sách người dùng">Người dùng</a>
-      <span class="page-topbar-sep max-md:hidden" aria-hidden="true">{{ ant_icon('right') }}</span>
+      <span class="page-topbar-sep max-md:hidden" aria-hidden="true">/</span>
     @endcan
     <a href="{{ route('backend.groups.index') }}" class="page-topbar-crumb">Nhóm quyền</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $title }}</h1>
     @if ($readonly)<span class="ant-tag">Chỉ xem</span>@endif
   </div>

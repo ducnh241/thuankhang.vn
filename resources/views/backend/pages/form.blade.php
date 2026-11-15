@@ -31,7 +31,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.pages.index') }}" class="page-topbar-crumb" title="Về danh sách trang">Trang</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $editing ? $page->title : 'Thêm trang' }}</h1>
     @if ($editing && ! $page->status)<span class="ant-tag">Đang ẩn</span>@endif
   </div>

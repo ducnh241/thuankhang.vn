@@ -1,12 +1,14 @@
-{{-- Khung trang quản trị theo template ProCMS (vd projects.html): sidebar tối bên trái, header chỉ có trên mobile,
-     nội dung có thanh trên cùng dính đầu trang (page-topbar).
+{{-- Khung trang quản trị theo layout Admin Pro của template (nhánh admin-pro, vd projects.html): sidebar tối bên trái
+     (thu gọn được), header trắng 48px ở đầu vùng nội dung, dưới header là thanh trang (cùng màu nền với nội dung) dính đầu trang
+     (page-topbar): breadcrumb "Trang chủ / … / trang hiện tại" bên trái, nút của trang bên phải.
      Trang con khai báo:
-       @section('title', 'Dự án')      tiêu đề tab trình duyệt và tiêu đề trên thanh trên cùng
+       @section('title', 'Dự án')      tiêu đề tab trình duyệt và cấp cuối của breadcrumb
        @section('breadcrumb')          (tuỳ chọn) các cấp cha trước tiêu đề, mỗi cấp
-                                        <a href="..." class="page-topbar-crumb">Dự án</a>; layout tự thêm dấu › trước tiêu đề
+                                        <a href="..." class="page-topbar-crumb">Dự án</a>; layout tự thêm dấu / trước tiêu đề
        @section('topbar-sub')          (tuỳ chọn) chi tiết của trang sau tiêu đề, chữ nhỏ màu xám (vd kỳ báo cáo)
-       @section('actions')             (tuỳ chọn) nút bên phải thanh trên cùng (ant-btn…)
-       @section('topbar')              (tuỳ chọn) thay toàn bộ phần bên trong thanh trên cùng
+       @section('actions')             (tuỳ chọn) nút bên phải thanh trang (ant-btn…)
+       @section('topbar')              (tuỳ chọn) thay phần bên trong thanh trang (sau cấp "Trang chủ" do layout thêm):
+                                        .page-topbar-left (crumb / sep / title / tag) + .page-topbar-right
        @section('content')             nội dung trang --}}
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -19,21 +21,28 @@
     @include('backend.partials.sprite')
 
     <div class="page">
-      @include('backend.partials.header')
       <section class="ant-layout ant-layout-has-sider workspace">
         @include('backend.partials.sidebar')
         <section class="ant-layout">
+          @include('backend.partials.header')
           <main class="ant-layout-content">
             <div class="page-inner">
               <div class="page-topbar" id="page-topbar">
                 <div class="page-topbar-inner">
+                  {{-- Cấp đầu của breadcrumb, chung mọi trang (Dashboard chính là trang chủ nên không có) --}}
+                  @unless (request()->routeIs('backend.dashboard'))
+                    <div class="page-topbar-home max-md:hidden">
+                      <a href="{{ route('backend.dashboard') }}" class="page-topbar-crumb">Trang chủ</a>
+                      <span class="page-topbar-sep" aria-hidden="true">/</span>
+                    </div>
+                  @endunless
                   @hasSection('topbar')
                     @yield('topbar')
                   @else
                     <div class="page-topbar-left">
                       @hasSection('breadcrumb')
                         @yield('breadcrumb')
-                        <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+                        <span class="page-topbar-sep" aria-hidden="true">/</span>
                       @endif
                       <h1 class="page-topbar-title">@yield('title', 'Dashboard')</h1>
                       @hasSection('topbar-sub')

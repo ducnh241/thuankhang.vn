@@ -32,7 +32,7 @@
 @section('topbar')
   <div class="page-topbar-left">
     <a href="{{ route('backend.users.index') }}" class="page-topbar-crumb" title="Về danh sách người dùng">Người dùng</a>
-    <span class="page-topbar-sep" aria-hidden="true">{{ ant_icon('right') }}</span>
+    <span class="page-topbar-sep" aria-hidden="true">/</span>
     <h1 class="page-topbar-title">{{ $editing ? $user->name : 'Thêm người dùng' }}</h1>
     @if ($editing)
       @if ($user->isSuperAdmin())<span class="ant-tag ant-tag-gold">Root admin</span>@endif
