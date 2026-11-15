@@ -95,6 +95,16 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   mới nhất; thẻ SP hiện ★ điểm TB. Admin /backend/review: lọc, ẩn / hiện (quyền `review`, `review/moderate` — Vận hành,
   CSKH), ghi nhật ký tay (`ProductReview` thuộc `AuditLog::MANUAL_SUBJECTS`). Nhóm quyền cũ trên DB cần tick thêm 2 quyền này.
 
+## API quản trị sản phẩm + skill Claude (15/11/2026)
+- `/api/v1` (routes/api.php): `me`, `categories` CRUD (danh mục sản phẩm), `products` CRUD (ảnh URL / base64 / giữ id,
+  biến thể đồng bộ, xóa mềm). Controller `App\Http\Controllers\Api\V1`. Tài liệu: `skills/thuankhang-products/reference/api.md`.
+- Xác thực Bearer `tk_…` (bảng `api_tokens`, chỉ lưu SHA-256), middleware `AuthenticateApiToken` đặt user vào guard `web`
+  → dùng chung Gate `product/*` + Nhật ký. Token tạo / thu hồi ở Admin → Hồ sơ → Token API.
+- Dùng chung với admin: `App\Services\ProductVariantSync` (đồng bộ biến thể), `App\Services\ProductImageImporter`
+  (tải ảnh từ link công khai — chặn IP nội bộ kể cả qua redirect — hoặc base64; PNG/JPG/WEBP ≤ 4MB).
+- Skill: `skills/thuankhang-products` (SKILL.md + `scripts/tk_api.py` + quy tắc nội dung), đóng gói `skills/build.sh`
+  → `skills/dist/*.zip` (gitignore; `config.json` chứa token cũng gitignore).
+
 ## Trạng thái đơn hàng (đã chốt 04/11/2026)
 `App\Models\Order`, cột `status`. Mọi lần đổi trạng thái chạy trong transaction có `lockForUpdate` và ghi `AuditLog` tay
 (Order thuộc `AuditLog::MANUAL_SUBJECTS`).

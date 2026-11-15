@@ -42,6 +42,9 @@ Route::prefix('backend')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+        // Token API của chính tài khoản (dùng cho skill Claude / công cụ ngoài đăng sản phẩm)
+        Route::post('profile/api-tokens', [ProfileController::class, 'createToken'])->name('profile.tokens.store')->middleware('throttle:10,1');
+        Route::delete('profile/api-tokens/{token}', [ProfileController::class, 'revokeToken'])->name('profile.tokens.destroy')->whereNumber('token');
 
         // Cấu hình affiliate (A2–A5): mỗi trang một form, quyền affiliate_level|commission|kpi|setting (+ /edit)
         Route::prefix('affiliate')->name('affiliate.')->group(function () {

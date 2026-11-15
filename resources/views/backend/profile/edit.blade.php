@@ -162,6 +162,48 @@
         <p class="mt-4 mb-0 {{ $muted }}">Quyền và trạng thái do người quản trị đổi ở trang Người dùng.</p>
       </div>
     </div>
+
+    {{-- Token API (Bearer) cho skill Claude / công cụ ngoài: mang đúng quyền của tài khoản này --}}
+    <div class="ant-card ant-card-bordered" data-card="api-tokens">
+      <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Token API</div></div></div>
+      <div class="ant-card-body">
+        <p class="mt-0 mb-3 {{ $muted }}">Dùng cho Claude (skill đăng sản phẩm) hoặc công cụ ngoài gọi <code>/api/v1</code>. Token có đúng quyền của tài khoản này; giữ bí mật như mật khẩu.</p>
+        @if (session('new_api_token'))
+          <div class="ant-alert ant-alert-success mb-3" role="status" data-new-token>
+            <div class="ant-alert-content">
+              <div class="ant-alert-message font-medium">Token mới — sao chép ngay, sẽ không hiện lại:</div>
+              <div class="mt-2 flex items-center gap-2">
+                <input type="text" readonly value="{{ session('new_api_token') }}" class="ant-input ant-input-sm font-mono" onfocus="this.select()" aria-label="Token API mới" />
+                <button type="button" class="ant-btn ant-btn-sm" data-copy-text="{{ session('new_api_token') }}">{{ ant_icon('copy') }}<span>Sao chép</span></button>
+              </div>
+            </div>
+          </div>
+        @endif
+        @if ($tokens->isNotEmpty())
+          <ul class="m-0 mb-3 list-none divide-y divide-[#f0f0f0] p-0">
+            @foreach ($tokens as $token)
+              <li class="flex items-start justify-between gap-2 py-2" data-token="{{ $token->id }}">
+                <div class="min-w-0">
+                  <div class="truncate font-medium">{{ $token->name }}</div>
+                  <div class="text-xs {{ $muted }}"><span class="font-mono">{{ $token->prefix }}…</span> · tạo {{ $token->created_at?->format('d/m/Y') }} · {{ $token->last_used_at ? 'dùng '.$token->last_used_at->diffForHumans() : 'chưa dùng' }}</div>
+                </div>
+                <form method="POST" action="{{ route('backend.profile.tokens.destroy', $token->id) }}" onsubmit="return confirm('Thu hồi token này? Công cụ đang dùng sẽ mất quyền truy cập.')">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="ant-btn ant-btn-text ant-btn-sm ant-btn-dangerous">Thu hồi</button>
+                </form>
+              </li>
+            @endforeach
+          </ul>
+        @endif
+        <form method="POST" action="{{ route('backend.profile.tokens.store') }}" class="flex gap-2">
+          @csrf
+          <input type="text" name="token_name" maxlength="100" class="ant-input" placeholder="Tên token, VD: Claude đăng sản phẩm" aria-label="Tên token" required />
+          <button type="submit" class="ant-btn ant-btn-primary shrink-0">{{ ant_icon('plus') }}<span>Tạo</span></button>
+        </form>
+        @error('token_name')<div class="ant-form-item-explain-error mt-1 text-[#ff4d4f]">{{ $message }}</div>@enderror
+      </div>
+    </div>
   </div>
 </div>
 @endsection

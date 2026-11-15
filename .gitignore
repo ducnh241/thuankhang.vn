@@ -26,3 +26,7 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Skill Claude: cấu hình chứa token + gói zip
+/skills/*/config.json
+/skills/dist/

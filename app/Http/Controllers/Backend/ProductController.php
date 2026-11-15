@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\ProductRequest;
-use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Services\ProductVariantSync;
 use App\Support\AffiliateSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -69,7 +69,7 @@ class ProductController extends Controller
     {
         $product = DB::transaction(function () use ($request) {
             $product = Product::create($request->productData());
-            $this->syncVariants($product, $request->variantRows());
+            ProductVariantSync::sync($product, $request->variantRows());
             $added = $this->addImages($product, $request->file('images') ?? [], 0);
             $this->applyImageOrder($product, $request->imageOrder(), $added);
 
@@ -90,7 +90,7 @@ class ProductController extends Controller
     {
         $removed = DB::transaction(function () use ($request, $product) {
             $product->update($request->productData());
-            $this->syncVariants($product, $request->variantRows());
+            ProductVariantSync::sync($product, $request->variantRows());
 
             // Ảnh: giữ đúng các ảnh còn trong form theo thứ tự mới, bỏ ảnh đã gỡ, thêm ảnh mới vào cuối
             $keep = $request->keptImageIds();
@@ -140,25 +140,6 @@ class ProductController extends Controller
             'categories' => Category::tree(Category::TYPE_PRODUCT),
             'businessFee' => AffiliateSettings::get('business_fee_percent'),
         ]);
-    }
-
-    /**
-     * Đồng bộ biến thể theo form: sửa dòng có id, thêm dòng mới, xóa dòng đã bỏ (đơn cũ giữ tên biến thể qua snapshot).
-     * Ghi một dòng nhật ký khi danh sách biến thể thay đổi.
-     */
-    private function syncVariants(Product $product, array $rows): void
-    {
-        $before = $product->variants()->get()->map(fn ($v) => $v->only(['name', 'sku', 'price', 'stock', 'image_id', 'active']))->values()->all();
-        $keep = array_filter(array_column($rows, 'id'));
-        $product->variants()->whereNotIn('id', $keep ?: [0])->delete();
-        foreach ($rows as $row) {
-            $data = collect($row)->except('id')->all();
-            $row['id'] ? $product->variants()->whereKey($row['id'])->first()?->update($data) : $product->variants()->create($data);
-        }
-        $after = $product->variants()->get()->map(fn ($v) => $v->only(['name', 'sku', 'price', 'stock', 'image_id', 'active']))->values()->all();
-        if ($before !== $after) {
-            AuditLog::record('updated', $product, ['old' => ['variants' => $before], 'new' => ['variants' => $after]], "Cập nhật biến thể sản phẩm {$product->name}");
-        }
     }
 
     /** @return list<ProductImage> ảnh vừa thêm, theo thứ tự trong images[] */
