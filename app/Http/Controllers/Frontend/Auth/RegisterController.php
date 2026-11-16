@@ -7,7 +7,6 @@ use App\Http\Middleware\CaptureReferralCode;
 use App\Http\Requests\Frontend\RegisterRequest;
 use App\Models\Level;
 use App\Models\Member;
-use App\Support\AffiliateSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,9 +16,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * Đăng ký thành viên (S3, Step 3). Ô "Mã người giới thiệu" điền sẵn từ cookie ref (link ?ref=CODE), sửa được trước khi
- * gửi; trang hiện tên rút gọn của người giới thiệu để xác nhận. Không nhập mã → gắn vào tài khoản gốc (Tham số chung:
- * root_referral_code) nếu đã cấu hình. Người giới thiệu gắn cố định; cấp mặc định là cấp gốc "Chưa kích hoạt".
+ * Đăng ký thành viên (S3, Step 3). Chỉ đăng ký được khi có mã người giới thiệu hợp lệ (của thành viên đang hoạt động): ô
+ * "Mã người giới thiệu" điền sẵn từ cookie ref (link ?ref=CODE), sửa được trước khi gửi; trang hiện tên rút gọn của người
+ * giới thiệu để xác nhận. Ngoại lệ: hệ thống chưa có thành viên nào thì tài khoản đầu tiên không cần mã. Người giới thiệu
+ * gắn cố định; cấp mặc định là cấp gốc "Chưa kích hoạt".
  */
 class RegisterController extends Controller
 {
@@ -32,14 +32,14 @@ class RegisterController extends Controller
         return view('frontend.auth.register', [
             'code' => $code,
             'referrer' => $referrer && ! $referrer->isLocked() ? $referrer : null,
+            'codeRequired' => Member::query()->exists(),
         ]);
     }
 
     public function store(RegisterRequest $request): RedirectResponse
     {
-        $referrer = $request->filled('referral_code')
-            ? Member::findByReferralCode($request->validated('referral_code'))
-            : $this->rootAccount();
+        // Mã người giới thiệu bắt buộc và đã được kiểm tra ở RegisterRequest; chỉ tài khoản đầu tiên của hệ thống mới không có
+        $referrer = $request->filled('referral_code') ? Member::findByReferralCode($request->validated('referral_code')) : null;
 
         $member = DB::transaction(fn () => Member::create([
             'full_name' => $request->validated('full_name'),
@@ -67,13 +67,5 @@ class RegisterController extends Controller
         return $member && ! $member->isLocked()
             ? response()->json(['name' => $member->shortName()])
             : response()->json(['message' => 'Mã giới thiệu không tồn tại.'], 404);
-    }
-
-    /** Tài khoản gốc của công ty cho người đăng ký không có mã (cấu hình ở Tham số chung). */
-    private function rootAccount(): ?Member
-    {
-        $root = Member::findByReferralCode(AffiliateSettings::get('root_referral_code'));
-
-        return $root && ! $root->isLocked() ? $root : null;
     }
 }

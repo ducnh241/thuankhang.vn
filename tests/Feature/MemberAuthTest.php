@@ -6,7 +6,6 @@ use App\Http\Middleware\CaptureReferralCode;
 use App\Models\Level;
 use App\Models\Member;
 use App\Models\User;
-use App\Support\AffiliateSettings;
 use Database\Seeders\AffiliateConfigSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -77,8 +76,8 @@ class MemberAuthTest extends TestCase
         $this->post('/dang-ky', $this->form(['email' => 'DA@CO.VN']))->assertSessionHasErrors('email');
         $this->post('/dang-ky', $this->form(['password' => 'chiconchu', 'password_confirmation' => 'chiconchu']))->assertSessionHasErrors('password');
         $this->post('/dang-ky', $this->form(['password_confirmation' => 'khac12345']))->assertSessionHasErrors(['password' => 'Mật khẩu nhập lại không khớp.']);
-        $this->post('/dang-ky', $this->form(['referral_code' => 'KHONGCO']))->assertSessionHasErrors(['referral_code' => 'Mã giới thiệu không tồn tại. Kiểm tra lại hoặc để trống.']);
-        $this->post('/dang-ky', $this->form(['referral_code' => 'khoa123']))->assertSessionHasErrors('referral_code');
+        $this->post('/dang-ky', $this->form(['referral_code' => 'KHONGCO']))->assertSessionHasErrors(['referral_code' => 'Mã giới thiệu không tồn tại. Kiểm tra lại mã với người giới thiệu bạn.']);
+        $this->post('/dang-ky', $this->form(['referral_code' => 'khoa123']))->assertSessionHasErrors(['referral_code' => 'Mã giới thiệu này đang tạm khóa. Hãy dùng mã của người giới thiệu khác.']);
         $this->post('/dang-ky', $this->form(['phone' => ['x'], 'full_name' => ['y']]))->assertSessionHasErrors(['phone', 'full_name']);
 
         $this->assertSame(2, Member::count());
@@ -88,17 +87,32 @@ class MemberAuthTest extends TestCase
             ->assertOk()->assertSee('value="Nguyễn Văn Bình"', false)->assertSee('value="KHONGCO"', false)->assertDontSee('matkhau123');
     }
 
-    public function test_register_without_code_uses_root_account(): void
+    public function test_register_requires_a_valid_referral_code(): void
     {
-        // Chưa cấu hình tài khoản gốc → không có người giới thiệu
-        $this->post('/dang-ky', $this->form(['phone' => '0911111111']))->assertRedirect();
-        $this->assertNull(Member::where('phone', '0911111111')->value('referrer_id'));
+        $this->withoutMiddleware(ThrottleRequests::class);
+
+        // Hệ thống chưa có thành viên nào: tài khoản đầu tiên đăng ký được không cần mã (chưa có ai để giới thiệu)
+        $this->get('/dang-ky')->assertOk()->assertDontSee('Bắt buộc: chỉ đăng ký được khi có mã của người giới thiệu');
+        $this->post('/dang-ky', $this->form(['phone' => '0911111111']))->assertRedirect(route('member.account'));
+        $first = Member::where('phone', '0911111111')->sole();
+        $this->assertNull($first->referrer_id);
         $this->post('/dang-xuat');
 
-        $root = Member::factory()->create(['referral_code' => 'CONGTY']);
-        AffiliateSettings::save(['root_referral_code' => 'CONGTY']);
-        $this->post('/dang-ky', $this->form(['phone' => '0922222222']))->assertRedirect();
-        $this->assertSame($root->id, Member::where('phone', '0922222222')->value('referrer_id'));
+        // Từ đó trở đi: bắt buộc có mã, và mã phải hợp lệ
+        $this->get('/dang-ky')->assertOk()->assertSee('Bắt buộc: chỉ đăng ký được khi có mã của người giới thiệu')
+            ->assertSee('Mã người giới thiệu<span class="text-rose-500"> *</span>', false);
+        foreach (['', '   ', null] as $empty) {
+            $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => $empty]))
+                ->assertSessionHasErrors(['referral_code' => 'Nhập mã người giới thiệu. Chỉ đăng ký được khi có mã của người giới thiệu.']);
+        }
+        $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => 'SAIMA99']))->assertSessionHasErrors('referral_code');
+        $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => ['x']]))->assertSessionHasErrors('referral_code');
+        $this->assertSame(1, Member::count());
+        $this->assertGuest('member');
+
+        // Có mã hợp lệ (không phân biệt hoa thường): đăng ký được, gắn đúng người giới thiệu
+        $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => strtolower($first->referral_code)]))->assertRedirect(route('member.account'));
+        $this->assertSame($first->id, Member::where('phone', '0922222222')->value('referrer_id'));
     }
 
     public function test_referrer_lookup(): void

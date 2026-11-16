@@ -344,20 +344,21 @@ class AffiliateConfigTest extends TestCase
         $root = $this->root();
         $this->actingAs($root)->get('/backend/affiliate/settings')->assertOk()
             ->assertSee('value="500.000"', false)->assertSee('value="5"', false)->assertSee('Chưa cấu hình');
-        Member::factory()->create(['referral_code' => 'GOC01']); // tài khoản gốc phải là thành viên có thật
 
         $valid = [
             'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10',
             'default_vat_percent' => '8', 'shipping_fee' => '35.000', 'order_code_prefix' => ' thk ', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
-            'root_referral_code' => 'goc01', 'max_vp_per_province' => '',
+            'max_vp_per_province' => '',
         ];
         $this->actingAs($root)->put('/backend/affiliate/settings', $valid)
             ->assertRedirect(route('backend.affiliate.settings.edit'))->assertSessionHas('success');
 
-        $this->assertSame(['5.50', 1_000_000, '10.00', 12, 'GOC01', null], [
+        $this->assertSame(['5.50', 1_000_000, '10.00', 12, null], [
             AffiliateSettings::get('business_fee_percent'), AffiliateSettings::get('min_withdraw'), AffiliateSettings::get('pit_percent'),
-            AffiliateSettings::get('payment_expiry_hours'), AffiliateSettings::get('root_referral_code'), AffiliateSettings::get('max_vp_per_province'),
+            AffiliateSettings::get('payment_expiry_hours'), AffiliateSettings::get('max_vp_per_province'),
         ]);
+        // Không còn "tài khoản gốc": đăng ký bắt buộc có mã người giới thiệu
+        $this->actingAs($root)->get('/backend/affiliate/settings')->assertDontSee('name="root_referral_code"', false);
         // Tài khoản nhận tiền không còn ở trang này: đã chuyển sang Cài đặt → tab Thanh toán
         $this->actingAs($root)->get('/backend/affiliate/settings')->assertDontSee('name="bank_account"', false)
             ->assertSee(route('backend.settings.edit', ['tab' => 'payment']), false);
@@ -370,19 +371,12 @@ class AffiliateConfigTest extends TestCase
 
         foreach ([
             'business_fee_percent' => '101', 'min_withdraw' => '500.000,5', 'payment_expiry_hours' => '0', 'ref_cookie_days' => 'abc',
-            'root_referral_code' => 'mã gốc!', 'max_vp_per_province' => '0',
+            'max_vp_per_province' => '0',
             'order_code_prefix' => 'ABCDE',
         ] as $field => $value) {
             $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, $field => $value])->assertSessionHasErrors($field);
         }
         $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, 'business_fee_percent' => ''])->assertSessionHasErrors('business_fee_percent');
-        // Mã gốc không có thành viên / thành viên bị khóa
-        $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, 'root_referral_code' => 'KHONGCO'])
-            ->assertSessionHasErrors(['root_referral_code' => 'Không có thành viên nào có mã giới thiệu này.']);
-        Member::factory()->locked()->create(['referral_code' => 'KHOA1']);
-        $this->actingAs($root)->put('/backend/affiliate/settings', [...$valid, 'root_referral_code' => 'khoa1'])
-            ->assertSessionHasErrors(['root_referral_code' => 'Thành viên có mã này đang bị khóa.']);
-        $this->assertSame('GOC01', AffiliateSettings::get('root_referral_code'));
         $this->assertSame('5.50', AffiliateSettings::get('business_fee_percent'));
     }
 

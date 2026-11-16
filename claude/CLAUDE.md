@@ -56,7 +56,8 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   resources/frontend, build riêng `vite.frontend.config.js` → public/assets/frontend/build). Sản phẩm hiện trên web: `App\Support\Catalog::products()`. HTML mô tả in ra qua `App\Support\RichText::clean()`.
   Cookie `ref` (?ref=CODE) ghi ở mọi trang website (middleware CaptureReferralCode). Demo: DemoProductSeeder (ảnh Unsplash).
 - Step 3 (Tài khoản & ref): xong — website: bảng `members` (tách khỏi `users` quản trị), guard `member`, /dang-ky
-  (mã giới thiệu từ cookie ref, tra tên GET /ma-gioi-thieu/{code}, không mã → `root_referral_code`), /dang-nhap (SĐT),
+  (mã giới thiệu từ cookie ref, tra tên GET /ma-gioi-thieu/{code}; **từ 16/11/2026 bắt buộc có mã người giới thiệu hợp lệ**
+  — bỏ "tài khoản gốc" `root_referral_code`; riêng tài khoản đầu tiên của hệ thống không cần mã), /dang-nhap (SĐT),
   /dang-xuat, /tai-khoan. Admin /backend/member (A10): danh sách, cây F1/F2, khóa/mở (member/lock), sửa người giới thiệu
   có lý do (member/referrer, chặn vòng qua `Member::downlineIds()`). Nhật ký / backend luôn dùng guard `web`.
 - Step 4 (VP tỉnh / điểm nhận hàng): xong — bảng `pickup_points` (xóa mềm, `owner_member_id` duy nhất, gỡ khi xóa),

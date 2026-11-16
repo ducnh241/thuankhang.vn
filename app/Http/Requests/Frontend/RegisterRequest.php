@@ -11,7 +11,8 @@ use Illuminate\Validation\Validator;
 
 /**
  * Đăng ký thành viên (S3): họ tên, số di động (tên đăng nhập), email (tuỳ chọn), mật khẩu, mã người giới thiệu
- * (tuỳ chọn — điền sẵn từ cookie ?ref=). Mã phải là của thành viên đang hoạt động.
+ * (BẮT BUỘC — điền sẵn từ cookie ?ref=). Mã phải là của thành viên đang hoạt động. Ngoại lệ duy nhất: hệ thống chưa có
+ * thành viên nào thì tài khoản đầu tiên đăng ký được không cần mã.
  */
 class RegisterRequest extends FormRequest
 {
@@ -22,7 +23,8 @@ class RegisterRequest extends FormRequest
             'phone' => ['required', 'string', Rule::unique('members', 'phone')],
             'email' => ['nullable', 'string', 'email', 'max:150', Rule::unique('members', 'email')],
             'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
-            'referral_code' => ['nullable', 'string', 'max:20'],
+            // Bắt buộc có mã người giới thiệu (trừ tài khoản đầu tiên của hệ thống — chưa có ai để giới thiệu)
+            'referral_code' => [Rule::requiredIf(fn () => Member::query()->exists()), 'nullable', 'string', 'max:20'],
         ];
     }
 
@@ -40,6 +42,7 @@ class RegisterRequest extends FormRequest
             'email.unique' => 'Email này đã được dùng cho tài khoản khác.',
             'password.required' => 'Nhập mật khẩu.',
             'password.confirmed' => 'Mật khẩu nhập lại không khớp.',
+            'referral_code.required' => 'Nhập mã người giới thiệu. Chỉ đăng ký được khi có mã của người giới thiệu.',
         ];
     }
 
@@ -71,9 +74,9 @@ class RegisterRequest extends FormRequest
             if (! $validator->errors()->has('referral_code') && $this->filled('referral_code')) {
                 $referrer = Member::findByReferralCode($this->input('referral_code'));
                 if (! $referrer) {
-                    $validator->errors()->add('referral_code', 'Mã giới thiệu không tồn tại. Kiểm tra lại hoặc để trống.');
+                    $validator->errors()->add('referral_code', 'Mã giới thiệu không tồn tại. Kiểm tra lại mã với người giới thiệu bạn.');
                 } elseif ($referrer->isLocked()) {
-                    $validator->errors()->add('referral_code', 'Mã giới thiệu này đang tạm khóa. Hãy dùng mã khác hoặc để trống.');
+                    $validator->errors()->add('referral_code', 'Mã giới thiệu này đang tạm khóa. Hãy dùng mã của người giới thiệu khác.');
                 }
             }
         }];

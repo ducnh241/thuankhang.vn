@@ -1,6 +1,7 @@
 @extends('frontend.layouts.app')
 
-{{-- Đăng ký thành viên (S3). Ô mã người giới thiệu điền sẵn từ link ?ref=; gõ mã thì tra tên người giới thiệu để xác nhận
+{{-- Đăng ký thành viên (S3). Bắt buộc có mã người giới thiệu hợp lệ ($codeRequired; chỉ tài khoản đầu tiên của hệ thống
+     không cần). Ô mã điền sẵn từ link ?ref=; gõ mã thì tra tên người giới thiệu để xác nhận
      (frontend/js/app.js, [data-referrer-lookup]). --}}
 @section('title', 'Đăng ký')
 @section('robots', 'noindex, nofollow')
@@ -25,11 +26,11 @@
         @include('frontend.partials.field', ['name' => 'password_confirmation', 'label' => 'Nhập lại mật khẩu', 'type' => 'password', 'required' => true, 'attrs' => 'autocomplete="new-password"'])
 
         <div data-referrer-lookup data-url="{{ url('ma-gioi-thieu') }}">
-          @include('frontend.partials.field', ['name' => 'referral_code', 'label' => 'Mã người giới thiệu', 'value' => $codeValue, 'attrs' => 'maxlength="20" autocomplete="off" style="text-transform: uppercase" data-referrer-input'])
+          @include('frontend.partials.field', ['name' => 'referral_code', 'label' => 'Mã người giới thiệu', 'required' => $codeRequired, 'value' => $codeValue, 'attrs' => 'maxlength="20" autocomplete="off" style="text-transform: uppercase" data-referrer-input'])
           <p class="mt-1 text-sm" data-referrer-result aria-live="polite">
             @if ($referrerName)<span class="text-brand-700">Người giới thiệu: <strong>{{ $referrerName }}</strong></span>@endif
           </p>
-          <p class="mt-1 text-xs text-slate-500">Không bắt buộc. Người giới thiệu được gắn cố định khi đăng ký, không đổi được về sau.</p>
+          <p class="mt-1 text-xs text-slate-500">@if ($codeRequired)Bắt buộc: chỉ đăng ký được khi có mã của người giới thiệu. Chưa có mã? Hỏi người đã giới thiệu bạn{{ $site['site_hotline'] ? ' hoặc gọi hotline '.$site['site_hotline'] : '' }}. @endif Người giới thiệu được gắn cố định khi đăng ký, không đổi được về sau.</p>
         </div>
 
         <button type="submit" class="w-full rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700">Đăng ký</button>

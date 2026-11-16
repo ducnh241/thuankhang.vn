@@ -50,7 +50,7 @@
                   @endif
                 </div></div>
                 {{ ant_form_error($errors->first($key)) }}
-                @if ($hint || ($settings[$key] === null && $default === null && in_array($key, ['pit_percent', 'root_referral_code'], true)))
+                @if ($hint || ($settings[$key] === null && $default === null && in_array($key, ['pit_percent'], true)))
                   <div class="ant-form-item-extra">@if ($settings[$key] === null && $default === null && $key !== 'max_vp_per_province')<span class="ant-tag ant-tag-orange m-0 mr-1">Chưa cấu hình</span>@endif{{ $hint }}</div>
                 @endif
               </div>
