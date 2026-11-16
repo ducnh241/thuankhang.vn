@@ -23,7 +23,6 @@
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
         <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên chi nhánh của bạn</div>
         <div class="mt-2 text-xl font-bold text-slate-900" data-team-total>{{ $count($teamCount) }}</div>
-        <p class="mt-1 text-xs text-slate-500">Tính từ bạn xuống mọi tầng bên dưới.</p>
       </div>
     </div>
 
