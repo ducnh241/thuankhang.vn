@@ -149,6 +149,12 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   doanh số tháng, nhánh yếu hơn, người kế tiếp sẽ vào nhánh nào). Website `/tai-khoan`: ô "Người bạn đã giới thiệu (F1)" =
   số F1 + nút Xem chi tiết → `/tai-khoan/thanh-vien` (họ tên + cấp, không lộ SĐT / email); ô "Thành viên của nhánh" = số
   người dưới vị trí của mình trong cây nhị phân (`Member::branchIds()`), kèm số người nhánh trái / phải.
+- Sơ đồ cây (quản trị): nút "Xem cây nhị phân" trong khung trên → `backend/member/{member}/tree?depth=2..6`
+  (`backend.members.tree`, quyền `member`, `MemberController::tree`). Dữ liệu từ `BinaryTree::tree($member, $depth)`: mỗi
+  node có cấp bậc (màu theo `MemberController::LEVEL_COLORS`), bên Trái / Phải, doanh số tháng hiện tại của riêng người
+  đó, "Cả nhánh" (số người + doanh số tháng gồm cả mình), nhãn "Yếu hơn", ô "Còn trống"; hết số tầng thì có "Xem tiếp N
+  người bên dưới"; nút "Lên một tầng" về cây của người đứng trên. View `backend/members/tree.blade.php` +
+  `_tree-node.blade.php` (đệ quy), CSS `.btree*` trong `resources/backend/css/app.css`.
 - Còn phải hỏi khi làm thưởng nhóm: mốc / kỳ tính / cách trả (bảng KPI tháng hiện có?), cách tính doanh số nhánh yếu.
   Test: `tests/Feature/BinaryTreeTest.php`.
 

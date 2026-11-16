@@ -3277,3 +3277,144 @@ a.project-thumb:hover {
   height: 100%;
   object-fit: contain;
 }
+
+/* Cây nhị phân (backend/members/tree): danh sách lồng nhau vẽ thành sơ đồ từ trên xuống — mỗi <li> là một node, <ul> con
+   là hai nhánh trái / phải; đường nối vẽ bằng ::before / ::after. Cây rộng thì cuộn ngang. */
+.btree {
+  overflow-x: auto;
+  padding: 24px 16px;
+}
+.btree ul {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 20px 0 0;
+  list-style: none;
+}
+.btree > ul {
+  min-width: max-content;
+  padding-top: 0;
+}
+.btree li {
+  position: relative;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 6px 0;
+}
+.btree > ul > li {
+  padding-top: 0;
+}
+/* Đường ngang nối hai nhánh + đường dọc xuống từng node */
+.btree li::before,
+.btree li::after {
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 20px;
+  border-top: 1px solid #bfbfbf;
+  content: '';
+}
+.btree li::after {
+  right: auto;
+  left: 50%;
+  border-left: 1px solid #bfbfbf;
+}
+.btree li:first-child::before,
+.btree li:last-child::after {
+  border-top: 0;
+}
+.btree li:last-child::before {
+  border-right: 1px solid #bfbfbf;
+  border-radius: 0 6px 0 0;
+}
+.btree li:first-child::after {
+  border-radius: 6px 0 0;
+}
+.btree li:last-child::after {
+  border-left: 0;
+}
+.btree > ul > li::before,
+.btree > ul > li::after {
+  display: none;
+}
+/* Đường dọc từ node cha xuống đường ngang */
+.btree ul ul::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 20px;
+  border-left: 1px solid #bfbfbf;
+  content: '';
+}
+.btree-node {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 172px;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.btree-top {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+.btree-empty {
+  justify-content: center;
+  min-height: 64px;
+  border-style: dashed;
+  background: #fafafa;
+}
+.btree-locked {
+  background: #fff1f0;
+}
+.btree-side {
+  align-self: flex-start;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #f0f0f0;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+.btree-side-left {
+  background: #e6f7ff;
+  color: #096dd9;
+}
+.btree-side-right {
+  background: #f9f0ff;
+  color: #722ed1;
+}
+.btree-side-top {
+  background: #007bff;
+  color: #fff;
+}
+.btree-name {
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.btree-sales {
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.btree-branch,
+.btree-more {
+  font-size: 12px;
+}
+.btree-branch {
+  color: rgba(0, 0, 0, 0.45);
+  font-variant-numeric: tabular-nums;
+}

@@ -24,6 +24,13 @@ class MemberController extends Controller
 {
     public const TABS = ['' => 'Tất cả', 'activated' => 'Đã kích hoạt', 'inactive' => 'Chưa kích hoạt', 'locked' => 'Đang khóa'];
 
+    /** Trang cây nhị phân: số tầng bên dưới [ít nhất, nhiều nhất] và mặc định; màu tag Ant Design theo thứ tự cấp. */
+    public const TREE_DEPTHS = [2, 6];
+
+    public const TREE_DEFAULT_DEPTH = 4;
+
+    public const LEVEL_COLORS = ['', 'blue', 'cyan', 'green', 'orange', 'magenta', 'geekblue'];
+
     /** Số F1 hiện tối đa ở trang chi tiết. */
     public const F1_LIMIT = 200;
 
@@ -95,6 +102,26 @@ class MemberController extends Controller
             'nextLevel' => LevelEngine::nextLevel($member),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)
                 ->whereIn('action', ['updated', 'created'])->latest('id')->limit(20)->get(),
+        ]);
+    }
+
+    /**
+     * Cây nhị phân từ thành viên này trở xuống (nút "Xem cây nhị phân" ở trang chi tiết): mỗi node có cấp bậc, nhánh trái /
+     * phải, doanh số tháng hiện tại của riêng người đó và của cả nhánh. ?depth = số tầng bên dưới (2–6, mặc định 4).
+     */
+    public function tree(Request $request, Member $member): View
+    {
+        $depth = (int) $this->queryString($request, 'depth');
+        $depth = $depth >= self::TREE_DEPTHS[0] && $depth <= self::TREE_DEPTHS[1] ? $depth : self::TREE_DEFAULT_DEPTH;
+        $member->load(['level', 'parent']);
+
+        return view('backend.members.tree', [
+            'member' => $member,
+            'depth' => $depth,
+            'tree' => BinaryTree::tree($member, $depth),
+            // Màu tag theo thứ tự cấp (cấp gốc không màu)
+            'levelColors' => Level::ordered()->pluck('id')->values()->flip()->map(fn ($index) => self::LEVEL_COLORS[min($index, count(self::LEVEL_COLORS) - 1)])->all(),
+            'levels' => Level::ordered()->get(['id', 'name']),
         ]);
     }
 

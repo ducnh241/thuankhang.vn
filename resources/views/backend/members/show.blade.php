@@ -244,6 +244,7 @@
             @endif
           </div>
         @endforeach
+        <a href="{{ route('backend.members.tree', $member) }}" class="ant-btn mt-3" id="view-binary-tree">{{ ant_icon('apartment') }}<span>Xem cây nhị phân</span></a>
         <div class="mt-3 text-xs {{ $muted }}" data-binary-next>Người đăng ký tiếp theo bằng mã của thành viên này sẽ vào <strong>{{ mb_strtolower($sides[$nextSide]) }}</strong>{{ $legs['L']['head'] && $legs['R']['head'] ? ' (nhánh yếu hơn: doanh số tháng thấp hơn, bằng nhau thì nhánh ít người hơn)' : ' (nhánh còn trống)' }}. Vị trí đã xếp là cố định.</div>
       </div>
     </div>

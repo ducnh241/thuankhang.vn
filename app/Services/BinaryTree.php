@@ -108,6 +108,55 @@ class BinaryTree
         return [...$legs, 'weaker' => $weaker];
     }
 
+    /**
+     * Cây nhị phân từ một thành viên trở xuống, tối đa $depth tầng bên dưới (để vẽ ở trang quản trị). Mỗi node:
+     *   member (kèm level), sales (doanh số tháng của riêng người đó), branch_count / branch_sales (cả nhánh, gồm chính
+     *   họ), children ([L => node|null, R => node|null], null khi không có ai bên dưới hoặc bị cắt vì hết tầng),
+     *   more (còn người bên dưới nhưng chưa vẽ), weaker (L | R: nhánh yếu hơn trong hai nhánh con — null nếu chưa đủ hai nhánh).
+     */
+    public static function tree(Member $member, int $depth = 4, ?CarbonInterface $asOf = null): array
+    {
+        $nodes = self::subtree($member->id);
+        $children = self::childrenMap($nodes);
+        $sales = self::monthSales($nodes->keys()->all(), $asOf ?? now());
+
+        // Chỉ nạp model của những người sẽ vẽ
+        $visible = [$member->id];
+        $level = [$member->id];
+        for ($i = 0; $i < $depth && $level !== []; $i++) {
+            $level = collect($level)->flatMap(fn ($id) => array_values($children[$id] ?? []))->all();
+            $visible = [...$visible, ...$level];
+        }
+        $members = Member::with('level:id,name,sort_order,threshold_amount')->whereIn('id', $visible)->get()->keyBy('id');
+
+        $build = function (int $id, int $at) use (&$build, $children, $sales, $members, $depth) {
+            $kids = $children[$id] ?? [];
+            $totals = self::totals($id, $children, $sales);
+            $node = [
+                'member' => $members[$id], 'sales' => $sales[$id] ?? 0,
+                'branch_count' => $totals['count'], 'branch_sales' => $totals['sales'],
+                'children' => null, 'more' => false, 'weaker' => null,
+            ];
+            if ($kids === []) {
+                return $node;
+            }
+            if ($at >= $depth) {
+                return [...$node, 'more' => true];
+            }
+            $node['children'] = [
+                self::LEFT => isset($kids[self::LEFT]) ? $build($kids[self::LEFT], $at + 1) : null,
+                self::RIGHT => isset($kids[self::RIGHT]) ? $build($kids[self::RIGHT], $at + 1) : null,
+            ];
+            if (isset($kids[self::LEFT], $kids[self::RIGHT])) {
+                $node['weaker'] = self::weakerSide(self::totals($kids[self::LEFT], $children, $sales), self::totals($kids[self::RIGHT], $children, $sales));
+            }
+
+            return $node;
+        };
+
+        return $build($member->id, 0);
+    }
+
     /** Id mọi người nằm dưới một thành viên trong cây nhị phân (không gồm chính họ). */
     public static function branchIds(int $memberId): array
     {

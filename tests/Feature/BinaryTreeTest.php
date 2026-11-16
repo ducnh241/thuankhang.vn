@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Group;
+use App\Models\Level;
 use App\Models\Member;
 use App\Models\Order;
 use App\Models\User;
@@ -286,5 +287,75 @@ class BinaryTreeTest extends TestCase
             ->assertSeeInOrder(['Cây nhị phân', 'nhánh trái của', 'Nguyễn Thị Huyền', 'Còn trống', 'Còn trống'])
             ->assertSee('sẽ vào <strong>nhánh trái</strong> (nhánh còn trống)', false)->assertDontSee('Ông tổng');
         $this->actingAs($ops, 'web')->get(route('backend.members.show', $huyen))->assertSee('nhánh phải của')->assertSee('sẽ vào <strong>nhánh phải</strong> (nhánh còn trống)', false);
+    }
+
+    public function test_admin_binary_tree_page_shows_levels_sides_and_monthly_sales_per_node(): void
+    {
+        $this->seed(RoleSeeder::class);
+        $ops = User::factory()->create(['group_id' => Group::where('name', 'Vận hành')->value('id')]);
+        $levels = Level::ordered()->pluck('id', 'name');
+        $trung = $this->member('Nguyen văn trung');
+        $ha = $this->member('Đinh Thu Hà', $trung);         // trái của Trung
+        $huyen = $this->member('Lê Ngọc Huyền', $trung);    // phải của Trung
+        $chung = $this->member('Chung Nguyễn', $ha);         // trái của Hà
+        $yen = $this->member('Trần Thị Yến', $huyen);        // trái của Huyền
+        $quoc = $this->member('Nguyễn Văn Quốc', $yen);      // trái của Yến
+        $ha->forceFill(['level_id' => $levels['Cộng tác viên']])->saveQuietly();
+        $huyen->forceFill(['level_id' => $levels['Đại lý']])->saveQuietly();
+        $this->paid($ha, 2_000_000);
+        $this->paid($chung, 500_000);
+        $this->paid($quoc, 1_200_000);
+        $this->paid($huyen, 9_000_000, now()->subMonthNoOverflow()->startOfMonth()); // tháng trước: không tính
+
+        // Trang chi tiết có nút mở cây
+        $this->actingAs($ops, 'web')->get(route('backend.members.show', $trung))->assertOk()
+            ->assertSee('<a href="'.route('backend.members.tree', $trung).'" class="ant-btn mt-3" id="view-binary-tree">', false)->assertSee('Xem cây nhị phân');
+
+        $html = $this->actingAs($ops, 'web')->get(route('backend.members.tree', $trung))->assertOk()
+            ->assertSee('<title>Cây nhị phân - Nguyen văn trung - '.config('app.name').'</title>', false)
+            // Tóm tắt hai nhánh: doanh số tháng + số người, nhánh yếu hơn (phải: 1.200.000 < trái 2.500.000)
+            ->assertSeeInOrder(['Doanh số tháng '.now()->format('m/Y'), 'Nhánh trái:', '2.500.000 đ', '2 người', 'Nhánh phải:', '1.200.000 đ', '3 người', 'Yếu hơn: nhánh phải'])
+            // Chú giải cấp bậc theo cấu hình
+            ->assertSeeInOrder(['Cấp bậc:', 'Chưa kích hoạt', 'Nhân viên', 'Cộng tác viên', 'Đại lý'])
+            ->getContent();
+
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        $xp = new \DOMXPath($dom);
+        $card = fn (Member $m) => preg_replace('/\s+/u', ' ', trim($xp->query('//div[@data-node="'.$m->id.'"]')->item(0)->textContent));
+        $side = fn (Member $m) => $xp->query('//div[@data-node="'.$m->id.'"]')->item(0)->getAttribute('data-side');
+
+        // Mỗi node: nhánh, họ tên, cấp bậc, doanh số tháng của riêng người đó; node có tuyến dưới thêm dòng "Cả nhánh"
+        $this->assertSame(['', 'L', 'R', 'L', 'L', 'L'], array_map($side, [$trung, $ha, $huyen, $chung, $yen, $quoc]));
+        $this->assertSame('Gốc Nguyen văn trung Chưa kích hoạt 0 đ Cả nhánh: 6 người · 3.700.000 đ', $card($trung));
+        $this->assertSame('Trái Đinh Thu Hà Cộng tác viên 2.000.000 đ Cả nhánh: 2 người · 2.500.000 đ Xem từ đây', $card($ha));
+        $this->assertSame('Phải Yếu hơn Lê Ngọc Huyền Đại lý 0 đ Cả nhánh: 3 người · 1.200.000 đ Xem từ đây', $card($huyen));
+        $this->assertSame('Trái Chung Nguyễn Chưa kích hoạt 500.000 đ', $card($chung));
+        $this->assertSame('Trái Nguyễn Văn Quốc Chưa kích hoạt 1.200.000 đ', $card($quoc));
+        // Cấp bậc có màu riêng theo thứ tự cấp
+        $this->assertStringContainsString('<span class="ant-tag m-0 ant-tag-cyan">Cộng tác viên</span>', $html);
+        $this->assertStringContainsString('<span class="ant-tag m-0 ant-tag-green">Đại lý</span>', $html);
+        // Chỗ trống vẽ rõ bên nào: Hà, Huyền, Yến đều còn trống nhánh phải
+        $this->assertSame(3, $xp->query('//div[@data-node="empty"][@data-side="R"]')->length);
+        $this->assertSame(0, $xp->query('//div[@data-node="empty"][@data-side="L"]')->length);
+        // Tên node dẫn về trang chi tiết thành viên
+        $this->assertStringContainsString('<a href="'.route('backend.members.show', $yen).'" class="btree-name"', $html);
+
+        // Giới hạn số tầng: depth=2 chỉ vẽ tới Yến / Chung; Yến còn người bên dưới → link "Xem tiếp"
+        $this->actingAs($ops, 'web')->get(route('backend.members.tree', [$trung, 'depth' => 2]))->assertOk()
+            ->assertSee('Trần Thị Yến')->assertDontSee('Nguyễn Văn Quốc')
+            ->assertSee('<a href="'.route('backend.members.tree', [$yen, 'depth' => 2]).'" class="btree-more">Xem tiếp 1 người bên dưới ›</a>', false);
+        $this->actingAs($ops, 'web')->get(route('backend.members.tree', [$trung, 'depth' => 'abc']))->assertOk()->assertSee('Nguyễn Văn Quốc');
+        $this->actingAs($ops, 'web')->get(route('backend.members.tree', [$trung, 'depth' => 99]))->assertOk();
+
+        // Xem cây từ Huyền: nút "Lên một tầng" về cây của Trung; Huyền là node đang xem
+        $this->actingAs($ops, 'web')->get(route('backend.members.tree', $huyen))->assertOk()
+            ->assertSee('<a href="'.route('backend.members.tree', [$trung, 'depth' => 4]).'" class="ant-btn"', false)->assertSee('Lên một tầng')
+            ->assertSee('Đang xem')->assertSee('Trần Thị Yến')->assertDontSee('Đinh Thu Hà');
+
+        // Phân quyền: không có quyền xem thành viên thì không vào được; id sai → 404
+        $other = User::factory()->create(['group_id' => Group::factory()->withPermissions('page')->create()->id]);
+        $this->actingAs($other, 'web')->get(route('backend.members.tree', $trung))->assertForbidden();
+        $this->actingAs($ops, 'web')->get('/backend/member/999999/tree')->assertNotFound();
     }
 }
