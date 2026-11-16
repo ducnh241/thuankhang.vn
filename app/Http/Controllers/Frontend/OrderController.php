@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Order;
-use App\Services\OrderNotifier;
+use App\Services\StaffNotifier;
 use App\Support\VietQr;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,7 +55,7 @@ class OrderController extends Controller
         });
 
         if ($done) {
-            OrderNotifier::orderTransferred($order->refresh()->load('pickupPoint')); // báo kế toán vào xác nhận thanh toán
+            StaffNotifier::orderTransferred($order->refresh()->load('pickupPoint')); // báo kế toán vào xác nhận thanh toán
         }
 
         return back()->with($done ? 'success' : 'error', $done

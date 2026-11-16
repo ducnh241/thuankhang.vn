@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Crypt;
 use Throwable;
 
 /**
- * Cấu hình thông báo cho kế toán (Cài đặt → tab "Thông báo", /backend/setting/notification): sự kiện nào thì báo, kênh
+ * Cấu hình thông báo cho người vận hành / kế toán (Cài đặt → tab "Thông báo", /backend/setting/notification): sự kiện nào
+ * (đơn mới, khách báo chuyển khoản, hồ sơ KYC mới) thì báo, kênh
  * Telegram (bot token, chat ID) và kênh email (địa chỉ nhận, máy chủ SMTP, người gửi). Lưu trong bảng settings (khóa
  * notify_*). Bot token và mật khẩu SMTP là bí mật: lưu mã hóa bằng APP_KEY, không hiện lại trên form, không ghi vào nhật
  * ký (NotificationSettingController tự ghi một dòng tóm tắt).
@@ -20,6 +21,7 @@ class NotificationSettings
     public const EVENTS = [
         'order_created' => ['Có đơn hàng mới', 'Ngay khi khách bấm Thanh toán (đơn ở trạng thái Đơn mới, chờ khách chuyển khoản).'],
         'order_transferred' => ['Khách báo đã chuyển khoản', 'Khi khách bấm "Tôi đã chuyển khoản" — lúc kế toán cần vào đối chiếu và xác nhận thanh toán.'],
+        'kyc_submitted' => ['Có hồ sơ KYC mới', 'Khi thành viên gửi (hoặc gửi lại) hồ sơ KYC — để vào duyệt hồ sơ.'],
     ];
 
     /** Token của BotFather: "<id bot>:<chuỗi bí mật>". */

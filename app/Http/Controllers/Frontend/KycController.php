@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\KycRequest;
 use App\Models\AuditLog;
 use App\Models\MemberKyc;
+use App\Services\StaffNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -66,7 +67,7 @@ class KycController extends Controller
                 AuditLog::record($resubmit ? 'updated' : 'created', $kyc, null,
                     "Thành viên {$member->full_name} ({$member->referral_code}) ".($resubmit ? 'gửi lại' : 'gửi').' hồ sơ KYC');
 
-                return $old;
+                return ['old' => $old, 'kyc' => $kyc, 'resubmit' => $resubmit];
             });
         } catch (Throwable $e) {
             MemberKyc::deleteImages(...array_values($stored));
@@ -76,7 +77,8 @@ class KycController extends Controller
         if ($result === null) {
             return redirect()->route('member.kyc')->with('error', 'Hồ sơ KYC của bạn đã được gửi trước đó.');
         }
-        MemberKyc::deleteImages(...$result);
+        MemberKyc::deleteImages(...$result['old']);
+        StaffNotifier::kycSubmitted($result['kyc']->setRelation('member', $member), $result['resubmit']); // báo để vào duyệt (gửi sau khi trả trang)
 
         return redirect()->route('member.kyc')->with('success', 'Đã gửi hồ sơ KYC. Chúng tôi sẽ duyệt trong thời gian sớm nhất.');
     }

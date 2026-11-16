@@ -1,6 +1,6 @@
 @extends('layouts.backend')
 
-{{-- Cài đặt → tab "Thông báo": báo cho kế toán khi có đơn mới / khách báo đã chuyển khoản, qua Telegram và email. Một form
+{{-- Cài đặt → tab "Thông báo": báo khi có đơn mới / khách báo đã chuyển khoản / hồ sơ KYC mới, qua Telegram và email. Một form
      (#notification-form, edit-form.js lo dải "Chưa lưu thay đổi"); mỗi kênh có nút gửi thử dùng cấu hình ĐÃ LƯU (form
      riêng #test-telegram-form / #test-mail-form, nút nằm trong thẻ của kênh nhờ thuộc tính form=""). Bí mật (bot token,
      mật khẩu SMTP) không hiện lại: ô để trống = giữ nguyên. Chỉ Root admin sửa được; người khác chỉ xem (inert). --}}
@@ -65,7 +65,7 @@
 
       {{-- Khi nào thì báo (chung cho cả hai kênh) --}}
       <div class="ant-card ant-card-bordered" data-card="events">
-        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Báo cho kế toán khi</div></div></div>
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Gửi thông báo khi</div></div></div>
         <div class="ant-card-body">
           <div class="flex flex-col gap-3">
             @foreach (NotificationSettings::EVENTS as $event => [$label, $hint])
@@ -80,7 +80,7 @@
               </div>
             @endforeach
           </div>
-          <div class="mt-3 text-xs {{ $muted }}">Áp dụng cho các kênh đang bật bên dưới. Tin gồm mã đơn, tên người nhận, số tiền, hình thức nhận hàng và link mở đơn trong trang quản trị.</div>
+          <div class="mt-3 text-xs {{ $muted }}">Áp dụng cho các kênh đang bật bên dưới. Tin đơn hàng gồm mã đơn, tên người nhận, số tiền, hình thức nhận hàng; tin KYC chỉ gồm tên và mã thành viên (không có số CCCD, số tài khoản). Tin nào cũng kèm link mở trang tương ứng trong quản trị.</div>
         </div>
       </div>
 

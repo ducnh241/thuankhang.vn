@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Setting;
-use App\Services\OrderNotifier;
+use App\Services\StaffNotifier;
 use App\Support\NotificationSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +15,7 @@ use Illuminate\Validation\Validator;
 use Illuminate\View\View;
 
 /**
- * Cài đặt → tab "Thông báo" (/backend/setting/notification): báo cho kế toán khi có đơn mới / khách báo đã chuyển khoản,
+ * Cài đặt → tab "Thông báo" (/backend/setting/notification): báo khi có đơn mới / khách báo đã chuyển khoản / hồ sơ KYC mới,
  * qua Telegram (bot token, chat ID) và email (địa chỉ nhận, máy chủ SMTP, người gửi); mỗi kênh có nút gửi thử.
  * Xem: quyền setting. Sửa / gửi thử: quyền setting/edit VÀ là Root admin — trang này giữ bí mật (bot token, mật khẩu
  * SMTP) và quyết định thư / tin của hệ thống đi qua đâu, như mã theo dõi ở tab Tracking.
@@ -130,12 +130,12 @@ class NotificationSettingController extends Controller
     {
         abort_unless($this->canEdit($request), 403);
         $config = NotificationSettings::all();
-        $site = OrderNotifier::siteName();
-        $lines = ['Kết nối hoạt động. Nơi này sẽ nhận thông báo đơn hàng để kế toán xác nhận thanh toán.', 'Gửi bởi: '.$request->user()->name.' · '.now()->format('H:i d/m/Y')];
+        $site = StaffNotifier::siteName();
+        $lines = ['Kết nối hoạt động. Nơi này sẽ nhận thông báo đơn hàng và hồ sơ KYC từ website.', 'Gửi bởi: '.$request->user()->name.' · '.now()->format('H:i d/m/Y')];
 
         [$error, $done] = $channel === 'telegram'
-            ? [OrderNotifier::sendTelegram('✅ Tin thử từ '.$site, $lines, $config), 'Đã gửi tin thử. Kiểm tra nhóm / chat Telegram.']
-            : [OrderNotifier::sendMail('Email thử', $lines, $config), 'Đã gửi email thử tới '.implode(', ', $config['mail_recipients']).'. Kiểm tra hộp thư (cả mục Spam).'];
+            ? [StaffNotifier::sendTelegram('✅ Tin thử từ '.$site, $lines, $config), 'Đã gửi tin thử. Kiểm tra nhóm / chat Telegram.']
+            : [StaffNotifier::sendMail('Email thử', $lines, $config), 'Đã gửi email thử tới '.implode(', ', $config['mail_recipients']).'. Kiểm tra hộp thư (cả mục Spam).'];
 
         return redirect()->route('backend.settings.notification.edit')
             ->with($error ? 'error' : 'success', $error ? 'Chưa gửi thử được. '.$error : $done);

@@ -8,13 +8,16 @@ use App\Models\Level;
 use App\Models\Member;
 use App\Models\MemberKyc;
 use App\Models\User;
+use App\Support\NotificationSettings;
 use Database\Seeders\AffiliateConfigSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -229,6 +232,48 @@ class MemberKycTest extends TestCase
         $this->assertEqualsCanonicalizing([$kyc->front_image, $kyc->back_image], Storage::disk('local')->allFiles());
         $this->assertSame(['created', 'updated'], AuditLog::where('auditable_type', MemberKyc::class)->orderBy('id')->pluck('action')->all());
         $this->assertStringContainsString('gửi lại hồ sơ KYC', AuditLog::latest('id')->value('description'));
+    }
+
+    public function test_new_kyc_notifies_staff_on_telegram(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+        Http::preventStrayRequests();
+        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true])]);
+        $token = '1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw9';
+        $on = fn (array $events) => NotificationSettings::save(['telegram_enabled' => true, 'telegram_token' => $token, 'telegram_chat_id' => '-1001234567890', 'events' => $events]);
+
+        // Tắt sự kiện KYC: không gửi
+        $on(['order_created' => true, 'order_transferred' => true, 'kyc_submitted' => false]);
+        $this->submit($this->member(['full_name' => 'Lê Văn Tắt']), ['full_name' => 'Lê Văn Tắt', 'bank_account_name' => 'LE VAN TAT', 'id_number' => '001090000001', 'bank_account_number' => '111111111'])->assertSessionHas('success');
+        Http::assertNothingSent();
+
+        // Bật: gửi hồ sơ → một tin Telegram có tên + mã thành viên và link duyệt, không có số CCCD / số tài khoản
+        $on(['kyc_submitted' => true]);
+        $member = $this->member(['referral_code' => 'ANAN123']);
+        $this->submit($member)->assertSessionHas('success');
+        $kyc = $member->kyc;
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.telegram.org/bot'.$token.'/sendMessage' && $request['chat_id'] === '-1001234567890'
+            && str_contains($request['text'], '<b>🪪 Hồ sơ KYC mới — Nguyễn Văn An</b>') && str_contains($request['text'], 'Thành viên: Nguyễn Văn An (mã ANAN123)')
+            && str_contains($request['text'], 'Duyệt hồ sơ: '.route('backend.kyc.show', $kyc))
+            && ! str_contains($request['text'], '001090012345') && ! str_contains($request['text'], '0011001234567'));
+
+        // Gửi lỗi (validate) hoặc gửi đè khi đang chờ duyệt: không báo thêm
+        $this->submit($member, ['id_number' => '123'])->assertSessionHasErrors('id_number');
+        $this->submit($member)->assertSessionHas('error');
+        Http::assertSentCount(1);
+
+        // Bị từ chối rồi gửi lại: báo "gửi lại"
+        $kyc->update(['status' => MemberKyc::STATUS_REJECTED, 'reject_reason' => 'Ảnh mờ']);
+        $this->submit($member)->assertSessionHas('success');
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($request) => str_contains($request['text'], '🪪 Hồ sơ KYC gửi lại — Nguyễn Văn An'));
+
+        // Telegram lỗi: hồ sơ vẫn gửi được bình thường
+        Http::fake(fn () => throw new ConnectionException('timeout'));
+        $other = $this->member(['full_name' => 'Trần Bình']);
+        $this->submit($other, ['full_name' => 'Trần Bình', 'bank_account_name' => 'TRAN BINH', 'id_number' => '001090000002', 'bank_account_number' => '222222222'])->assertSessionHas('success');
+        $this->assertSame('pending', $other->kyc->status);
     }
 
     public function test_admin_queue_search_and_permissions(): void

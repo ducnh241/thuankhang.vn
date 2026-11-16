@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MemberKyc;
 use App\Models\Order;
 use App\Support\Money;
 use App\Support\NotificationSettings;
@@ -16,14 +17,16 @@ use Throwable;
 use function Illuminate\Support\defer;
 
 /**
- * Thông báo cho kế toán qua Telegram và email (cấu hình: App\Support\NotificationSettings, Cài đặt → Thông báo):
+ * Thông báo cho người vận hành / kế toán qua Telegram và email (cấu hình: App\Support\NotificationSettings, Cài đặt →
+ * Thông báo):
  *   - có đơn hàng mới (khách bấm Thanh toán);
- *   - khách báo đã chuyển khoản → kế toán vào xác nhận thanh toán.
- * Tin gửi SAU khi đã trả trang cho khách (defer) nên Telegram / máy chủ thư chậm hay lỗi không làm hỏng việc đặt hàng; lỗi
- * chỉ ghi log (đã che bot token / mật khẩu). Nội dung chỉ gồm mã đơn, tên người nhận, số tiền, hình thức nhận và link
- * trang đơn trong quản trị.
+ *   - khách báo đã chuyển khoản → kế toán vào xác nhận thanh toán;
+ *   - thành viên gửi hồ sơ KYC → vào duyệt.
+ * Tin gửi SAU khi đã trả trang cho khách (defer) nên Telegram / máy chủ thư chậm hay lỗi không làm hỏng thao tác của khách;
+ * lỗi chỉ ghi log (đã che bot token / mật khẩu). Nội dung chỉ gồm thông tin tối thiểu (mã đơn, tên, số tiền, hình thức
+ * nhận; với KYC: tên + mã thành viên) và link mở trang tương ứng trong quản trị.
  */
-class OrderNotifier
+class StaffNotifier
 {
     public static function orderCreated(Order $order): void
     {
@@ -51,6 +54,24 @@ class OrderNotifier
                 'Xác nhận thanh toán: '.route('backend.orders.show', $order),
             ],
         ]);
+    }
+
+    /** Thành viên gửi / gửi lại hồ sơ KYC → vào duyệt. Tin không chứa số CCCD, số tài khoản hay ảnh. */
+    public static function kycSubmitted(MemberKyc $kyc, bool $resubmit = false): void
+    {
+        self::notify('kyc_submitted', function () use ($kyc, $resubmit) {
+            $member = $kyc->member;
+
+            return [
+                'subject' => ($resubmit ? 'Hồ sơ KYC gửi lại' : 'Hồ sơ KYC mới').' — '.$member->full_name,
+                'icon' => '🪪',
+                'lines' => [
+                    'Thành viên: '.$member->full_name.' (mã '.$member->referral_code.')',
+                    'Gửi lúc: '.$kyc->submitted_at->format('H:i d/m/Y'),
+                    'Duyệt hồ sơ: '.route('backend.kyc.show', $kyc),
+                ],
+            ];
+        });
     }
 
     /**
@@ -157,7 +178,7 @@ class OrderNotifier
                 }
             });
         } catch (Throwable $e) {
-            Log::warning('Thông báo đơn hàng: không chuẩn bị được nội dung', ['event' => $event, 'error' => $e->getMessage()]);
+            Log::warning('Thông báo: không chuẩn bị được nội dung', ['event' => $event, 'error' => $e->getMessage()]);
         }
     }
 

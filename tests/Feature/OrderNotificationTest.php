@@ -219,7 +219,7 @@ class OrderNotificationTest extends TestCase
         $this->actingAs($root)->put($url, ['telegram_enabled' => '1', 'telegram_token' => ' '.self::TOKEN.' ', 'telegram_chat_id' => ' -100 1234567890 ', 'events' => ['order_created' => '1', 'order_transferred' => '0']])
             ->assertRedirect($url)->assertSessionHas('success');
         $config = NotificationSettings::all();
-        $this->assertSame([true, self::TOKEN, self::CHAT, ['order_created' => true, 'order_transferred' => false]],
+        $this->assertSame([true, self::TOKEN, self::CHAT, ['order_created' => true, 'order_transferred' => false, 'kyc_submitted' => false]],
             [$config['telegram_enabled'], $config['telegram_token'], $config['telegram_chat_id'], $config['events']]);
         $this->assertTrue(NotificationSettings::telegramReady($config));
         // Token mã hóa trong DB, không hiện lại trên form (chỉ bản che bớt), không vào nhật ký

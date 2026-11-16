@@ -138,10 +138,11 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Trang thanh toán và trang đơn của khách **không tách dòng VAT** (giá đã gồm VAT); `orders.vat_amount` vẫn lưu để tính
   hoa hồng.
 - Thông báo cho kế toán: **Cài đặt → tab "Thông báo"** (`/backend/setting/notification`, trang riêng dùng chung thanh tab
-  `backend/settings/_nav`). Sự kiện (chung cho các kênh): có đơn mới, khách báo đã chuyển khoản. Kênh: **Telegram** (bot
+  `backend/settings/_nav`). Sự kiện (chung cho các kênh): có đơn mới, khách báo đã chuyển khoản, có hồ sơ KYC
+  mới / gửi lại (`StaffNotifier::kycSubmitted`, gọi ở `Frontend\KycController::store`; tin chỉ có tên + mã thành viên + link duyệt). Kênh: **Telegram** (bot
   token + chat ID) và **Email** (địa chỉ nhận, SMTP: máy chủ / mã hóa / cổng / tài khoản / mật khẩu, người gửi; để trống
   SMTP thì dùng mailer của `.env` nếu đó là mailer thật). Mỗi kênh có nút gửi thử (dùng cấu hình đã lưu).
-- Code: `App\Support\NotificationSettings` (khóa `notify_*` trong bảng settings), `App\Services\OrderNotifier` (gọi ở
+- Code: `App\Support\NotificationSettings` (khóa `notify_*` trong bảng settings), `App\Services\StaffNotifier` (gọi ở
   `CheckoutController::store` và `OrderController::confirmTransfer`; gửi bằng `defer()` SAU khi trả trang — Telegram / SMTP
   lỗi không ảnh hưởng đặt hàng, chỉ ghi log), `Backend\NotificationSettingController`.
 - Bảo mật: bot token và mật khẩu SMTP lưu mã hóa (APP_KEY), không hiện lại trên form (để trống = giữ nguyên), không vào
