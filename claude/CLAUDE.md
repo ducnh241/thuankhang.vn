@@ -146,9 +146,9 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   người); chưa chạy thì lần có người đăng ký mới cũng tự xếp người cũ trước. `--rebuild` xóa hết vị trí và xếp lại (chỉ
   dùng trước khi vận hành thật).
 - Hiển thị: quản trị → chi tiết thành viên có khung "Cây nhị phân" (vị trí, hai nhánh: người đứng đầu, số thành viên,
-  doanh số tháng, nhánh yếu hơn, người kế tiếp sẽ vào nhánh nào). Website `/tai-khoan`: ô "Người bạn đã giới thiệu (F1)" =
-  số F1 + nút Xem chi tiết → `/tai-khoan/thanh-vien` (họ tên + cấp, không lộ SĐT / email); ô "Thành viên của nhánh" = số
-  người dưới vị trí của mình trong cây nhị phân (`Member::branchIds()`), kèm số người nhánh trái / phải.
+  doanh số tháng, nhánh yếu hơn, người kế tiếp sẽ vào nhánh nào). Website `/tai-khoan`: ô "Đại lý bạn tuyển dụng" (F1) =
+  số F1 + nút Xem chi tiết → `/tai-khoan/thanh-vien` (họ tên + cấp, không lộ SĐT / email); ô "Thành viên chi nhánh của bạn" = số
+  người dưới vị trí của mình trong cây nhị phân (`Member::branchIds()`); không hiện số người nhánh trái / phải (chủ dự án yêu cầu bỏ 17/11/2026).
 - Sơ đồ cây (quản trị): nút "Xem cây nhị phân" trong khung trên → `backend/member/{member}/tree?depth=2..6`
   (`backend.members.tree`, quyền `member`, `MemberController::tree`). Dữ liệu từ `BinaryTree::tree($member, $depth)`: mỗi
   node có cấp bậc (màu theo `MemberController::LEVEL_COLORS`), bên Trái / Phải, doanh số tháng hiện tại của riêng người

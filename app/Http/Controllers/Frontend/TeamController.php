@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Thành viên trực tiếp của tôi (/tai-khoan/thanh-vien, mở từ ô "Thành viên trực tiếp (F1)" ở trang tài khoản): danh sách
+ * Thành viên trực tiếp của tôi (/tai-khoan/thanh-vien, mở từ ô "Đại lý bạn tuyển dụng" ở trang tài khoản): danh sách
  * người mình trực tiếp giới thiệu — chỉ họ tên và cấp hiện tại (không hiện số điện thoại, email, doanh số). Kèm tổng số
  * thành viên của cả nhánh (mọi người nằm dưới vị trí của mình trong cây nhị phân).
  */

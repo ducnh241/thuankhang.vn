@@ -30,19 +30,18 @@
         @endunless
         <p class="mt-2 text-xs text-slate-500">Đã mua: <strong class="text-slate-700" data-member-cumulative>{{ \App\Support\Money::format($member->cumulative_amount) }}đ</strong></p>
       </div>
-      {{-- Thành viên trực tiếp (F1): tổng số + xem danh sách họ tên / cấp --}}
+      {{-- Đại lý bạn tuyển dụng = thành viên trực tiếp (F1): tổng số + xem danh sách họ tên / cấp --}}
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Người bạn đã giới thiệu (F1)</div>
+        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Đại lý bạn tuyển dụng</div>
         <div class="mt-2 flex items-baseline justify-between gap-3">
           <span class="text-xl font-bold text-slate-900" data-f1-count>{{ number_format($f1Count, 0, ',', '.') }}</span>
           <a href="{{ route('member.team') }}" class="text-sm font-medium text-brand-700 hover:underline">Xem chi tiết ›</a>
         </div>
       </div>
-      {{-- Thành viên của nhánh: mọi người nằm dưới vị trí của mình trong cây nhị phân, tính xuống tất cả các nhánh con --}}
+      {{-- Thành viên chi nhánh của bạn: mọi người nằm dưới vị trí của mình trong cây nhị phân, tính xuống tất cả các nhánh con --}}
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên của nhánh</div>
+        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên chi nhánh của bạn</div>
         <div class="mt-2 text-xl font-bold text-slate-900" data-team-count>{{ number_format($teamCount, 0, ',', '.') }}</div>
-        <p class="mt-1 text-xs text-slate-500" data-team-legs>Nhánh trái {{ number_format($legs['L']['count'], 0, ',', '.') }} · Nhánh phải {{ number_format($legs['R']['count'], 0, ',', '.') }}</p>
       </div>
     </div>
 

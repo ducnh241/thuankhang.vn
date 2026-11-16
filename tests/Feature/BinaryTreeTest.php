@@ -153,12 +153,12 @@ class BinaryTreeTest extends TestCase
 
         // Huyền: 1 F1 (Yến), nhánh 3 người (Yến + A + B) — đều ở nhánh trái
         $this->actingAs($huyen->fresh(), 'member')->get('/tai-khoan')->assertOk()
-            ->assertSee('data-f1-count>1<', false)->assertSee('data-team-count>3<', false)->assertSee('Nhánh trái 3 · Nhánh phải 0');
+            ->assertSee('data-f1-count>1<', false)->assertSee('data-team-count>3<', false)->assertDontSee('Nhánh trái');
         $this->get('/tai-khoan/thanh-vien')->assertSee('data-team-total>3<', false);
         // Tổng: nhánh trái 5 người (Hà, Huyền, Yến, A, B), nhánh phải trống
         auth('member')->logout(); // đổi sang tài khoản khác: bỏ phiên của Huyền trước (phiên cũ giữ dấu mật khẩu của Huyền)
         $this->flushSession();
-        $this->actingAs($tong->fresh(), 'member')->get('/tai-khoan')->assertOk()->assertSee('data-team-count>5<', false)->assertSee('Nhánh trái 5 · Nhánh phải 0');
+        $this->actingAs($tong->fresh(), 'member')->get('/tai-khoan')->assertOk()->assertSee('data-team-count>5<', false)->assertDontSee('Nhánh phải');
     }
 
     public function test_command_places_existing_members_in_registration_order(): void

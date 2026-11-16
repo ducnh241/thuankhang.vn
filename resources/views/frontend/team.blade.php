@@ -1,8 +1,8 @@
 @extends('frontend.layouts.app')
 
-{{-- Thành viên trực tiếp (F1) của tôi: họ tên + cấp hiện tại. Ô tóm tắt phía trên: số F1 và tổng thành viên của cả nhánh
+{{-- Đại lý bạn tuyển dụng = thành viên trực tiếp (F1) của tôi: họ tên + cấp hiện tại. Ô tóm tắt phía trên: số F1 và tổng thành viên của cả nhánh
      (F1 + các tầng dưới). Không hiện số điện thoại / email / doanh số của người khác. --}}
-@section('title', 'Thành viên trực tiếp')
+@section('title', 'Đại lý bạn tuyển dụng')
 @section('robots', 'noindex, nofollow')
 
 @php $count = fn ($n) => number_format((int) $n, 0, ',', '.'); @endphp
@@ -10,18 +10,18 @@
 @section('content')
   <div class="mx-auto max-w-4xl px-4 pt-8">
     <div class="flex items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold text-slate-900">Thành viên trực tiếp</h1>
+      <h1 class="text-2xl font-bold text-slate-900">Đại lý bạn tuyển dụng</h1>
       <a href="{{ route('member.account') }}" class="text-sm text-brand-700 hover:underline">‹ Tài khoản</a>
     </div>
     <p class="mt-1 text-sm text-slate-600">Những người đăng ký bằng mã / link giới thiệu của bạn (F1).</p>
 
     <div class="mt-5 grid grid-cols-2 gap-4">
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên trực tiếp (F1)</div>
+        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Đại lý bạn tuyển dụng</div>
         <div class="mt-2 text-xl font-bold text-slate-900" data-team-direct>{{ $count($directs->total()) }}</div>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Tất cả thành viên của nhánh</div>
+        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên chi nhánh của bạn</div>
         <div class="mt-2 text-xl font-bold text-slate-900" data-team-total>{{ $count($teamCount) }}</div>
         <p class="mt-1 text-xs text-slate-500">Tính từ bạn xuống mọi tầng bên dưới.</p>
       </div>

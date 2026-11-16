@@ -185,7 +185,7 @@ class MemberAuthTest extends TestCase
         $this->actingAs($member, 'member')->get('/tai-khoan')->assertOk()
             ->assertSee('Xin chào, Đỗ Thu Hà')->assertSee('THUHA99')->assertSee(url('/').'?ref=THUHA99', false)
             ->assertSee('Phạm Q. Huy')->assertSee('Chưa kích hoạt')->assertSee('0977777777')
-            ->assertSeeInOrder(['Người bạn đã giới thiệu (F1)', '3'])
+            ->assertSeeInOrder(['Đại lý bạn tuyển dụng', '3'])
             ->assertSee('<meta name="robots" content="noindex, nofollow" />', false);
         $this->get('/')->assertSee('data-member-menu', false)->assertSee('Đỗ Thu Hà');
     }
@@ -201,11 +201,11 @@ class MemberAuthTest extends TestCase
         Member::factory()->create(['full_name' => 'Thành viên B', 'referrer_id' => $yen->id]);
         Member::factory()->create(['full_name' => 'Người Ngoài Nhánh', 'referrer_id' => $ha->id]);
 
-        // Trang tài khoản của Huyền: F1 = 1 (Yến) + nút xem chi tiết; thành viên của nhánh = 3 (Yến + A + B)
+        // Trang tài khoản của Huyền: F1 = 1 (Yến) + nút xem chi tiết; thành viên chi nhánh = 3 (Yến + A + B)
         $this->actingAs($huyen, 'member')->get('/tai-khoan')->assertOk()
             ->assertSee('<span class="text-xl font-bold text-slate-900" data-f1-count>1</span>', false)
             ->assertSee('<a href="'.route('member.team').'"', false)->assertSee('Xem chi tiết')
-            ->assertSeeInOrder(['Thành viên của nhánh', '<div class="mt-2 text-xl font-bold text-slate-900" data-team-count>3</div>'], false)
+            ->assertSeeInOrder(['Thành viên chi nhánh của bạn', '<div class="mt-2 text-xl font-bold text-slate-900" data-team-count>3</div>'], false)
             // Người giới thiệu vẫn xem được ở phần Thông tin tài khoản
             ->assertSeeInOrder(['Thông tin tài khoản', 'Người giới thiệu bạn', 'Đinh T. Hà']);
 
