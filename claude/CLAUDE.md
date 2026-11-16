@@ -125,6 +125,20 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
+## Engine lên cấp – Step 7 (16/11/2026)
+- Khi kế toán **xác nhận thanh toán** đơn (`Backend\OrderController::confirmPayment`), cùng transaction gọi
+  `App\Services\LevelEngine::orderPaid($order)`: cộng **tiền hàng** của đơn (`goods_amount`: đã gồm VAT, không gồm phí
+  giao hàng) vào `members.cumulative_amount`; đơn đầu tiên thì đặt `activated_at`; xét cấp = cấp **đang bật** có mốc cao
+  nhất mà doanh số cộng dồn **đã đạt (≥ mốc)** — một đơn có thể nhảy nhiều cấp; **không bao giờ hạ cấp** (đổi mốc / tắt
+  cấp không kéo ai xuống). Xét theo mốc trong Affiliate → Levels, không theo tên (tên cấp sửa tự do).
+- Mặc định: có đơn đầu → cấp mốc 1 đ (Nhân viên) · đạt 3tr → Cộng tác viên · 15tr → Đại lý · 150tr → cấp 5 · 300tr → cấp 6.
+- Mỗi đơn chỉ cộng một lần: `orders.sales_counted_at`. Vết lên cấp: bảng `level_histories` (`LevelHistory`: từ cấp, lên
+  cấp, đơn — null khi kích hoạt thủ công, doanh số cộng dồn lúc đó); nhật ký thành viên ghi một dòng cho mỗi đơn.
+- Hiển thị: trang Tài khoản của thành viên có khung "Cấp bậc của bạn" (đã mua, còn thiếu bao nhiêu để lên cấp kế, danh
+  sách cấp); trang chi tiết thành viên trong quản trị có "Lịch sử lên cấp".
+- Đơn đã thanh toán từ trước khi có engine: chạy một lần `php artisan levels:count-paid-orders` (có `--dry-run`).
+- Chưa làm: hoa hồng F1 / F2 + ví (Step 8). Test: `tests/Feature/LevelEngineTest.php`.
+
 ## Luồng mua hàng + thông báo cho kế toán (16/11/2026)
 - Luồng: **Thêm vào giỏ** (ở lại trang, thông báo có nút "Xem giỏ hàng" / "Thanh toán") hoặc **Mua ngay** (sang thẳng
   `/thanh-toan`) → nhập người nhận + hình thức nhận như cũ → bấm **Thanh toán** → tạo đơn, sang trang đơn hiện thông tin

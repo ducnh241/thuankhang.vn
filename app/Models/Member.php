@@ -66,6 +66,12 @@ class Member extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    /** Vết lên cấp (mới nhất trước). */
+    public function levelHistories(): HasMany
+    {
+        return $this->hasMany(LevelHistory::class)->latest('id');
+    }
+
     /** Hồ sơ KYC (CCCD + tài khoản ngân hàng) — mỗi thành viên một hồ sơ. */
     public function kyc(): HasOne
     {
@@ -105,6 +111,12 @@ class Member extends Authenticatable
             AuditLog::record('updated', $member,
                 ['old' => ['activated_at' => null, 'level' => $oldLevel?->name], 'new' => ['activated_at' => $member->activated_at->toDateTimeString(), 'level' => $level?->name]],
                 $note);
+            if ($level && $level->id !== $oldLevel?->id) {
+                LevelHistory::create([
+                    'member_id' => $member->id, 'from_level_id' => $oldLevel?->id, 'to_level_id' => $level->id,
+                    'order_id' => null, 'cumulative_after' => (int) $member->cumulative_amount, 'note' => 'Kích hoạt thủ công',
+                ]);
+            }
             $this->setRawAttributes($member->getAttributes(), true);
 
             return $level;

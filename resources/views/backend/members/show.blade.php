@@ -42,7 +42,10 @@
           <dt>Email</dt><dd>{{ $member->email ?: '—' }}</dd>
           <dt>Mã giới thiệu</dt><dd class="font-mono">{{ $member->referral_code }}</dd>
           <dt>Cấp hiện tại</dt><dd>{{ $member->level?->name }}</dd>
-          <dt>Doanh số cộng dồn</dt><dd class="tabular-nums">{{ Money::format($member->cumulative_amount) }} đ</dd>
+          <dt>Doanh số cộng dồn</dt>
+          <dd class="tabular-nums">{{ Money::format($member->cumulative_amount) }} đ
+            @if ($nextLevel)<span class="{{ $muted }}">— còn {{ Money::format($nextLevel->threshold_amount - $member->cumulative_amount) }} đ để lên {{ $nextLevel->name }}</span>@endif
+          </dd>
           <dt>Kích hoạt</dt><dd>{{ $member->activated_at?->format('d/m/Y H:i') ?? 'Chưa (chưa có đơn thanh toán)' }}</dd>
           <dt>KYC</dt>
           <dd data-member-kyc>
@@ -161,6 +164,29 @@
       @if ($member->referrals_count > MemberController::F1_LIMIT)
         <div class="ant-card-body text-xs {{ $muted }}">Đang hiện {{ MemberController::F1_LIMIT }} F1 mới nhất / {{ $count($member->referrals_count) }}.</div>
       @endif
+    </div>
+
+    {{-- Vết lên cấp (Step 7): do đơn nào, doanh số cộng dồn lúc đó --}}
+    <div class="ant-card ant-card-bordered" data-card="levels">
+      <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Lịch sử lên cấp</div></div></div>
+      <div class="ant-card-body">
+        @forelse ($levelHistory as $row)
+          <div @class(['flex flex-wrap gap-x-2 text-sm', 'mt-2' => ! $loop->first])>
+            <span class="tabular-nums {{ $muted }}">{{ $row->created_at?->format('d/m/Y H:i') }}</span>
+            <span class="font-medium">{{ $row->fromLevel?->name ?? '—' }} → {{ $row->toLevel?->name }}</span>
+            <span class="{{ $muted }}">
+              @if ($row->order)
+                đơn @can('order')<a href="{{ route('backend.orders.show', $row->order) }}" class="font-mono">{{ $row->order->code }}</a>@else<span class="font-mono">{{ $row->order->code }}</span>@endcan,
+              @elseif ($row->note)
+                {{ mb_strtolower($row->note) }},
+              @endif
+              doanh số cộng dồn {{ Money::format($row->cumulative_after) }} đ
+            </span>
+          </div>
+        @empty
+          <p class="m-0 {{ $muted }}">Chưa lên cấp lần nào. Cấp tự xét khi đơn của thành viên được xác nhận thanh toán.</p>
+        @endforelse
+      </div>
     </div>
 
     <div class="ant-card ant-card-bordered" data-card="history">

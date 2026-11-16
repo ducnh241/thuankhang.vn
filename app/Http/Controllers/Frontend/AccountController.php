@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Level;
+use App\Services\LevelEngine;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -16,6 +18,9 @@ class AccountController extends Controller
         return view('frontend.account', [
             'member' => $member,
             'f1Count' => $member->referrals()->count(),
+            // Cấp kế tiếp + các cấp đang bật (trừ cấp gốc) để hiện tiến độ lên cấp
+            'nextLevel' => LevelEngine::nextLevel($member),
+            'levels' => Level::where('active', true)->where('threshold_amount', '>', 0)->orderBy('threshold_amount')->get(['id', 'name', 'threshold_amount']),
         ]);
     }
 }

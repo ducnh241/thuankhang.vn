@@ -82,6 +82,7 @@ class Order extends Model
     protected function casts(): array
     {
         return [
+            'sales_counted_at' => 'datetime',
             'goods_amount' => 'integer',
             'vat_amount' => 'integer',
             'shipping_fee' => 'integer',

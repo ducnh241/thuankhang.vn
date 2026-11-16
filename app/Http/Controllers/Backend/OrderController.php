@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Member;
 use App\Models\Order;
 use App\Models\PickupPoint;
+use App\Services\LevelEngine;
 use App\Support\AffiliateSettings;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
@@ -93,7 +94,8 @@ class OrderController extends Controller
     /**
      * Xác nhận đã thanh toán sau khi đối chiếu sao kê: bắt buộc mã giao dịch ngân hàng (duy nhất toàn hệ thống) và số tiền thực
      * nhận (không thấp hơn tổng đơn). Đơn đã hủy (tiền về muộn) được khôi phục, bắt buộc ghi chú.
-     * TODO Step 7–8: kích hoạt tài khoản, cộng doanh số / lên cấp, ghi hoa hồng F1 / F2 trong cùng transaction.
+     * Cùng transaction: LevelEngine::orderPaid() cộng doanh số cộng dồn, kích hoạt tài khoản ở đơn đầu, xét lên cấp (Step 7).
+     * TODO Step 8: ghi hoa hồng F1 / F2.
      */
     public function confirmPayment(Request $request, Order $order): RedirectResponse
     {
@@ -133,12 +135,16 @@ class OrderController extends Controller
                 "Xác nhận đã thanh toán đơn {$order->code} — GD {$reference}, ".Money::format($data['paid_amount']).' đ'
                 .($old === Order::STATUS_CANCELLED ? ' (khôi phục đơn đã hủy)' : '').($note ? ". Ghi chú: {$note}" : ''));
 
-            return true;
+            // Step 7: cộng doanh số cộng dồn của người mua, kích hoạt ở đơn đầu, xét lên cấp — cùng transaction
+            return LevelEngine::orderPaid($order);
         });
+        if ($done === false) {
+            return back()->with('error', 'Đơn đã được thanh toán hoặc đang ở trạng thái không xác nhận được.');
+        }
 
-        return $done
-            ? back()->with('success', "Đã xác nhận thanh toán đơn {$order->code}.")
-            : back()->with('error', 'Đơn đã được thanh toán hoặc đang ở trạng thái không xác nhận được.');
+        return back()->with('success', "Đã xác nhận thanh toán đơn {$order->code}."
+            .($done['activated'] ? ' Tài khoản thành viên được kích hoạt.' : '')
+            .($done['to'] ? ' Thành viên lên cấp '.$done['to']->name.'.' : ''));
     }
 
     /** Khách báo đã chuyển nhưng chưa thấy tiền: trả về "Đơn mới", tính lại hạn thanh toán từ bây giờ. */

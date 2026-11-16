@@ -7,6 +7,7 @@ use App\Http\Requests\Backend\MemberReferrerRequest;
 use App\Models\AuditLog;
 use App\Models\Level;
 use App\Models\Member;
+use App\Services\LevelEngine;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -88,6 +89,8 @@ class MemberController extends Controller
             'firstLevel' => Level::earning()->firstWhere('active', true),
             'orders' => $member->orders()->latest('id')->limit(10)->get(),
             'orderCount' => $member->orders()->count(),
+            'levelHistory' => $member->levelHistories()->with(['fromLevel:id,name', 'toLevel:id,name', 'order:id,code'])->limit(20)->get(),
+            'nextLevel' => LevelEngine::nextLevel($member),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)
                 ->whereIn('action', ['updated', 'created'])->latest('id')->limit(20)->get(),
         ]);

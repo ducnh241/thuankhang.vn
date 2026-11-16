@@ -28,6 +28,7 @@
         @unless ($member->isActivated())
           <p class="mt-1 text-xs text-slate-500">Mua đơn hàng đầu tiên để kích hoạt tài khoản và bắt đầu nhận hoa hồng.</p>
         @endunless
+        <p class="mt-2 text-xs text-slate-500">Đã mua: <strong class="text-slate-700" data-member-cumulative>{{ \App\Support\Money::format($member->cumulative_amount) }}đ</strong></p>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
         <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Người bạn đã giới thiệu (F1)</div>
@@ -38,6 +39,40 @@
         <div class="mt-2 text-xl font-bold text-slate-900">{{ $member->referrer?->shortName() ?? '—' }}</div>
       </div>
     </div>
+
+    {{-- Tiến độ lên cấp: cấp xét theo tổng tiền hàng tự mua cộng dồn của mọi đơn đã thanh toán; không bao giờ hạ cấp --}}
+    @php
+        $bought = (int) $member->cumulative_amount;
+        $floor = (int) ($member->level?->threshold_amount ?? 0);
+        $percent = $nextLevel ? (int) max(0, min(100, floor(($bought - $floor) * 100 / max(1, $nextLevel->threshold_amount - $floor)))) : 100;
+        $money = fn ($amount) => \App\Support\Money::format($amount);
+    @endphp
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6" data-level-progress>
+      <h2 class="text-lg font-bold text-slate-900">Cấp bậc của bạn</h2>
+      <p class="mt-1 text-sm text-slate-600">Cấp được xét theo tổng tiền hàng bạn tự mua, cộng dồn qua mọi đơn đã thanh toán (không tính phí giao hàng). Đã lên cấp thì không bị hạ.</p>
+      <div class="mt-4">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+          <span class="font-semibold text-brand-700">{{ $member->level?->name }}</span>
+          @if ($nextLevel)
+            <span class="text-slate-600" data-level-next>Mua thêm <strong class="text-slate-900">{{ $money($nextLevel->threshold_amount - $bought) }}đ</strong> để lên <strong class="text-slate-900">{{ $nextLevel->name }}</strong></span>
+          @else
+            <span class="text-slate-600" data-level-next>Bạn đang ở cấp cao nhất</span>
+          @endif
+        </div>
+        <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $percent }}" aria-label="Tiến độ lên cấp kế tiếp">
+          <div class="h-full rounded-full bg-brand-500" style="width: {{ $percent }}%"></div>
+        </div>
+      </div>
+      <ol class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+        @foreach ($levels as $item)
+          @php $reached = $bought >= $item->threshold_amount || (int) $member->level?->threshold_amount >= $item->threshold_amount; @endphp
+          <li @class(['flex items-center justify-between gap-3 rounded-xl border px-3 py-2', 'border-brand-100 bg-brand-50' => $item->id === $member->level_id, 'border-slate-200' => $item->id !== $member->level_id])>
+            <span @class(['font-medium', 'text-brand-800' => $reached, 'text-slate-700' => ! $reached])>{{ $reached ? '✓ ' : '' }}{{ $item->name }}</span>
+            <span class="shrink-0 text-xs text-slate-500">{{ $item->threshold_amount <= 1 ? 'Có đơn đầu tiên' : 'Từ '.$money($item->threshold_amount).'đ' }}</span>
+          </li>
+        @endforeach
+      </ol>
+    </section>
 
     <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
       <h2 class="text-lg font-bold text-slate-900">Giới thiệu bạn bè</h2>
