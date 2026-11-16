@@ -114,7 +114,7 @@
           <p class="mt-1 text-sm text-slate-500">Chụp đủ 4 góc, rõ chữ, không lóa. Ảnh JPG, PNG hoặc WEBP, mỗi ảnh tối đa {{ $maxLabel }}.</p>
           <div class="mt-4 grid gap-4 sm:grid-cols-2">
             @foreach (['front_image' => 'Mặt trước', 'back_image' => 'Mặt sau'] as $field => $side)
-              <div data-kyc-image data-max-bytes="{{ $maxKilobytes * 1024 }}">
+              <div class="min-w-0" data-kyc-image data-max-bytes="{{ $maxKilobytes * 1024 }}">
                 <div class="mb-1.5 text-sm font-medium text-slate-700" id="l_{{ $field }}">{{ $side }} CCCD <span class="text-rose-500">*</span></div>
                 <label for="f_{{ $field }}" @class(['relative flex aspect-[8/5] cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border-2 border-dashed bg-slate-50 px-3 text-center transition hover:border-brand-500',
                   'border-rose-300' => $errors->has($field), 'border-slate-300' => ! $errors->has($field)])>
@@ -124,7 +124,7 @@
                   <img alt="" class="absolute inset-0 size-full bg-slate-100 object-contain" hidden data-kyc-preview />
                 </label>
                 <input id="f_{{ $field }}" name="{{ $field }}" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" aria-labelledby="l_{{ $field }}" />
-                <p class="mt-1 text-xs text-slate-500" hidden data-kyc-note></p>
+                <p class="mt-1 text-xs break-words text-slate-500" hidden data-kyc-note></p>
                 {!! $error($field) !!}
               </div>
             @endforeach

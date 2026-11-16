@@ -216,7 +216,7 @@
               'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6.2" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17" cy="20" r="1.3" />'],
           ['route' => 'member.orders.index', 'label' => 'Đơn hàng', 'active' => request()->routeIs('member.orders.*'),
               'icon' => '<rect x="5" y="3" width="14" height="18" rx="2" /><path stroke-linecap="round" d="M9 8h6M9 12h6M9 16h3" />'],
-          ['route' => 'member.account', 'label' => 'Tài khoản', 'active' => request()->routeIs('member.account', 'member.kyc', 'member.login', 'member.register'),
+          ['route' => 'member.account', 'label' => 'Tài khoản', 'active' => request()->routeIs('member.account', 'member.kyc', 'member.team', 'member.login', 'member.register'),
               'icon' => '<circle cx="12" cy="8" r="4" /><path stroke-linecap="round" d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />'],
       ];
   @endphp

@@ -125,6 +125,22 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
+## Cây nhị phân + mặt trời (khách chốt 16/11/2026 — CHƯA code phần xếp cây / thưởng nhóm)
+- Mô hình: kết hợp **hệ mặt trời** (cây giới thiệu: hoa hồng F1 / F2 theo người giới thiệu) và **hệ nhị phân** (cây vị trí:
+  mỗi người có tối đa 2 nhánh trái / phải; "bậc thưởng nhóm" tính theo **nhánh yếu hơn**). Một "ông tổng" là node gốc.
+- Quyết định đã hỏi và được trả lời:
+  - Người mới đăng ký bằng mã của X → xếp **dưới X**, vào **nhánh yếu hơn của X**, gán cố định (không đổi về sau). Vì luôn
+    nằm trong nhánh của người giới thiệu nên "thành viên của nhánh" = mọi tầng dưới theo cây giới thiệu.
+  - "Nhánh yếu hơn" xét theo **doanh số trong tháng** (tiền hàng đã thanh toán của cả nhánh trong tháng hiện tại).
+  - Thành viên đã có từ trước: **tự xếp theo thứ tự ngày đăng ký** (chạy lại quy tắc xếp cho từng người).
+  - Phạm vi đã làm: CHỈ trang tài khoản (dưới đây). Xếp cây tự động và tính thưởng nhóm làm sau — khi làm cần hỏi tiếp:
+    vị trí cụ thể trong nhánh yếu (chỗ trống đầu tiên từ trên xuống?), hai nhánh bằng nhau thì xếp bên nào, mốc / kỳ / cách
+    trả thưởng nhóm (bảng KPI tháng hiện có?).
+- Đã làm ở trang Tài khoản (`/tai-khoan`): ô "Người bạn đã giới thiệu (F1)" = số F1 trực tiếp + nút **Xem chi tiết** →
+  `/tai-khoan/thanh-vien` (`Frontend\TeamController`: danh sách F1 gồm họ tên + cấp hiện tại, không lộ SĐT / email); ô
+  "Người giới thiệu bạn" đổi thành **"Thành viên của nhánh"** = tổng số người nằm dưới mình ở mọi tầng
+  (`Member::downlineIds()`); người giới thiệu chuyển xuống phần "Thông tin tài khoản".
+
 ## Engine lên cấp – Step 7 (16/11/2026)
 - Khi kế toán **xác nhận thanh toán** đơn (`Backend\OrderController::confirmPayment`), cùng transaction gọi
   `App\Services\LevelEngine::orderPaid($order)`: cộng **tiền hàng** của đơn (`goods_amount`: đã gồm VAT, không gồm phí

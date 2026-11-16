@@ -190,6 +190,46 @@ class MemberAuthTest extends TestCase
         $this->get('/')->assertSee('data-member-menu', false)->assertSee('Đỗ Thu Hà');
     }
 
+    public function test_account_shows_direct_members_and_branch_size(): void
+    {
+        // Ví dụ: Huyền giới thiệu Yến; Yến giới thiệu A và B. Hà là tuyến trên của Huyền.
+        $levels = Level::ordered()->pluck('id', 'name');
+        $ha = Member::factory()->create(['full_name' => 'Đinh Thu Hà']);
+        $huyen = Member::factory()->create(['full_name' => 'Nguyễn Thị Huyền', 'referrer_id' => $ha->id]);
+        $yen = Member::factory()->create(['full_name' => 'Trần Hải Yến', 'referrer_id' => $huyen->id, 'level_id' => $levels['Cộng tác viên'], 'phone' => '0911000111', 'email' => 'yen@example.com']);
+        Member::factory()->create(['full_name' => 'Thành viên A', 'referrer_id' => $yen->id, 'level_id' => $levels['Nhân viên']]);
+        Member::factory()->create(['full_name' => 'Thành viên B', 'referrer_id' => $yen->id]);
+        Member::factory()->create(['full_name' => 'Người Ngoài Nhánh', 'referrer_id' => $ha->id]);
+
+        // Trang tài khoản của Huyền: F1 = 1 (Yến) + nút xem chi tiết; thành viên của nhánh = 3 (Yến + A + B)
+        $this->actingAs($huyen, 'member')->get('/tai-khoan')->assertOk()
+            ->assertSee('<span class="text-xl font-bold text-slate-900" data-f1-count>1</span>', false)
+            ->assertSee('<a href="'.route('member.team').'"', false)->assertSee('Xem chi tiết')
+            ->assertSeeInOrder(['Thành viên của nhánh', '<div class="mt-2 text-xl font-bold text-slate-900" data-team-count>3</div>'], false)
+            // Người giới thiệu vẫn xem được ở phần Thông tin tài khoản
+            ->assertSeeInOrder(['Thông tin tài khoản', 'Người giới thiệu bạn', 'Đinh T. Hà']);
+
+        // Trang danh sách: chỉ thành viên trực tiếp (Yến) với họ tên + cấp hiện tại; không lộ SĐT / email
+        $this->get('/tai-khoan/thanh-vien')->assertOk()
+            ->assertSee('data-team-direct>1<', false)->assertSee('data-team-total>3<', false)
+            ->assertSeeInOrder(['Họ và tên', 'Cấp hiện tại', 'Trần Hải Yến', 'Cộng tác viên'])
+            ->assertDontSee('Thành viên A')->assertDontSee('Thành viên B')->assertDontSee('Người Ngoài Nhánh')->assertDontSee('Đinh Thu Hà')
+            ->assertDontSee('0911000111')->assertDontSee('yen@example.com');
+
+        // Yến: 2 thành viên trực tiếp (A, B), nhánh 2 người; Hà: 2 trực tiếp, nhánh 5 người; A: chưa có ai
+        $this->actingAs($yen, 'member')->get('/tai-khoan/thanh-vien')->assertOk()
+            ->assertSee('data-team-direct>2<', false)->assertSee('data-team-total>2<', false)
+            ->assertSee('Thành viên A')->assertSee('Nhân viên')->assertSee('Thành viên B')->assertSee('Chưa kích hoạt')->assertDontSee('Nguyễn Thị Huyền');
+        $this->actingAs($ha, 'member')->get('/tai-khoan')->assertSee('data-f1-count>2<', false)->assertSee('data-team-count>5<', false);
+        $leaf = Member::where('full_name', 'Thành viên A')->sole();
+        $this->actingAs($leaf, 'member')->get('/tai-khoan')->assertSee('data-f1-count>0<', false)->assertSee('data-team-count>0<', false);
+        $this->actingAs($leaf, 'member')->get('/tai-khoan/thanh-vien')->assertOk()->assertSee('Bạn chưa giới thiệu ai')->assertSee($leaf->referral_code);
+
+        // Chưa đăng nhập: về trang đăng nhập
+        auth('member')->logout();
+        $this->get('/tai-khoan/thanh-vien')->assertRedirect(route('member.login'));
+    }
+
     public function test_members_and_admins_are_separate(): void
     {
         $admin = User::factory()->superAdmin()->create(['email' => 'admin@example.com']);

@@ -176,7 +176,7 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
     }
     preview.src = URL.createObjectURL(file);
     preview.hidden = false;
-    say('Đã chọn: ' + file.name + ' — bấm vào ảnh để đổi.');
+    say('Đã chọn ảnh. Bấm vào ảnh để đổi.'); // không hiện tên tệp: tên ảnh từ điện thoại / Zalo rất dài, tràn sang ô bên cạnh
   });
 });
 /*

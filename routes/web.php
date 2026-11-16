@@ -14,6 +14,7 @@ use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\Frontend\ProductReviewController;
 use App\Http\Controllers\Frontend\SearchController;
+use App\Http\Controllers\Frontend\TeamController;
 use App\Http\Middleware\CaptureReferralCode;
 use App\Http\Middleware\EnsureMemberActive;
 use App\Models\Category;
@@ -43,6 +44,8 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
     });
     Route::middleware(['auth:member', EnsureMemberActive::class])->group(function () {
         Route::get('tai-khoan', AccountController::class)->name('member.account');
+        // Thành viên trực tiếp (F1) của tôi: họ tên + cấp hiện tại
+        Route::get('tai-khoan/thanh-vien', TeamController::class)->name('member.team');
         // KYC (S10): form + trạng thái; ảnh CCCD của chính mình (side = front | back)
         Route::get('tai-khoan/kyc', [KycController::class, 'show'])->name('member.kyc');
         Route::post('tai-khoan/kyc', [KycController::class, 'store'])->name('member.kyc.store')->middleware('throttle:10,1');
