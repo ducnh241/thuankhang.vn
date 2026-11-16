@@ -125,6 +125,14 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
+## Xóa đơn thử trước khi chạy thật (17/11/2026)
+
+- Migration `2026_11_23_000001_clear_test_orders`: xóa TOÀN BỘ đơn + dòng đơn đang có lúc chạy (không hoàn tác — sao lưu
+  trước). Kèm theo: trả tồn kho của đơn đang giữ hàng, doanh số cộng dồn mọi thành viên về 0, xóa vết lên cấp theo đơn và
+  đưa thành viên lên cấp nhờ đơn thử về cấp trước đó (về cấp gốc thì bỏ ngày kích hoạt), id đơn bắt đầu lại từ 1 (MySQL).
+  Không đụng: thành viên không có vết lên cấp theo đơn (giữ cấp + kích hoạt), cây nhị phân, KYC, đánh giá, audit log.
+  Test: `tests/Feature/ClearTestOrdersMigrationTest.php`. Chưa chạy trên database local (chủ dự án tự chạy `migrate`).
+
 ## Cây nhị phân + mặt trời (16/11/2026 — đã có xếp cây; CHƯA tính thưởng nhóm)
 - Mô hình: kết hợp **hệ mặt trời** (cây giới thiệu `members.referrer_id`: hoa hồng F1 / F2 theo người giới thiệu) và **hệ nhị
   phân** (cây vị trí: mỗi người tối đa 2 nhánh trái / phải; "bậc thưởng nhóm" sẽ tính theo **nhánh yếu hơn**).
