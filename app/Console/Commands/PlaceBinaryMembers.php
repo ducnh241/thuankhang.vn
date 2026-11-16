@@ -26,7 +26,11 @@ class PlaceBinaryMembers extends Command
         $root = BinaryTree::root();
         $this->info($count ? "Đã xếp {$count} thành viên vào cây nhị phân." : 'Không có thành viên nào cần xếp.');
         if ($root) {
-            $this->line("Ông tổng: {$root->full_name} ({$root->referral_code}). Tổng thành viên: ".Member::count().'.');
+            $this->line("Ông tổng: {$root->full_name} ({$root->referral_code}), nhánh có ".count($root->branchIds()).' thành viên. Tổng thành viên: '.Member::count().'.');
+            $others = Member::whereNull('referrer_id')->where('id', '!=', $root->id)->count();
+            if ($others) {
+                $this->line("Có {$others} thành viên khác không có người giới thiệu (gốc cây riêng, nằm ngoài cây của ông tổng).");
+            }
         }
 
         return self::SUCCESS;

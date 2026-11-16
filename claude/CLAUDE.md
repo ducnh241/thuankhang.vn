@@ -127,12 +127,18 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 
 ## Cây nhị phân + mặt trời (16/11/2026 — đã có xếp cây; CHƯA tính thưởng nhóm)
 - Mô hình: kết hợp **hệ mặt trời** (cây giới thiệu `members.referrer_id`: hoa hồng F1 / F2 theo người giới thiệu) và **hệ nhị
-  phân** (cây vị trí: mỗi người tối đa 2 nhánh trái / phải; "bậc thưởng nhóm" sẽ tính theo **nhánh yếu hơn**). Thành viên
-  đăng ký đầu tiên là "ông tổng" (node gốc).
+  phân** (cây vị trí: mỗi người tối đa 2 nhánh trái / phải; "bậc thưởng nhóm" sẽ tính theo **nhánh yếu hơn**).
+- **Ông tổng** (gốc cây chính) = thành viên có mã ở Tham số chung → "Mã giới thiệu của ông tổng" (`root_member_code`; live:
+  Nguyen văn trung, mã `U4SNA69`); chưa cấu hình thì là người không có người giới thiệu đăng ký sớm nhất
+  (`BinaryTree::root()`). Thành viên **không có người giới thiệu** khác (vd tài khoản thử Nguyễn Hữu Đức `3VBJ366`) là
+  **gốc của một cây riêng**, không bị trộn vào cây của ông tổng.
+- Chuyển dữ liệu live: migration `2026_11_22_000001_set_binary_root_and_rebuild` đặt ông tổng = `U4SNA69` (nếu có và chưa
+  cấu hình) rồi xóa mọi vị trí + xếp lại toàn bộ theo thứ tự đăng ký. Chạy một lần khi triển khai.
 - Lưu trữ: `members.parent_id` (người đứng ngay trên trong cây nhị phân), `members.position` (`L` / `R`), `placed_at`;
-  unique (`parent_id`, `position`). Ông tổng: `parent_id` null. Doanh số nhánh không lưu, tính từ đơn đã thanh toán.
+  unique (`parent_id`, `position`). Gốc cây (ông tổng / gốc cây riêng): `parent_id` null. Doanh số nhánh không lưu, tính
+  từ đơn đã thanh toán.
 - Quy tắc xếp (`App\Services\BinaryTree`, tự chạy ở sự kiện `Member::created` — mọi đường tạo thành viên đều được xếp):
-  bắt đầu từ **người giới thiệu X** (không có → ông tổng); đang ở người còn trống nhánh → vào nhánh trống (trái trước);
+  bắt đầu từ **người giới thiệu X** (không có người giới thiệu → là gốc một cây, không xếp); đang ở người còn trống nhánh → vào nhánh trống (trái trước);
   kín cả hai → đi xuống **nhánh yếu hơn** rồi lặp lại. Nhánh yếu hơn = **doanh số trong tháng** thấp hơn (tổng
   `goods_amount` đơn đã thanh toán trong tháng của mọi người trong nhánh); bằng nhau → nhánh ít người hơn; vẫn bằng → trái.
   Vị trí **cố định**: doanh số đổi về sau hay quản trị sửa người giới thiệu đều không dời chỗ.

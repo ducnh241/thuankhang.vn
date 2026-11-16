@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\BinaryTree;
+use App\Support\AffiliateSettings;
 use Database\Seeders\AffiliateConfigSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -165,13 +166,11 @@ class BinaryTreeTest extends TestCase
         $a = $this->member('A', $tong);
         $b = $this->member('B', $tong);
         $c = $this->member('C', $a);
-        $d = $this->member('D'); // không có người giới thiệu (đăng ký từ thời chưa bắt buộc mã) → xếp từ ông tổng
         $expected = Member::orderBy('id')->get(['id', 'parent_id', 'position'])->toArray();
-        $this->assertSame('Tổng', $d->fresh()->parent->parent->full_name);
 
         // Dữ liệu cũ: chưa ai có vị trí
         Member::query()->update(['parent_id' => null, 'position' => null, 'placed_at' => null]);
-        $this->artisan('binary:place-members')->expectsOutputToContain('Đã xếp 4 thành viên vào cây nhị phân.')->assertSuccessful();
+        $this->artisan('binary:place-members')->expectsOutputToContain('Đã xếp 3 thành viên vào cây nhị phân.')->assertSuccessful();
         $this->assertSame($expected, Member::orderBy('id')->get(['id', 'parent_id', 'position'])->toArray());
         $this->artisan('binary:place-members')->expectsOutputToContain('Không có thành viên nào cần xếp.')->assertSuccessful();
 
@@ -184,8 +183,90 @@ class BinaryTreeTest extends TestCase
         // --rebuild: hỏi lại trước khi xóa; đồng ý thì xếp lại từ đầu, kết quả như cũ
         $this->artisan('binary:place-members --rebuild')->expectsConfirmation('Xóa toàn bộ vị trí trong cây nhị phân và xếp lại từ đầu?', 'no')->assertSuccessful();
         $this->artisan('binary:place-members --rebuild')->expectsConfirmation('Xóa toàn bộ vị trí trong cây nhị phân và xếp lại từ đầu?', 'yes')
-            ->expectsOutputToContain('Đã xếp 5 thành viên vào cây nhị phân.')->assertSuccessful();
+            ->expectsOutputToContain('Đã xếp 4 thành viên vào cây nhị phân.')->assertSuccessful();
         $this->assertSame($expected, Member::where('id', '<', $new->id)->orderBy('id')->get(['id', 'parent_id', 'position'])->toArray());
+    }
+
+    public function test_configured_root_and_members_without_referrer_form_their_own_tree(): void
+    {
+        // Tài khoản thử đăng ký trước (không có người giới thiệu) + 2 tài khoản thử dưới nó; rồi mới tới ông tổng thật
+        $test = $this->member('Tài khoản thử');
+        $t2 = $this->member('Thử 2', $test);
+        $trung = $this->member('Nguyen văn trung');
+        $ha = $this->member('Hà', $trung);
+        $huyen = $this->member('Huyền', $trung);
+
+        // Chưa cấu hình: ông tổng tạm là người không có người giới thiệu đăng ký sớm nhất
+        $this->assertSame($test->id, BinaryTree::root()->id);
+        // Cấu hình ông tổng là Trung
+        AffiliateSettings::save(['root_member_code' => $trung->referral_code]);
+        $this->assertSame($trung->id, BinaryTree::root()->id);
+        $this->assertTrue($trung->fresh()->isRoot());
+        $this->assertFalse($test->fresh()->isRoot());
+
+        // Hai cây tách biệt: tài khoản thử không nằm trong cây của ông tổng và ngược lại; cả hai gốc đều không có parent
+        $this->assertSame([null, null], [$trung->fresh()->parent_id, $test->fresh()->parent_id]);
+        $this->assertSame([['Nguyen văn trung', 'L'], ['Nguyen văn trung', 'R'], ['Tài khoản thử', 'L']], [$this->slot($ha), $this->slot($huyen), $this->slot($t2)]);
+        $this->assertEqualsCanonicalizing([$ha->id, $huyen->id], $trung->branchIds());
+        $this->assertSame([$t2->id], $test->branchIds());
+
+        // Quản trị: Trung là "Ông tổng", tài khoản thử là "Gốc cây riêng"
+        $this->seed(RoleSeeder::class);
+        $ops = User::factory()->create(['group_id' => Group::where('name', 'Vận hành')->value('id')]);
+        $this->actingAs($ops, 'web')->get(route('backend.members.show', $trung))->assertSeeInOrder(['Cây nhị phân', 'Ông tổng', 'gốc của cây']);
+        $this->actingAs($ops, 'web')->get(route('backend.members.show', $test))->assertSeeInOrder(['Cây nhị phân', 'Gốc cây riêng', 'không thuộc cây của ông tổng'])->assertDontSee('Ông tổng</span>', false);
+
+        // Tham số chung: mã ông tổng phải là thành viên có thật và không có người giới thiệu
+        $root = User::factory()->superAdmin()->create();
+        $url = '/backend/affiliate/settings';
+        $valid = collect(AffiliateSettings::all())->map(fn ($value, $key) => AffiliateSettings::display($key, $value))->except('kpi_pay_day')->all();
+        $this->actingAs($root, 'web')->get($url)->assertOk()->assertSee('name="root_member_code" value="'.$trung->referral_code.'"', false);
+        $this->actingAs($root, 'web')->from($url)->put($url, [...$valid, 'root_member_code' => 'KHONGCO'])->assertSessionHasErrors(['root_member_code' => 'Không có thành viên nào có mã giới thiệu này.']);
+        $this->actingAs($root, 'web')->from($url)->put($url, [...$valid, 'root_member_code' => $ha->referral_code])
+            ->assertSessionHasErrors(['root_member_code' => 'Thành viên này có người giới thiệu nên không thể là ông tổng (ông tổng đứng đầu cây).']);
+        $this->actingAs($root, 'web')->put($url, [...$valid, 'root_member_code' => strtolower($test->referral_code)])->assertSessionHasNoErrors();
+        $this->assertSame($test->id, BinaryTree::root()->id);
+    }
+
+    public function test_live_data_migration_makes_trung_the_root_and_rebuilds_positions(): void
+    {
+        // Dữ liệu như bản dump từ live: 3 tài khoản thử (1 → 2, 3) rồi Trung (mã U4SNA69) và tuyến dưới của Trung
+        $make = fn (string $name, ?Member $referrer = null, array $extra = []) => Member::factory()->create(['full_name' => $name, 'referrer_id' => $referrer?->id, ...$extra])->fresh();
+        $test = $make('Nguyễn Hữu Đức', null, ['referral_code' => '3VBJ366']);
+        $t2 = $make('Nguyễn Hữu Đức 2', $test);
+        $t3 = $make('Mỹ Anh', $test);
+        $trung = $make('Nguyen văn trung', null, ['referral_code' => 'U4SNA69']);
+        $ha = $make('ĐinhThuHa', $trung);
+        $chung = $make('Chung Nguyễn', $ha);
+        $huyen = $make('Lê Ngọc Huyền', $trung);
+        $yen = $make('Trần Thị Yến', $trung);
+        $hoa = $make('DinhGiaHoa', $huyen);
+        $quoc = $make('Nguyễn văn quốc', $huyen);
+        $mai = $make('Thanh Mai', $huyen);
+        $nguyet = $make('Minh Nguyệt', $trung);
+        // Giả lập trạng thái sai trước khi chuyển: Trung bị xếp dưới tài khoản thử, chưa cấu hình ông tổng
+        $trung->forceFill(['parent_id' => $t2->id, 'position' => 'L'])->saveQuietly();
+
+        (require database_path('migrations/2026_11_22_000001_set_binary_root_and_rebuild.php'))->up();
+
+        $this->assertSame('U4SNA69', AffiliateSettings::get('root_member_code'));
+        $this->assertSame($trung->id, BinaryTree::root()->id);
+        $this->assertNull($trung->fresh()->parent_id);
+        // Cây của ông tổng Trung
+        $this->assertSame([
+            'ĐinhThuHa' => ['Nguyen văn trung', 'L'], 'Chung Nguyễn' => ['ĐinhThuHa', 'L'], 'Lê Ngọc Huyền' => ['Nguyen văn trung', 'R'],
+            'Trần Thị Yến' => ['Lê Ngọc Huyền', 'L'], 'DinhGiaHoa' => ['Lê Ngọc Huyền', 'R'], 'Nguyễn văn quốc' => ['Trần Thị Yến', 'L'],
+            'Thanh Mai' => ['DinhGiaHoa', 'L'], 'Minh Nguyệt' => ['ĐinhThuHa', 'R'],
+        ], collect([$ha, $chung, $huyen, $yen, $hoa, $quoc, $mai, $nguyet])->mapWithKeys(fn ($m) => [$m->full_name => $this->slot($m)])->all());
+        $this->assertCount(8, $trung->branchIds());
+        // Tài khoản thử: cây riêng, không lẫn vào cây của Trung
+        $this->assertSame([null, ['Nguyễn Hữu Đức', 'L'], ['Nguyễn Hữu Đức', 'R']], [$test->fresh()->parent_id, $this->slot($t2), $this->slot($t3)]);
+        $this->assertEmpty(array_intersect($trung->branchIds(), [$test->id, $t2->id, $t3->id]));
+
+        // Chạy lại migration: không đổi gì (đã cấu hình ông tổng, xếp lại cho cùng kết quả)
+        $before = Member::orderBy('id')->get(['id', 'parent_id', 'position'])->toArray();
+        (require database_path('migrations/2026_11_22_000001_set_binary_root_and_rebuild.php'))->up();
+        $this->assertSame($before, Member::orderBy('id')->get(['id', 'parent_id', 'position'])->toArray());
     }
 
     public function test_admin_member_page_shows_binary_position_and_legs(): void

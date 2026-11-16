@@ -222,6 +222,8 @@
             {{ mb_strtolower($sides[$member->position] ?? 'Nhánh') }} của {!! $memberLink($member->parent) !!}
           @elseif ($member->isRoot())
             <span class="ant-tag ant-tag-blue m-0">Ông tổng</span> gốc của cây
+          @elseif ($member->referrer_id === null)
+            <span class="ant-tag m-0">Gốc cây riêng</span> không có người giới thiệu, không thuộc cây của ông tổng
           @else
             <span class="ant-tag ant-tag-orange m-0">Chưa xếp</span>
           @endif

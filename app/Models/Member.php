@@ -70,10 +70,10 @@ class Member extends Authenticatable
         return $this->hasMany(self::class, 'parent_id')->orderBy('position');
     }
 
-    /** Là ông tổng (node gốc của cây nhị phân: thành viên đăng ký đầu tiên). */
+    /** Là ông tổng: gốc của cây nhị phân chính (cấu hình ở Tham số chung, xem BinaryTree::root()). */
     public function isRoot(): bool
     {
-        return $this->parent_id === null && ! self::where('id', '<', $this->id)->exists();
+        return BinaryTree::root()?->id === $this->id;
     }
 
     /** Id mọi người trong nhánh của mình ở cây nhị phân — từ vị trí đang đứng tính xuống tất cả các nhánh con. */

@@ -4,16 +4,19 @@ namespace App\Services;
 
 use App\Models\Member;
 use App\Models\Order;
+use App\Support\AffiliateSettings;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Cây nhị phân của thành viên (kết hợp với cây giới thiệu "mặt trời"). Mỗi người có tối đa 2 nhánh: trái (L), phải (R).
- * Thành viên đầu tiên của hệ thống là "ông tổng" (node gốc, không có parent).
+ * "Ông tổng" = gốc của cây chính: thành viên có mã cấu hình ở Tham số chung (root_member_code); chưa cấu hình thì là
+ * thành viên không có người giới thiệu đăng ký sớm nhất. Thành viên KHÔNG có người giới thiệu khác (tài khoản thử, dữ liệu
+ * cũ) là gốc của một cây riêng — không bị trộn vào cây của ông tổng.
  *
  * Quy tắc xếp người mới (gán một lần, cố định):
- *   - Bắt đầu từ người giới thiệu X (không có người giới thiệu → từ ông tổng).
+ *   - Bắt đầu từ người giới thiệu X.
  *   - Đang đứng ở một người còn trống nhánh → vào nhánh trống đó (trái trước, phải sau).
  *   - Cả hai nhánh đã có người → đi xuống NHÁNH YẾU HƠN rồi lặp lại. Nhánh yếu hơn = nhánh có doanh số trong tháng thấp
  *     hơn (tổng tiền hàng các đơn đã thanh toán trong tháng của mọi người trong nhánh); bằng nhau → nhánh ít người hơn;
@@ -28,28 +31,26 @@ class BinaryTree
 
     public const SIDES = [self::LEFT => 'Nhánh trái', self::RIGHT => 'Nhánh phải'];
 
-    /** Ông tổng: thành viên đăng ký đầu tiên. */
+    /** Ông tổng: thành viên có mã cấu hình ở Tham số chung; chưa cấu hình → người không có người giới thiệu đăng ký sớm nhất. */
     public static function root(): ?Member
     {
-        return Member::orderBy('id')->first();
+        $configured = Member::findByReferralCode(AffiliateSettings::get('root_member_code'));
+
+        return $configured ?? Member::whereNull('referrer_id')->orderBy('id')->first() ?? Member::orderBy('id')->first();
     }
 
     /**
-     * Xếp một thành viên vào cây (không làm gì nếu đã có chỗ). $asOf: thời điểm xét doanh số tháng — mặc định bây giờ; khi
-     * xếp lại thành viên cũ thì là ngày họ đăng ký. Chạy trong transaction, khóa ông tổng để hai người đăng ký cùng lúc
-     * không tranh một chỗ.
+     * Xếp một thành viên vào cây (không làm gì nếu đã có chỗ, hoặc không có người giới thiệu — khi đó họ là gốc một cây).
+     * $asOf: thời điểm xét doanh số tháng — mặc định bây giờ; khi xếp lại thành viên cũ thì là ngày họ đăng ký. Chạy trong
+     * transaction có khóa để hai người đăng ký cùng lúc không tranh một chỗ.
      */
     public static function place(Member $member, ?CarbonInterface $asOf = null): void
     {
         DB::transaction(function () use ($member, $asOf) {
-            $root = Member::orderBy('id')->lockForUpdate()->first();
-            if (! $root || $root->id === $member->id) {
-                return; // ông tổng: không có parent
-            }
+            self::lock();
             // Thành viên đăng ký trước mình mà chưa có chỗ (dữ liệu cũ): xếp họ trước, đúng thứ tự
-            Member::whereNull('parent_id')->where('id', '!=', $root->id)->where('id', '<', $member->id)->orderBy('id')->get()
-                ->each(fn (Member $earlier) => self::assign($earlier, $root, $earlier->created_at));
-            self::assign($member, $root, $asOf);
+            self::pending()->where('id', '<', $member->id)->get()->each(fn (Member $earlier) => self::assign($earlier, $earlier->created_at));
+            self::assign($member, $asOf);
         });
     }
 
@@ -57,12 +58,9 @@ class BinaryTree
     public static function placeUnplaced(): int
     {
         return DB::transaction(function () {
-            $root = Member::orderBy('id')->lockForUpdate()->first();
-            if (! $root) {
-                return 0;
-            }
-            $pending = Member::whereNull('parent_id')->where('id', '!=', $root->id)->orderBy('id')->get();
-            $pending->each(fn (Member $member) => self::assign($member, $root, $member->created_at));
+            self::lock();
+            $pending = self::pending()->get();
+            $pending->each(fn (Member $member) => self::assign($member, $member->created_at));
 
             return $pending->count();
         });
@@ -76,6 +74,18 @@ class BinaryTree
 
             return self::placeUnplaced();
         });
+    }
+
+    /** Thành viên cần xếp mà chưa có chỗ: có người giới thiệu nhưng chưa có parent. Theo thứ tự đăng ký. */
+    private static function pending()
+    {
+        return Member::whereNull('parent_id')->whereNotNull('referrer_id')->orderBy('id');
+    }
+
+    /** Khóa toàn cây trong transaction hiện tại (khóa dòng thành viên đầu tiên làm mutex). */
+    private static function lock(): void
+    {
+        Member::orderBy('id')->lockForUpdate()->first();
     }
 
     /**
@@ -104,23 +114,31 @@ class BinaryTree
         return self::subtree($memberId)->keys()->reject(fn ($id) => $id === $memberId)->values()->all();
     }
 
-    /** Gán chỗ cho một thành viên chưa có chỗ: bắt đầu từ người giới thiệu (hoặc ông tổng), đi xuống theo nhánh yếu hơn. */
-    private static function assign(Member $member, Member $root, ?CarbonInterface $asOf): void
+    /**
+     * Gán chỗ cho một thành viên chưa có chỗ: bắt đầu từ người giới thiệu, đi xuống theo nhánh yếu hơn. Không có người giới
+     * thiệu → là gốc của một cây, không gán. Người giới thiệu chưa có chỗ (vd quản trị đổi người giới thiệu sang người đăng
+     * ký sau) thì xếp người giới thiệu trước.
+     */
+    private static function assign(Member $member, ?CarbonInterface $asOf, int $depth = 0): void
     {
-        if ($member->parent_id !== null || $member->id === $root->id) {
+        if ($member->parent_id !== null || $member->referrer_id === null || $member->referrer_id === $member->id) {
             return;
         }
-        $start = $member->referrer_id && $member->referrer_id !== $member->id ? (int) $member->referrer_id : $root->id;
-        // Người giới thiệu phải có chỗ trước (mọi người đăng ký trước đều đã được xếp ở place() / placeUnplaced())
-        $sponsor = Member::find($start);
-        if (! $sponsor || ($sponsor->id !== $root->id && $sponsor->parent_id === null)) {
-            $start = $root->id;
+        $sponsor = Member::find($member->referrer_id);
+        if (! $sponsor) {
+            return;
+        }
+        if ($sponsor->parent_id === null && $sponsor->referrer_id !== null && $depth < 50) {
+            self::assign($sponsor, $sponsor->created_at, $depth + 1);
         }
 
-        $nodes = self::subtree($start);
+        $nodes = self::subtree($sponsor->id);
+        if ($nodes->has($member->id)) {
+            return; // chặn vòng: mình đang là tuyến trên của người giới thiệu
+        }
         $children = self::childrenMap($nodes);
         $sales = self::monthSales($nodes->keys()->all(), $asOf ?? now());
-        $current = $start;
+        $current = $sponsor->id;
         while (true) {
             $kids = $children[$current] ?? [];
             if (! isset($kids[self::LEFT]) || ! isset($kids[self::RIGHT])) {

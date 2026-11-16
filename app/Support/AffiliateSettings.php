@@ -36,6 +36,7 @@ class AffiliateSettings
         'order_code_prefix' => ['order', 'Tiền tố mã đơn hàng', 'code', 'TK', ['required', 'max:4', 'regex:/^[A-Z]+$/'], 'Mã đơn = tiền tố + 8 ký tự (VD: TK7H2KQ9MX). 1–4 chữ cái in hoa, không dấu. Đổi chỉ áp dụng cho đơn mới.'],
         'payment_expiry_hours' => ['order', 'Hạn thanh toán đơn', 'int', 24, ['required', 'min:1', 'max:720'], 'Quá hạn chưa chuyển khoản thì đơn tự hết hạn.'],
         'ref_cookie_days' => ['order', 'Thời gian lưu mã giới thiệu', 'int', 30, ['required', 'min:1', 'max:365'], 'Cookie ghi nhớ mã ?ref= khi khách mở link giới thiệu.'],
+        'root_member_code' => ['network', 'Mã giới thiệu của ông tổng (gốc cây nhị phân)', 'code', null, ['nullable', 'max:20', 'regex:/^[0-9A-Z]+$/'], 'Thành viên đứng đầu hệ thống. Để trống = thành viên không có người giới thiệu đăng ký sớm nhất. Đổi ở đây không dời vị trí ai đã xếp.'],
         'max_vp_per_province' => ['network', 'Số VP tối đa mỗi tỉnh', 'int', null, ['nullable', 'min:1', 'max:100'], 'Để trống = không giới hạn.'],
         // Sửa ở trang KPI (A4)
         'kpi_pay_day' => [null, 'Ngày trả thưởng KPI hằng tháng', 'int', 10, ['required', 'min:1', 'max:28'], null],
