@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BinaryTree;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ use Illuminate\Support\Str;
 /**
  * Thành viên website (khách mua hàng / cộng tác viên). Đăng nhập bằng số điện thoại qua guard "member" — hoàn toàn
  * tách khỏi tài khoản quản trị (App\Models\User). referrer = người giới thiệu (F1 của mình), gắn khi đăng ký.
+ * parent_id + position = vị trí trong cây nhị phân (App\Services\BinaryTree), gán tự động một lần khi tạo.
  */
 #[Hidden(['password', 'remember_token'])]
 class Member extends Authenticatable
@@ -34,10 +36,17 @@ class Member extends Authenticatable
         'cumulative_amount' => 0,
     ];
 
+    /** Thành viên mới (đăng ký, hoặc tạo từ bất kỳ đâu) được xếp ngay vào cây nhị phân — vị trí cố định từ đó. */
+    protected static function booted(): void
+    {
+        static::created(fn (Member $member) => BinaryTree::place($member));
+    }
+
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'placed_at' => 'datetime',
             'cumulative_amount' => 'integer',
             'activated_at' => 'datetime',
             'last_login_at' => 'datetime',
@@ -47,6 +56,30 @@ class Member extends Authenticatable
     public function referrer(): BelongsTo
     {
         return $this->belongsTo(self::class, 'referrer_id');
+    }
+
+    /** Người đứng ngay trên trong cây nhị phân (khác người giới thiệu khi bị xếp xuống tầng dưới). Ông tổng: null. */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /** Hai người đứng ngay dưới trong cây nhị phân (nhánh trái L / phải R). */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderBy('position');
+    }
+
+    /** Là ông tổng (node gốc của cây nhị phân: thành viên đăng ký đầu tiên). */
+    public function isRoot(): bool
+    {
+        return $this->parent_id === null && ! self::where('id', '<', $this->id)->exists();
+    }
+
+    /** Id mọi người trong nhánh của mình ở cây nhị phân — từ vị trí đang đứng tính xuống tất cả các nhánh con. */
+    public function branchIds(): array
+    {
+        return BinaryTree::branchIds($this->id);
     }
 
     /** F1: người do thành viên này giới thiệu trực tiếp. */

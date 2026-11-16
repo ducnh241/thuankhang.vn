@@ -7,6 +7,7 @@ use App\Http\Requests\Backend\MemberReferrerRequest;
 use App\Models\AuditLog;
 use App\Models\Level;
 use App\Models\Member;
+use App\Services\BinaryTree;
 use App\Services\LevelEngine;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -75,7 +76,7 @@ class MemberController extends Controller
 
     public function show(Member $member): View
     {
-        $member->load(['level', 'referrer.referrer', 'kyc'])->loadCount('referrals');
+        $member->load(['level', 'referrer.referrer', 'kyc', 'parent'])->loadCount('referrals');
         $f1 = $member->referrals()->with('level:id,name')->withCount('referrals')
             ->orderByDesc('id')->limit(self::F1_LIMIT)->get();
         // F2 = F1 của các F1, nhóm theo F1 để hiện dòng mở rộng
@@ -89,6 +90,7 @@ class MemberController extends Controller
             'firstLevel' => Level::earning()->firstWhere('active', true),
             'orders' => $member->orders()->latest('id')->limit(10)->get(),
             'orderCount' => $member->orders()->count(),
+            'legs' => BinaryTree::legs($member),
             'levelHistory' => $member->levelHistories()->with(['fromLevel:id,name', 'toLevel:id,name', 'order:id,code'])->limit(20)->get(),
             'nextLevel' => LevelEngine::nextLevel($member),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)

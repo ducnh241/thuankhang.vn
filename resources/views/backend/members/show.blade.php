@@ -207,6 +207,45 @@
 
   {{-- Cột phụ --}}
   <div class="flex min-w-0 flex-col gap-4">
+    {{-- Cây nhị phân: vị trí của thành viên + hai nhánh bên dưới (số người, doanh số tháng). Nhánh yếu hơn là nhánh mà
+         người đăng ký tiếp theo bằng mã của thành viên này sẽ được xếp vào. Vị trí gán một lần, không sửa được. --}}
+    @php
+        $sides = \App\Services\BinaryTree::SIDES;
+        $nextSide = ! $legs['L']['head'] ? 'L' : (! $legs['R']['head'] ? 'R' : $legs['weaker']);
+    @endphp
+    <div class="ant-card ant-card-bordered" data-card="binary">
+      <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Cây nhị phân</div></div></div>
+      <div class="ant-card-body">
+        <div class="mb-3" data-binary-position>
+          <span class="{{ $muted }}">Vị trí:</span>
+          @if ($member->parent)
+            {{ mb_strtolower($sides[$member->position] ?? 'Nhánh') }} của {!! $memberLink($member->parent) !!}
+          @elseif ($member->isRoot())
+            <span class="ant-tag ant-tag-blue m-0">Ông tổng</span> gốc của cây
+          @else
+            <span class="ant-tag ant-tag-orange m-0">Chưa xếp</span>
+          @endif
+        </div>
+        @foreach ($sides as $side => $label)
+          @php $leg = $legs[$side]; @endphp
+          <div @class(['rounded border border-[#f0f0f0] px-3 py-2', 'mt-2' => ! $loop->first]) data-leg="{{ $side }}">
+            <div class="flex flex-wrap items-center gap-x-2">
+              <span class="font-medium">{{ $label }}</span>
+              @if ($legs['weaker'] === $side && $legs['L']['head'] && $legs['R']['head'])<span class="ant-tag ant-tag-gold m-0">Yếu hơn</span>@endif
+              <span class="ml-auto tabular-nums {{ $muted }}">{{ $count($leg['count']) }} thành viên</span>
+            </div>
+            @if ($leg['head'])
+              <div class="text-sm">Đứng đầu: {!! $memberLink($leg['head']) !!} <span class="{{ $muted }}">· {{ $leg['head']->level?->name }}</span></div>
+              <div class="text-xs {{ $muted }}">Doanh số tháng này: <span class="tabular-nums">{{ Money::format($leg['sales']) }} đ</span></div>
+            @else
+              <div class="text-sm {{ $muted }}">Còn trống</div>
+            @endif
+          </div>
+        @endforeach
+        <div class="mt-3 text-xs {{ $muted }}" data-binary-next>Người đăng ký tiếp theo bằng mã của thành viên này sẽ vào <strong>{{ mb_strtolower($sides[$nextSide]) }}</strong>{{ $legs['L']['head'] && $legs['R']['head'] ? ' (nhánh yếu hơn: doanh số tháng thấp hơn, bằng nhau thì nhánh ít người hơn)' : ' (nhánh còn trống)' }}. Vị trí đã xếp là cố định.</div>
+      </div>
+    </div>
+
     <div class="ant-card ant-card-bordered" data-card="referrer">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Người giới thiệu</div></div></div>
       <div class="ant-card-body">
@@ -244,7 +283,7 @@
               </div>
             </div>
             <button type="submit" class="ant-btn">{{ ant_icon('sync') }}<span>Đổi người giới thiệu</span></button>
-            <div class="mt-2 text-xs {{ $muted }}">Chỉ áp dụng cho các đơn thanh toán sau khi đổi; hoa hồng đã ghi không thay đổi. Có ghi nhật ký.</div>
+            <div class="mt-2 text-xs {{ $muted }}">Chỉ áp dụng cho các đơn thanh toán sau khi đổi; hoa hồng đã ghi không thay đổi. Vị trí trong cây nhị phân không đổi theo. Có ghi nhật ký.</div>
           </form>
         @endcan
       </div>

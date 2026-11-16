@@ -38,11 +38,11 @@
           <a href="{{ route('member.team') }}" class="text-sm font-medium text-brand-700 hover:underline">Xem chi tiết ›</a>
         </div>
       </div>
-      {{-- Thành viên của nhánh: mọi người nằm dưới mình, tính xuống tất cả các tầng --}}
+      {{-- Thành viên của nhánh: mọi người nằm dưới vị trí của mình trong cây nhị phân, tính xuống tất cả các nhánh con --}}
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
         <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên của nhánh</div>
         <div class="mt-2 text-xl font-bold text-slate-900" data-team-count>{{ number_format($teamCount, 0, ',', '.') }}</div>
-        <p class="mt-1 text-xs text-slate-500">Tính từ bạn xuống mọi tầng bên dưới.</p>
+        <p class="mt-1 text-xs text-slate-500" data-team-legs>Nhánh trái {{ number_format($legs['L']['count'], 0, ',', '.') }} · Nhánh phải {{ number_format($legs['R']['count'], 0, ',', '.') }}</p>
       </div>
     </div>
 
