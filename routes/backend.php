@@ -13,6 +13,7 @@ use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\DashboardController;
 use App\Http\Controllers\Backend\FileController;
 use App\Http\Controllers\Backend\GroupController;
+use App\Http\Controllers\Backend\KycController;
 use App\Http\Controllers\Backend\MemberController;
 use App\Http\Controllers\Backend\MenuController;
 use App\Http\Controllers\Backend\OrderController;
@@ -74,6 +75,13 @@ Route::prefix('backend')->group(function () {
         Route::post('member/{member}/lock', [MemberController::class, 'lock'])->name('members.lock')->can('member/lock');
         Route::post('member/{member}/activate', [MemberController::class, 'activate'])->name('members.activate')->can('member/activate');
         Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');
+
+        // KYC thành viên (A11; quyền: kyc, kyc/view_document — xem ảnh CCCD, kyc/review — duyệt / từ chối)
+        Route::get('kyc', [KycController::class, 'index'])->name('kyc.index')->can('kyc');
+        Route::get('kyc/{kyc}', [KycController::class, 'show'])->name('kyc.show')->can('kyc')->whereNumber('kyc');
+        Route::get('kyc/{kyc}/image/{side}', [KycController::class, 'image'])->name('kyc.image')->can('kyc/view_document')->whereNumber('kyc')->whereIn('side', ['front', 'back']);
+        Route::post('kyc/{kyc}/approve', [KycController::class, 'approve'])->name('kyc.approve')->can('kyc/review')->whereNumber('kyc');
+        Route::post('kyc/{kyc}/reject', [KycController::class, 'reject'])->name('kyc.reject')->can('kyc/review')->whereNumber('kyc');
 
         // Đơn hàng (A8; quyền: order, order/confirm_payment, order/status, order/cancel). URL theo mã đơn.
         Route::get('order', [OrderController::class, 'index'])->name('orders.index')->can('order');

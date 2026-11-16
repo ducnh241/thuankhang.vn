@@ -74,7 +74,7 @@ class MemberController extends Controller
 
     public function show(Member $member): View
     {
-        $member->load(['level', 'referrer.referrer'])->loadCount('referrals');
+        $member->load(['level', 'referrer.referrer', 'kyc'])->loadCount('referrals');
         $f1 = $member->referrals()->with('level:id,name')->withCount('referrals')
             ->orderByDesc('id')->limit(self::F1_LIMIT)->get();
         // F2 = F1 của các F1, nhóm theo F1 để hiện dòng mở rộng
@@ -128,17 +128,7 @@ class MemberController extends Controller
             return back()->with('error', 'Tài khoản đã được kích hoạt từ trước.');
         }
 
-        $level = DB::transaction(function () use ($member, $data) {
-            $member = Member::lockForUpdate()->findOrFail($member->id);
-            $oldLevel = $member->level;
-            $level = $oldLevel?->isBase() ? Level::earning()->firstWhere('active', true) : $oldLevel;
-            $member->forceFill(['activated_at' => now(), 'level_id' => $level?->id ?? $member->level_id])->saveQuietly();
-            AuditLog::record('updated', $member,
-                ['old' => ['activated_at' => null, 'level' => $oldLevel?->name], 'new' => ['activated_at' => $member->activated_at->toDateTimeString(), 'level' => $level?->name]],
-                'Kích hoạt tài khoản thủ công. Lý do: '.trim($data['reason']));
-
-            return $level;
-        });
+        $level = $member->activateManually('Kích hoạt tài khoản thủ công. Lý do: '.trim($data['reason']));
 
         return back()->with('success', "Đã kích hoạt tài khoản {$member->full_name}".($level ? " (cấp {$level->name})." : '.'));
     }

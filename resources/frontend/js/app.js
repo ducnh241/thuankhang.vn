@@ -94,6 +94,100 @@ document.addEventListener('click', async e => {
 });
 
 /*
+ * KYC (S10): ô ảnh CCCD [data-kyc-image] — xem trước ảnh vừa chọn. Ảnh chụp bằng điện thoại thường nặng 3–8 MB, trong khi
+ * máy chủ hay giới hạn dung lượng một lần gửi (nginx mặc định 1 MB cho cả form) → thu nhỏ ngay trên máy trước khi gửi:
+ * lần lượt thử các mức (cạnh dài, chất lượng JPEG) cho tới khi ảnh ≤ 480 KB — hai ảnh vẫn dưới 1 MB, chữ trên thẻ vẫn
+ * đọc rõ. Không thu nhỏ được (trình duyệt cũ, ảnh lỗi) thì gửi ảnh gốc; ảnh vượt mức máy chủ cho phép thì báo ngay.
+ */
+const KYC_TARGET_BYTES = 480 * 1024;
+const KYC_STEPS = [
+  [1600, 0.82],
+  [1600, 0.7],
+  [1280, 0.7],
+  [1280, 0.55],
+  [1024, 0.55],
+];
+async function shrinkImage(file) {
+  if (file.size <= KYC_TARGET_BYTES) return file;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    let best = file;
+    for (const [maxSide, quality] of KYC_STEPS) {
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; // ảnh PNG / WEBP nền trong suốt
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      if (blob && blob.size < best.size) {
+        best = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+      }
+      if (best.size <= KYC_TARGET_BYTES) break;
+    }
+    return best;
+  } catch {
+    return file;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+document.querySelectorAll('[data-kyc-image]').forEach(box => {
+  const input = box.querySelector('input[type="file"]');
+  const preview = box.querySelector('[data-kyc-preview]');
+  const note = box.querySelector('[data-kyc-note]');
+  const maxBytes = Number(box.dataset.maxBytes) || 0;
+  const say = (text, bad = false) => {
+    note.textContent = text;
+    note.hidden = !text;
+    note.classList.toggle('text-rose-600', bad);
+    note.classList.toggle('text-slate-500', !bad);
+  };
+  input.addEventListener('change', async () => {
+    let file = input.files[0];
+    if (preview.src) URL.revokeObjectURL(preview.src);
+    preview.removeAttribute('src');
+    preview.hidden = true;
+    say('');
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      input.value = '';
+      return say('Chọn ảnh JPG, PNG hoặc WEBP.', true);
+    }
+    const small = await shrinkImage(file);
+    if (small !== file) {
+      try {
+        const transfer = new DataTransfer();
+        transfer.items.add(small);
+        input.files = transfer.files;
+        file = small;
+      } catch {
+        // Trình duyệt cũ không cho gán lại file: gửi ảnh gốc
+      }
+    }
+    if (maxBytes && file.size > maxBytes) {
+      input.value = '';
+      return say(`Ảnh quá lớn (${(file.size / 1048576).toFixed(1)} MB). Hãy chọn ảnh nhẹ hơn.`, true);
+    }
+    preview.src = URL.createObjectURL(file);
+    preview.hidden = false;
+    say('Đã chọn: ' + file.name + ' — bấm vào ảnh để đổi.');
+  });
+});
+// Gửi hồ sơ: khóa nút để không gửi hai lần trong lúc tải ảnh lên
+document.querySelector('[data-kyc-form]')?.addEventListener('submit', e => {
+  const button = e.target.querySelector('[data-kyc-submit]');
+  if (button.disabled) return e.preventDefault();
+  button.disabled = true;
+  button.textContent = 'Đang gửi hồ sơ…';
+});
+
+/*
  * Thanh toán (S5): đổi hình thức nhận hàng → hiện ô tương ứng + phí ship trong tóm tắt; nhận tại VP: chọn tỉnh lọc danh
  * sách điểm, chọn điểm thì hiện địa chỉ / giờ mở cửa / điện thoại. Dữ liệu điểm lấy từ data-points.
  */

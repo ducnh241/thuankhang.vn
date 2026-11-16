@@ -91,6 +91,13 @@ return [
                     'icon' => 'contacts',
                 ],
                 [
+                    'label' => 'KYC',
+                    'route' => 'backend.kyc.index',
+                    'active' => 'backend.kyc.*',
+                    'can' => 'kyc',
+                    'icon' => 'safety-certificate',
+                ],
+                [
                     'label' => 'Configuration',
                     'icon' => 'fund',
                     'children' => [

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -65,6 +66,12 @@ class Member extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    /** Hồ sơ KYC (CCCD + tài khoản ngân hàng) — mỗi thành viên một hồ sơ. */
+    public function kyc(): HasOne
+    {
+        return $this->hasOne(MemberKyc::class);
+    }
+
     public function level(): BelongsTo
     {
         return $this->belongsTo(Level::class);
@@ -78,6 +85,30 @@ class Member extends Authenticatable
     public function isActivated(): bool
     {
         return $this->activated_at !== null;
+    }
+
+    /**
+     * Kích hoạt thủ công (quản trị): đặt activated_at, nâng từ cấp gốc lên cấp hưởng hoa hồng thấp nhất đang bật ("Nhân
+     * viên"); không đổi doanh số cộng dồn. Một chiều: không có hủy kích hoạt. Ghi một dòng nhật ký với $note.
+     * Trả về cấp sau khi kích hoạt; đã kích hoạt từ trước thì không làm gì.
+     */
+    public function activateManually(string $note): ?Level
+    {
+        return DB::transaction(function () use ($note) {
+            $member = self::lockForUpdate()->findOrFail($this->id);
+            $oldLevel = $member->level;
+            if ($member->isActivated()) {
+                return $oldLevel;
+            }
+            $level = $oldLevel?->isBase() ? Level::earning()->firstWhere('active', true) : $oldLevel;
+            $member->forceFill(['activated_at' => now(), 'level_id' => $level?->id ?? $member->level_id])->saveQuietly();
+            AuditLog::record('updated', $member,
+                ['old' => ['activated_at' => null, 'level' => $oldLevel?->name], 'new' => ['activated_at' => $member->activated_at->toDateTimeString(), 'level' => $level?->name]],
+                $note);
+            $this->setRawAttributes($member->getAttributes(), true);
+
+            return $level;
+        });
     }
 
     /** Link giới thiệu của thành viên (trang chủ kèm ?ref=). */

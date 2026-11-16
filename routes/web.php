@@ -9,6 +9,7 @@ use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\KycController;
 use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\Frontend\ProductReviewController;
@@ -42,6 +43,10 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
     });
     Route::middleware(['auth:member', EnsureMemberActive::class])->group(function () {
         Route::get('tai-khoan', AccountController::class)->name('member.account');
+        // KYC (S10): form + trạng thái; ảnh CCCD của chính mình (side = front | back)
+        Route::get('tai-khoan/kyc', [KycController::class, 'show'])->name('member.kyc');
+        Route::post('tai-khoan/kyc', [KycController::class, 'store'])->name('member.kyc.store')->middleware('throttle:10,1');
+        Route::get('tai-khoan/kyc/anh/{side}', [KycController::class, 'image'])->name('member.kyc.image')->whereIn('side', ['front', 'back']);
         Route::get('thanh-toan', [CheckoutController::class, 'show'])->name('shop.checkout');
         Route::post('thanh-toan', [CheckoutController::class, 'store'])->name('shop.checkout.store')->middleware('throttle:10,1');
         Route::post(Product::PATH.'/{slug}/danh-gia', [ProductReviewController::class, 'store'])->name('shop.product.review')->middleware('throttle:10,1');

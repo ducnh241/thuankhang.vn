@@ -3249,3 +3249,22 @@ a.project-thumb:hover {
   outline-offset: -2px;
   background: #f0f7ff;
 }
+
+/* KYC (backend/kyc/show): ảnh CCCD trong khung 8:5, bấm mở cỡ đầy đủ ở tab mới */
+.kyc-photo {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 8 / 5;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background: #fafafa;
+  transition: border-color 0.3s;
+}
+.kyc-photo:hover {
+  border-color: #007bff;
+}
+.kyc-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

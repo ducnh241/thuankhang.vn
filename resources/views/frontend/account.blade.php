@@ -60,6 +60,28 @@
       </div>
     </section>
 
+    {{-- KYC (S10): trạng thái hồ sơ + nút sang trang xác minh --}}
+    @php
+        $kyc = $member->kyc;
+        [$kycLabel, $kycClass, $kycText, $kycButton] = match ($kyc?->status) {
+            \App\Models\MemberKyc::STATUS_PENDING => ['Chờ duyệt', 'bg-amber-100 text-amber-800', 'Hồ sơ của bạn đang được kiểm tra.', 'Xem hồ sơ'],
+            \App\Models\MemberKyc::STATUS_APPROVED => ['Đã duyệt', 'bg-brand-100 text-brand-800', 'Tài khoản đã được xác minh.', 'Xem hồ sơ'],
+            \App\Models\MemberKyc::STATUS_REJECTED => ['Không được duyệt', 'bg-rose-100 text-rose-700', 'Hồ sơ chưa hợp lệ: '.($kyc->reject_reason ?: 'thông tin không hợp lệ').'. Hãy sửa và gửi lại.', 'Gửi lại hồ sơ'],
+            default => ['Chưa xác minh', 'bg-slate-100 text-slate-600', 'Gửi thông tin tài khoản ngân hàng và ảnh 2 mặt căn cước để xác minh tài khoản.', 'Xác minh ngay'],
+        };
+    @endphp
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6" data-kyc-card>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="min-w-0">
+          <h2 class="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">Xác minh tài khoản (KYC) <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $kycClass }}" data-kyc-badge>{{ $kycLabel }}</span></h2>
+          <p class="mt-1 text-sm text-slate-600">{{ $kycText }}</p>
+        </div>
+        <a href="{{ route('member.kyc') }}" @class(['shrink-0 rounded-full px-5 py-2 text-sm font-semibold',
+          'bg-brand-600 text-white hover:bg-brand-700' => ! $kyc || $kyc->isRejected(),
+          'border border-slate-300 text-slate-700 hover:border-brand-500 hover:text-brand-700' => $kyc && ! $kyc->isRejected()])>{{ $kycButton }}</a>
+      </div>
+    </section>
+
     <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
       <h2 class="text-lg font-bold text-slate-900">Thông tin tài khoản</h2>
       <dl class="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[160px_minmax(0,1fr)]">

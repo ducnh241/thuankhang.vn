@@ -124,6 +124,27 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
+## KYC thành viên (16/11/2026 — phần KYC của Step 9; ví / rút tiền chưa làm)
+- Luồng: thành viên vào Tài khoản → **Xác minh tài khoản (KYC)** `/tai-khoan/kyc` → nhập họ tên theo CCCD, số CCCD (12 số),
+  ngày sinh, ngân hàng (`config/banks.php`) + số tài khoản + tên chủ tài khoản, tải ảnh 2 mặt CCCD → gửi. Quản trị duyệt ở
+  `/backend/kyc` (A11, menu KYC): **Duyệt** (có ô tick "Kích hoạt tài khoản thành viên" — mặc định tick khi tài khoản chưa
+  kích hoạt và người duyệt có `member/activate`; dùng `Member::activateManually()`) hoặc **Không duyệt** kèm lý do.
+- Trạng thái (`MemberKyc::STATUSES`): `pending` Chờ duyệt → `approved` Đã duyệt | `rejected` Không được duyệt (thông tin
+  không hợp lệ; thành viên thấy lý do, sửa và gửi lại — đè hồ sơ cũ, ảnh cũ bị xóa). Chờ duyệt / đã duyệt không sửa được.
+- Bảng `member_kycs` (mỗi thành viên một dòng), model `App\Models\MemberKyc`. Quy tắc 1 CCCD = 1 tài khoản = 1 STK: CCCD /
+  (ngân hàng + STK) đang ở hồ sơ chờ duyệt / đã duyệt của người khác thì chặn lúc gửi; lúc duyệt kiểm lại với hồ sơ đã
+  duyệt. Tên chủ tài khoản phải trùng họ tên CCCD (so không dấu — `MemberKyc::normalizeName`).
+- Bảo mật: số CCCD mã hóa trong DB (cast `encrypted`) + `id_number_hash` (HMAC theo APP_KEY) để tra trùng / tìm kiếm; ảnh
+  CCCD mã hóa bằng APP_KEY, lưu disk riêng tư `storage/app/private/kyc/{member_id}/*.enc`, chỉ xem qua route có kiểm quyền
+  (`member.kyc.image` — chính chủ; `backend.kyc.image` — quyền `kyc/view_document`). Nhật ký (`AuditLog`, ghi tay) chỉ
+  ghi thao tác + lý do, không ghi số CCCD / STK. **Đổi APP_KEY thì phải khai báo APP_PREVIOUS_KEYS**, không thì không đọc
+  lại được ảnh / số CCCD cũ.
+- Ảnh: JPG / PNG / WEBP, tối đa `MemberKyc::MAX_KILOBYTES` (5 MB) hoặc mức PHP nếu thấp hơn. JS website
+  (`[data-kyc-image]`) thu nhỏ ảnh xuống ≤ 480 KB trước khi gửi để hai ảnh lọt cả giới hạn 1 MB mặc định của nginx; máy chủ
+  thật vẫn nên đặt `client_max_body_size` ≥ 12M (form KYC, Quản lý file, ảnh sản phẩm).
+- Quyền (đã khai báo từ Step 0): `kyc`, `kyc/view_document`, `kyc/review` — RoleSeeder cấp cho Vận hành.
+  Test: `tests/Feature/MemberKycTest.php`.
+
 ## Khung trang quản trị – layout Admin Pro (15/11/2026)
 - Nguồn: repo template `template-admin`, nhánh **`admin-pro`** (`src/partials/pro-sidebar.html`, `pro-header.html`,
   `src/css/pro.css`, `src/js/pro.js`). Chỉ chuyển **sidebar, header, breadcrumb**; nội dung trang vẫn là Ant Design 4

@@ -44,6 +44,15 @@
           <dt>Cấp hiện tại</dt><dd>{{ $member->level?->name }}</dd>
           <dt>Doanh số cộng dồn</dt><dd class="tabular-nums">{{ Money::format($member->cumulative_amount) }} đ</dd>
           <dt>Kích hoạt</dt><dd>{{ $member->activated_at?->format('d/m/Y H:i') ?? 'Chưa (chưa có đơn thanh toán)' }}</dd>
+          <dt>KYC</dt>
+          <dd data-member-kyc>
+            @if ($member->kyc)
+              <span class="ant-tag ant-tag-{{ \App\Models\MemberKyc::STATUS_COLORS[$member->kyc->status] }}">{{ $member->kyc->statusLabel() }}</span>
+              @can('kyc')<a href="{{ route('backend.kyc.show', $member->kyc) }}">Xem hồ sơ</a>@endcan
+            @else
+              Chưa gửi hồ sơ
+            @endif
+          </dd>
           <dt>Tham gia</dt><dd class="tabular-nums">{{ $member->created_at?->format('d/m/Y H:i') }}</dd>
           <dt>Đăng nhập gần nhất</dt><dd class="tabular-nums">{{ $member->last_login_at?->format('d/m/Y H:i') ?? '—' }}</dd>
         </dl>

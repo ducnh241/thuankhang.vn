@@ -46,7 +46,7 @@ class BackendLayoutTest extends TestCase
             $this->assertStringNotContainsString($group, $sidebar);
         }
         $this->assertSame(
-            ['Dashboard', 'Categories', 'Products', 'Orders', 'Reviews', 'Pickup points', 'Members', 'Configuration', 'Pages', 'Menus', 'Files', 'Users', 'Settings', 'Audit log'],
+            ['Dashboard', 'Categories', 'Products', 'Orders', 'Reviews', 'Pickup points', 'Members', 'KYC', 'Configuration', 'Pages', 'Menus', 'Files', 'Users', 'Settings', 'Audit log'],
             array_map('trim', $this->texts($sidebar, '//ul[@class="pro-menu"]/li/*[1]//span[@class="pro-menu-text"]'))
         );
         foreach (['dashboard', 'folder', 'file-text', 'container', 'team', 'setting', 'history', 'menu-fold'] as $icon) {
