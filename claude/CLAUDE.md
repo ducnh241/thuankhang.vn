@@ -139,6 +139,8 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   (`member.kyc.image` — chính chủ; `backend.kyc.image` — quyền `kyc/view_document`). Nhật ký (`AuditLog`, ghi tay) chỉ
   ghi thao tác + lý do, không ghi số CCCD / STK. **Đổi APP_KEY thì phải khai báo APP_PREVIOUS_KEYS**, không thì không đọc
   lại được ảnh / số CCCD cũ.
+- Ngày sinh: ô chữ gõ số `dd/mm/yyyy` (bàn phím số, JS `[data-date-input]` tự chèn dấu `/`) thay cho lịch của điện thoại —
+  chọn năm sinh bằng lịch Android phải lướt rất lâu. Máy chủ nhận `d/m/Y` (cả `-`, `.`, dấu cách) và đổi sang `Y-m-d`.
 - Ảnh: JPG / PNG / WEBP, tối đa `MemberKyc::MAX_KILOBYTES` (5 MB) hoặc mức PHP nếu thấp hơn. JS website
   (`[data-kyc-image]`) thu nhỏ ảnh xuống ≤ 480 KB trước khi gửi để hai ảnh lọt cả giới hạn 1 MB mặc định của nginx; máy chủ
   thật vẫn nên đặt `client_max_body_size` ≥ 12M (form KYC, Quản lý file, ảnh sản phẩm).

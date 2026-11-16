@@ -75,6 +75,9 @@ class MemberKycTest extends TestCase
             ->assertSee('<option value="VCB" >Vietcombank</option>', false)
             ->assertSee('name="front_image" type="file" accept="image/jpeg,image/png,image/webp"', false)
             ->assertSee('name="back_image" type="file"', false)
+            // Ngày sinh là ô chữ gõ số (không dùng lịch của điện thoại)
+            ->assertSee('name="birth_date" type="text" value="" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="VD: 20/05/1979" data-date-input', false)
+            ->assertDontSee('type="date"', false)
             ->assertSee('Gửi hồ sơ')->assertDontSee('data-kyc-status', false);
         $this->actingAs($member, 'member')->get('/tai-khoan/kyc/anh/front')->assertNotFound(); // chưa có hồ sơ
     }
@@ -139,7 +142,10 @@ class MemberKycTest extends TestCase
         $errors(['id_number' => '00109001234'])->assertSessionHasErrors(['id_number' => 'Số CCCD gồm đúng 12 chữ số.']);
         $errors(['id_number' => '00109001234a'])->assertSessionHasErrors('id_number');
         $errors(['birth_date' => now()->addDay()->format('Y-m-d')])->assertSessionHasErrors('birth_date');
-        $errors(['birth_date' => '20/05/1990'])->assertSessionHasErrors('birth_date');
+        // Ngày sinh gõ ngày/tháng/năm: ngày không có thật, thiếu năm, sai dạng đều báo lỗi
+        foreach (['31/02/1990', '20/13/1990', '20/05/90', '20/05', '1990', 'hai mươi', '00/05/1990', '20/05/1899'] as $bad) {
+            $errors(['birth_date' => $bad])->assertSessionHasErrors('birth_date');
+        }
         $errors(['bank_code' => 'XYZ'])->assertSessionHasErrors(['bank_code' => 'Chọn ngân hàng trong danh sách.']);
         $errors(['bank_account_number' => '12AB'])->assertSessionHasErrors('bank_account_number');
         // Tên chủ tài khoản phải trùng họ tên trên CCCD (so không dấu, không phân biệt hoa thường)
@@ -154,6 +160,26 @@ class MemberKycTest extends TestCase
 
         $this->assertSame(0, MemberKyc::count());
         $this->assertSame([], Storage::disk('local')->allFiles());
+    }
+
+    public function test_birth_date_is_typed_as_day_month_year(): void
+    {
+        $this->withoutMiddleware(ThrottleRequests::class);
+
+        foreach (['20/05/1979' => '1979-05-20', '5/7/1985' => '1985-07-05', '29-02-2000' => '2000-02-29', '01.12.1968' => '1968-12-01', ' 9 3 1990 ' => '1990-03-09', '1990-05-20' => '1990-05-20'] as $typed => $stored) {
+            $member = $this->member();
+            $this->submit($member, ['birth_date' => $typed, 'id_number' => fake()->unique()->numerify('0010########'), 'bank_account_number' => fake()->unique()->numerify('99########')])
+                ->assertSessionHasNoErrors()->assertSessionHas('success');
+            $this->assertSame($stored, $member->kyc->birth_date->format('Y-m-d'), $typed);
+        }
+
+        // Gửi chưa được (ngày sai, hoặc ngày đúng nhưng ô khác sai): form hiện lại đúng chữ đã gõ
+        $member = $this->member();
+        $this->submit($member, ['birth_date' => '31/02/1990'])->assertSessionHasErrors(['birth_date' => 'Ngày sinh không hợp lệ. Nhập ngày/tháng/năm, vd 20/05/1979.']);
+        $this->actingAs($member, 'member')->get('/tai-khoan/kyc')->assertSee('name="birth_date" type="text" value="31/02/1990"', false);
+        $this->submit($member, ['birth_date' => '5/7/1985', 'id_number' => '123'])->assertSessionHasErrors('id_number')->assertSessionDoesntHaveErrors('birth_date');
+        $this->actingAs($member, 'member')->get('/tai-khoan/kyc')->assertSee('name="birth_date" type="text" value="5/7/1985"', false);
+        $this->submit($member, ['birth_date' => now()->addDay()->format('d/m/Y')])->assertSessionHasErrors(['birth_date' => 'Ngày sinh phải trước hôm nay.']);
     }
 
     public function test_one_id_number_and_one_bank_account_per_member(): void
@@ -191,7 +217,7 @@ class MemberKycTest extends TestCase
         $this->actingAs($member, 'member')->get('/tai-khoan')->assertSee('Không được duyệt')->assertSee('Ảnh mặt sau bị mờ')->assertSee('Gửi lại hồ sơ');
         $this->actingAs($member, 'member')->get('/tai-khoan/kyc')->assertOk()
             ->assertSee('data-kyc-status="rejected"', false)->assertSee('Ảnh mặt sau bị mờ')
-            ->assertSee('name="id_number" value="001090012345"', false)->assertSee('name="birth_date" type="date" value="1990-05-20"', false)
+            ->assertSee('name="id_number" value="001090012345"', false)->assertSee('name="birth_date" type="text" value="20/05/1990" inputmode="numeric"', false)
             ->assertSee('<option value="VCB" selected>Vietcombank</option>', false)->assertSee('Gửi lại hồ sơ');
 
         $this->submit($member, ['bank_code' => 'TCB', 'bank_account_number' => '19031234567890'])->assertRedirect('/tai-khoan/kyc')->assertSessionHas('success');

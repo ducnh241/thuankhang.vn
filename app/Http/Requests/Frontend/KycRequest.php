@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * Hồ sơ KYC của thành viên (S10): họ tên theo CCCD, số CCCD (12 số), ngày sinh, ngân hàng + số tài khoản + tên chủ tài
+ * Hồ sơ KYC của thành viên (S10): họ tên theo CCCD, số CCCD (12 số), ngày sinh (gõ ngày/tháng/năm), ngân hàng + số tài khoản + tên chủ tài
  * khoản, ảnh 2 mặt CCCD. Tên chủ tài khoản phải trùng họ tên trên CCCD (so không dấu). 1 CCCD = 1 tài khoản = 1 số tài
  * khoản ngân hàng: CCCD / số tài khoản đang nằm trong hồ sơ chờ duyệt / đã duyệt của thành viên khác thì chặn.
  */
@@ -60,9 +60,9 @@ class KycRequest extends FormRequest
             'id_number.required' => 'Nhập số CCCD.',
             'id_number.regex' => 'Số CCCD gồm đúng 12 chữ số.',
             'birth_date.required' => 'Nhập ngày sinh.',
-            'birth_date.date_format' => 'Ngày sinh không hợp lệ.',
-            'birth_date.after' => 'Ngày sinh không hợp lệ.',
-            'birth_date.before' => 'Ngày sinh không hợp lệ.',
+            'birth_date.date_format' => 'Ngày sinh không hợp lệ. Nhập ngày/tháng/năm, vd 20/05/1979.',
+            'birth_date.after' => 'Ngày sinh không hợp lệ. Nhập ngày/tháng/năm, vd 20/05/1979.',
+            'birth_date.before' => 'Ngày sinh phải trước hôm nay.',
             'bank_code.required' => 'Chọn ngân hàng.',
             'bank_code.in' => 'Chọn ngân hàng trong danh sách.',
             'bank_account_number.required' => 'Nhập số tài khoản.',
@@ -83,6 +83,11 @@ class KycRequest extends FormRequest
             if (is_string($value = $this->input($field))) {
                 $data[$field] = preg_replace('/[\s.\-]/', '', $value);
             }
+        }
+        // Ngày sinh gõ dạng ngày/tháng/năm (20/05/1979, 5-7-1985…) → Y-m-d; ngày không có thật (31/02) để nguyên cho rule báo lỗi
+        if (is_string($birth = $this->input('birth_date')) && preg_match('#^\s*(\d{1,2})[/.\-\s](\d{1,2})[/.\-\s](\d{4})\s*$#', $birth, $m)
+            && checkdate((int) $m[2], (int) $m[1], (int) $m[3])) {
+            $data['birth_date'] = sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
         }
         if (is_string($holder = $this->input('bank_account_name'))) {
             $data['bank_account_name'] = MemberKyc::normalizeName($holder);

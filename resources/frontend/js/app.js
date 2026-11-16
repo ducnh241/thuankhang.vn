@@ -179,6 +179,65 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
     say('Đã chọn: ' + file.name + ' — bấm vào ảnh để đổi.');
   });
 });
+/*
+ * Ô ngày dạng chữ [data-date-input] (ngày sinh ở form KYC): gõ số, tự chèn dấu "/" thành dd/mm/yyyy. Gõ "5" cho ngày hoặc
+ * "7" cho tháng thì hiểu là 05 / 07; tự gõ dấu / - . hay dấu cách cũng được ("5/7/1985" → 05/07/1985). Rời ô: báo nếu
+ * ngày không có thật, ở tương lai hoặc trước 1900 (máy chủ vẫn kiểm tra lại).
+ */
+function formatDateText(raw, deleting) {
+  const parts = ['', '', ''];
+  let i = 0;
+  for (const ch of raw) {
+    if (/\d/.test(ch)) {
+      if (i < 2) {
+        parts[i] += ch;
+        // Chữ số đầu không thể là hàng chục (ngày > 3, tháng > 1): thêm 0 phía trước
+        if (parts[i].length === 1 && Number(ch) > (i === 0 ? 3 : 1)) parts[i] = '0' + ch;
+        if (parts[i].length === 2) i++;
+      } else if (parts[2].length < 4) {
+        parts[2] += ch;
+      }
+    } else if (i < 2 && parts[i].length === 1) {
+      parts[i] = '0' + parts[i];
+      i++;
+    }
+  }
+  let text = parts[0] + (i >= 1 ? '/' : '') + parts[1] + (i >= 2 ? '/' : '') + parts[2];
+  // Đang xóa lùi: bỏ dấu "/" ở cuối để xóa tiếp được chữ số trước nó
+  if (deleting && text.endsWith('/')) text = text.slice(0, -1);
+  return text;
+}
+function dateTextError(text) {
+  if (text === '') return '';
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
+  if (!m) return 'Nhập đủ ngày/tháng/năm, vd 20/05/1979.';
+  const [day, month, year] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return 'Ngày này không có thật. Kiểm tra lại ngày/tháng/năm.';
+  if (year < 1900) return 'Năm sinh không hợp lệ.';
+  if (date >= new Date(new Date().setHours(0, 0, 0, 0))) return 'Ngày sinh phải trước hôm nay.';
+  return '';
+}
+document.querySelectorAll('[data-date-input]').forEach(input => {
+  const error = input.parentElement.querySelector('[data-date-error]');
+  const showError = text => {
+    if (!error) return;
+    error.textContent = text;
+    error.hidden = !text;
+    input.toggleAttribute('aria-invalid', !!text);
+  };
+  input.addEventListener('input', e => {
+    showError('');
+    // Chỉ định dạng lại khi đang gõ ở cuối ô; sửa giữa chừng thì để nguyên (rời ô sẽ kiểm tra)
+    if (input.selectionStart !== input.value.length) return;
+    input.value = formatDateText(input.value, (e.inputType || '').startsWith('delete'));
+  });
+  input.addEventListener('blur', () => {
+    if (/^\d{1,2}\D\d{1,2}\D\d{4}$/.test(input.value.trim())) input.value = formatDateText(input.value.trim(), false);
+    showError(dateTextError(input.value.trim()));
+  });
+});
+
 // Gửi hồ sơ: khóa nút để không gửi hai lần trong lúc tải ảnh lên
 document.querySelector('[data-kyc-form]')?.addEventListener('submit', e => {
   const button = e.target.querySelector('[data-kyc-submit]');

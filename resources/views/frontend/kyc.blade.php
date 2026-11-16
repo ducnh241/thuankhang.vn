@@ -12,6 +12,9 @@
     $showForm = ! $kyc || $kyc->isRejected();
     // Gửi lại sau khi bị từ chối: điền sẵn thông tin cũ (ảnh phải chọn lại)
     $value = fn (string $field, $default = '') => old($field, $kyc && $kyc->isRejected() ? ($field === 'birth_date' ? $kyc->birth_date?->format('Y-m-d') : $kyc->{$field}) : $default);
+    // Ngày sinh hiện dạng ngày/tháng/năm: hồ sơ cũ lưu Y-m-d → đổi lại; gửi lỗi thì hiện lại đúng chữ thành viên đã gõ
+    $birthDate = (string) $value('birth_date');
+    $birthDate = preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $birthDate, $m) ? "$m[3]/$m[2]/$m[1]" : $birthDate;
     $error = fn (string $field) => $errors->has($field) ? '<p class="mt-1 text-sm text-rose-600">'.e($errors->first($field)).'</p>' : '';
     $input = 'w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none transition focus:ring-2';
     $inputState = fn (string $field) => $errors->has($field) ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100' : 'border-slate-300 focus:border-brand-500 focus:ring-brand-100';
@@ -69,8 +72,12 @@
             </div>
             <div>
               <label for="f_birth_date" class="mb-1.5 block text-sm font-medium text-slate-700">Ngày sinh <span class="text-rose-500">*</span></label>
-              <input id="f_birth_date" name="birth_date" type="date" value="{{ $value('birth_date') }}" max="{{ now()->subDay()->format('Y-m-d') }}" autocomplete="bday" class="{{ $input }} {{ $inputState('birth_date') }}" />
+              {{-- Ô chữ ngày/tháng/năm (không dùng lịch của điện thoại — chọn năm sinh phải lướt rất lâu): bàn phím số, JS tự
+                   chèn dấu "/" ([data-date-input] trong frontend/js/app.js); máy chủ nhận dd/mm/yyyy --}}
+              <input id="f_birth_date" name="birth_date" type="text" value="{{ $birthDate }}" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="VD: 20/05/1979" data-date-input aria-describedby="h_birth_date" class="{{ $input }} {{ $inputState('birth_date') }}" />
+              <p class="mt-1 text-sm text-rose-600" hidden data-date-error></p>
               {!! $error('birth_date') !!}
+              <p id="h_birth_date" class="mt-1 text-xs text-slate-500">Nhập ngày/tháng/năm, chỉ cần gõ số.</p>
             </div>
           </div>
         </section>
