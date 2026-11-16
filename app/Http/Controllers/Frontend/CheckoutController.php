@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\PickupPoint;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\OrderNotifier;
 use App\Support\AffiliateSettings;
 use App\Support\Cart;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
+ * Luồng mua hàng: Thêm vào giỏ / Mua ngay → trang Thanh toán (người nhận + hình thức nhận) → bấm "Thanh toán" → trang đơn
+ * hiện thông tin chuyển khoản đã cấu hình + mã QR → khách chuyển khoản rồi bấm "Tôi đã chuyển khoản" (hoặc hủy đơn).
+ * Có đơn mới thì báo kế toán qua Telegram / email (OrderNotifier, nếu đã cấu hình).
+ *
  * Checkout (S5, Step 5): bắt buộc đăng nhập thành viên. Chọn giao tận nơi (khách trả phí ship — Tham số chung) hoặc nhận
  * tại VP tỉnh (ship = 0). Tạo đơn "Chờ thanh toán", mã = tiền tố (Tham số chung) + 8 ký tự, hạn thanh toán theo Tham số chung; giá lấy giá hiện
  * tại của sản phẩm và lưu snapshot vào order_items. Mỗi thành viên tối đa Order::MAX_OPEN_UNPAID đơn chưa thanh toán.
@@ -116,8 +121,9 @@ class CheckoutController extends Controller
             return redirect()->route('shop.cart')->with('error', 'Không đủ hàng: '.$order.'. Vui lòng giảm số lượng.');
         }
         $cart->clear();
+        OrderNotifier::orderCreated($order); // báo kế toán có đơn mới (gửi sau khi trả trang, lỗi không ảnh hưởng đơn)
 
-        return redirect()->route('member.orders.show', $order)->with('success', "Đã đặt đơn {$order->code}. Vui lòng chuyển khoản để hoàn tất.");
+        return redirect()->route('member.orders.show', $order)->with('success', "Đã tạo đơn {$order->code}. Chuyển khoản theo thông tin bên dưới, rồi bấm “Tôi đã chuyển khoản” để hoàn tất.");
     }
 
     private function limitReached(): RedirectResponse

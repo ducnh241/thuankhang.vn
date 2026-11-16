@@ -50,7 +50,7 @@
                   @endif
                 </div></div>
                 {{ ant_form_error($errors->first($key)) }}
-                @if ($hint || ($settings[$key] === null && $default === null && in_array($key, ['pit_percent', 'bank_code', 'bank_account', 'bank_account_name', 'root_referral_code'], true)))
+                @if ($hint || ($settings[$key] === null && $default === null && in_array($key, ['pit_percent', 'root_referral_code'], true)))
                   <div class="ant-form-item-extra">@if ($settings[$key] === null && $default === null && $key !== 'max_vp_per_province')<span class="ant-tag ant-tag-orange m-0 mr-1">Chưa cấu hình</span>@endif{{ $hint }}</div>
                 @endif
               </div>
@@ -60,6 +60,6 @@
       </div>
     </div>
   @endforeach
-  <p class="ant-typography ant-typography-secondary m-0 text-xs">Ngày trả thưởng KPI sửa ở trang <a href="{{ route('backend.affiliate.kpi.index') }}">KPI tháng</a>.</p>
+  <p class="ant-typography ant-typography-secondary m-0 text-xs">Ngày trả thưởng KPI sửa ở trang <a href="{{ route('backend.affiliate.kpi.index') }}">KPI tháng</a>. Tài khoản nhận tiền và mã QR chuyển khoản sửa ở <a href="{{ route('backend.settings.edit', ['tab' => 'payment']) }}">Cài đặt → Thanh toán</a>.</p>
 </form>
 @endsection

@@ -22,7 +22,8 @@ class CartController extends Controller
         return view('frontend.cart', ['lines' => $lines, 'subtotal' => Cart::subtotal($lines)]);
     }
 
-    /** Thêm vào giỏ (sản phẩm có biến thể: bắt buộc variant_id); "Mua ngay" (buy_now=1) chuyển thẳng sang thanh toán. */
+    /** Thêm vào giỏ (sản phẩm có biến thể: bắt buộc variant_id); "Mua ngay" (buy_now=1) chuyển thẳng sang thanh toán;
+     *  "Thêm vào giỏ" ở lại trang, thông báo kèm nút sang giỏ hàng / thanh toán (cart_added). */
     public function store(Request $request, Cart $cart, Catalog $catalog): RedirectResponse
     {
         $data = $request->validate([
@@ -57,7 +58,7 @@ class CartController extends Controller
 
         return $request->boolean('buy_now')
             ? redirect()->route('shop.checkout')
-            : back()->with('success', "Đã thêm “{$name}” vào giỏ hàng.");
+            : back()->with('success', "Đã thêm “{$name}” vào giỏ hàng.")->with('cart_added', true);
     }
 
     /** Sửa số lượng; vượt tồn kho thì đặt bằng số còn lại và báo. */

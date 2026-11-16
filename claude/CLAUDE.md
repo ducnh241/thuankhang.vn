@@ -124,6 +124,31 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
+## Luồng mua hàng + thông báo cho kế toán (16/11/2026)
+- Luồng: **Thêm vào giỏ** (ở lại trang, thông báo có nút "Xem giỏ hàng" / "Thanh toán") hoặc **Mua ngay** (sang thẳng
+  `/thanh-toan`) → nhập người nhận + hình thức nhận như cũ → bấm **Thanh toán** → tạo đơn, sang trang đơn hiện thông tin
+  chuyển khoản đã cấu hình + mã QR → khách chuyển khoản rồi bấm "Tôi đã chuyển khoản", hoặc "Hủy đơn". Trạng thái đơn
+  không đổi (mục dưới).
+- Thông tin chuyển khoản + mã QR: **Cài đặt → tab "Thanh toán"** (`/backend/setting?tab=payment`): tên ngân hàng, mã ngân
+  hàng VietQR, số tài khoản, tên chủ tài khoản (khóa `pay_*` trong settings — chuyển từ `aff_bank_*` của Tham số chung,
+  migration `2026_11_19_000001`), và **ảnh mã QR của công ty** tải lên (`pay_qr`, disk public `settings/`). Trang đơn: có
+  ảnh QR tải lên thì hiện ảnh đó (khách tự nhập số tiền + nội dung); chưa tải thì tự tạo mã VietQR theo đơn nếu có mã
+  ngân hàng + số tài khoản (`App\Support\VietQr`). **Chỉ Root admin sửa được** các ô này (`SiteSettings::rootOnlyKeys()`)
+  — đây là tài khoản khách chuyển tiền vào.
+- Trang thanh toán và trang đơn của khách **không tách dòng VAT** (giá đã gồm VAT); `orders.vat_amount` vẫn lưu để tính
+  hoa hồng.
+- Thông báo cho kế toán: **Cài đặt → tab "Thông báo"** (`/backend/setting/notification`, trang riêng dùng chung thanh tab
+  `backend/settings/_nav`). Sự kiện (chung cho các kênh): có đơn mới, khách báo đã chuyển khoản. Kênh: **Telegram** (bot
+  token + chat ID) và **Email** (địa chỉ nhận, SMTP: máy chủ / mã hóa / cổng / tài khoản / mật khẩu, người gửi; để trống
+  SMTP thì dùng mailer của `.env` nếu đó là mailer thật). Mỗi kênh có nút gửi thử (dùng cấu hình đã lưu).
+- Code: `App\Support\NotificationSettings` (khóa `notify_*` trong bảng settings), `App\Services\OrderNotifier` (gọi ở
+  `CheckoutController::store` và `OrderController::confirmTransfer`; gửi bằng `defer()` SAU khi trả trang — Telegram / SMTP
+  lỗi không ảnh hưởng đặt hàng, chỉ ghi log), `Backend\NotificationSettingController`.
+- Bảo mật: bot token và mật khẩu SMTP lưu mã hóa (APP_KEY), không hiện lại trên form (để trống = giữ nguyên), không vào
+  nhật ký (controller ghi một dòng tóm tắt). Sửa / gửi thử: quyền `setting/edit` **và** Root admin; người có quyền
+  `setting` chỉ xem. Máy chủ SMTP chỉ nhận tên miền + cổng 25 / 465 / 587 / 2525. Tin chỉ gồm mã đơn, tên người nhận, số
+  tiền, hình thức nhận, link đơn trong quản trị. Test: `tests/Feature/OrderNotificationTest.php`.
+
 ## KYC thành viên (16/11/2026 — phần KYC của Step 9; ví / rút tiền chưa làm)
 - Luồng: thành viên vào Tài khoản → **Xác minh tài khoản (KYC)** `/tai-khoan/kyc` → nhập họ tên theo CCCD, số CCCD (12 số),
   ngày sinh, ngân hàng (`config/banks.php`) + số tài khoản + tên chủ tài khoản, tải ảnh 2 mặt CCCD → gửi. Quản trị duyệt ở

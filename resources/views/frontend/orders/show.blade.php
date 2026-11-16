@@ -7,7 +7,7 @@
     use App\Support\Money;
 
     $status = $order->displayStatus();
-    $hasBank = $bank['code'] && $bank['account'];
+    $hasBank = \App\Support\VietQr::configured($bank);
     $copy = 'rounded border border-slate-300 bg-white px-2 py-0.5 font-sans text-xs font-normal text-slate-700 hover:border-brand-500';
 @endphp
 @section('title', 'Đơn '.$order->code)
@@ -30,12 +30,12 @@
           <div class="mt-4 flex flex-col gap-6 md:flex-row md:items-start">
             @if ($qr)
               <figure class="mx-auto w-56 shrink-0 rounded-xl bg-white p-2 shadow-sm md:mx-0">
-                <img src="{{ $qr }}" alt="Mã QR chuyển khoản đơn {{ $order->code }}" width="220" height="220" class="w-full" data-qr />
-                <figcaption class="mt-1 text-center text-xs text-slate-500">Quét bằng app ngân hàng</figcaption>
+                <img src="{{ $qr }}" alt="Mã QR chuyển khoản đơn {{ $order->code }}" width="220" height="220" class="w-full" data-qr="{{ $qrIsStatic ? 'uploaded' : 'vietqr' }}" />
+                <figcaption class="mt-1 text-center text-xs text-slate-500">{{ $qrIsStatic ? 'Quét bằng app ngân hàng, rồi nhập đúng số tiền và nội dung' : 'Quét bằng app ngân hàng' }}</figcaption>
               </figure>
             @endif
             <dl class="grid flex-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[150px_minmax(0,1fr)]">
-              <dt class="text-slate-600">Ngân hàng</dt><dd class="font-semibold text-slate-900">{{ $bank['code'] }}</dd>
+              <dt class="text-slate-600">Ngân hàng</dt><dd class="font-semibold text-slate-900">{{ $bank['label'] }}</dd>
               <dt class="text-slate-600">Số tài khoản</dt>
               <dd class="flex items-center gap-2 font-mono font-semibold text-slate-900">{{ $bank['account'] }} <button type="button" class="{{ $copy }}" data-copy="{{ $bank['account'] }}">Sao chép</button></dd>
               @if ($bank['name'])<dt class="text-slate-600">Chủ tài khoản</dt><dd class="font-semibold text-slate-900">{{ $bank['name'] }}</dd>@endif
@@ -89,7 +89,7 @@
           @endforeach
         </ul>
         <dl class="space-y-2 border-t border-slate-100 px-5 py-4 text-sm">
-          <div class="flex justify-between"><dt class="text-slate-500">Tiền hàng (gồm VAT {{ Money::format($order->vat_amount) }}đ)</dt><dd>{{ Money::format($order->goods_amount) }}đ</dd></div>
+          <div class="flex justify-between"><dt class="text-slate-500">Tiền hàng</dt><dd>{{ Money::format($order->goods_amount) }}đ</dd></div>
           <div class="flex justify-between"><dt class="text-slate-500">Phí giao hàng</dt><dd>{{ Money::format($order->shipping_fee) }}đ</dd></div>
           <div class="flex justify-between text-base"><dt class="font-semibold">Tổng thanh toán</dt><dd class="font-bold text-brand-700">{{ Money::format($order->total_amount) }}đ</dd></div>
         </dl>

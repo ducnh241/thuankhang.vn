@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Cài đặt website (trang Cài đặt, theo settings.html của template): tên site, logo, favicon, liên hệ, chân trang,
- * bản đồ, mạng xã hội, SEO mặc định, mã theo dõi. Lưu từng khóa vào bảng settings sẵn có (key / value), dùng cho
+ * bản đồ, thông tin chuyển khoản + ảnh mã QR (tab Thanh toán), mạng xã hội, SEO mặc định, mã theo dõi. Lưu từng khóa vào bảng settings sẵn có (key / value), dùng cho
  * website bên ngoài; trang quản trị chỉ soạn và xem trước.
  */
 class SiteSettings
@@ -30,15 +30,29 @@ class SiteSettings
     public const TEXT_KEYS = [
         'site_name', 'site_hotline', 'site_email', 'site_address', 'site_footer', 'site_map',
         'seo_title', 'seo_description', 'seo_keywords', 'code_head', 'code_body', 'code_bottom',
+        ...self::PAYMENT_KEYS,
     ];
 
-    public const IMAGE_KEYS = ['site_logo', 'site_favicon'];
+    public const IMAGE_KEYS = ['site_logo', 'site_favicon', 'pay_qr'];
+
+    /**
+     * Thông tin chuyển khoản (tab Thanh toán) hiện cho khách ở trang đơn: tên ngân hàng, mã ngân hàng VietQR (để tự tạo mã
+     * QR theo đơn), số tài khoản, tên chủ tài khoản; pay_qr = ảnh mã QR của công ty tải lên. Đây là nơi tiền của khách
+     * chuyển về nên chỉ Root admin được sửa (như mã theo dõi).
+     */
+    public const PAYMENT_KEYS = ['pay_bank_name', 'pay_bank_code', 'pay_bank_account', 'pay_account_name'];
 
     /**
      * Mã theo dõi (tab Tracking): in nguyên văn vào mọi trang website — cùng tên miền với trang quản trị, nên ai sửa được
      * các ô này là chạy được JavaScript tùy ý trong phiên của người quản trị khác. Chỉ Root admin được sửa.
      */
     public const CODE_KEYS = ['code_head', 'code_body', 'code_bottom'];
+
+    /** Các ô chỉ Root admin sửa được: mã theo dõi + thông tin chuyển khoản. */
+    public static function rootOnlyKeys(): array
+    {
+        return [...self::CODE_KEYS, ...self::PAYMENT_KEYS, 'pay_qr'];
+    }
 
     public static function socialKeys(): array
     {

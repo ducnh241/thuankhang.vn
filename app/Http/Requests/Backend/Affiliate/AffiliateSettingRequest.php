@@ -45,7 +45,6 @@ class AffiliateSettingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'bank_account.regex' => 'Số tài khoản chỉ gồm chữ số (và chữ in hoa).',
             'root_referral_code.regex' => 'Mã giới thiệu chỉ gồm chữ in hoa và số.',
         ];
     }

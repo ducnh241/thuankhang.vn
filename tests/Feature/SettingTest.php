@@ -7,6 +7,7 @@ use App\Models\Group;
 use App\Models\Setting;
 use App\Models\User;
 use App\Support\SiteSettings;
+use App\Support\VietQr;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -232,5 +233,63 @@ class SettingTest extends TestCase
         $this->actingAs($root)->put('/backend/setting', $this->valid(['seo_keywords' => [['lồng']]]))->assertSessionHasErrors('seo_keywords.0');
         $this->actingAs($root)->get('/backend/setting?tab[]=seo')->assertOk()->assertSee('id="page-title">Chung</h1>', false);
         $this->actingAs($root)->get('/backend/setting')->assertOk();
+    }
+
+    public function test_payment_tab_bank_info_and_qr_are_root_only(): void
+    {
+        Storage::fake('public');
+        $root = $this->root();
+
+        // Tab Thanh toán: ô thông tin chuyển khoản + ô tải ảnh mã QR
+        $this->actingAs($root)->get('/backend/setting?tab=payment')->assertOk()
+            ->assertSee('<h1 class="page-topbar-title" id="page-title">Thanh toán</h1>', false)
+            ->assertSee('data-tab="payment"', false)->assertSee('id="settings-payment"', false)
+            ->assertSee('name="pay_bank_name"', false)->assertSee('name="pay_bank_code"', false)->assertSee('name="pay_bank_account"', false)->assertSee('name="pay_account_name"', false)
+            ->assertSee('data-image-field="payment_qr"', false)->assertSee('name="payment_qr"', false)->assertSee('Chưa cấu hình');
+
+        $this->actingAs($root)->put('/backend/setting', $this->valid(['_tab' => 'payment', 'pay_bank_name' => ' Vietcombank   CN Hà Nội ', 'pay_bank_code' => ' vcb ',
+            'pay_bank_account' => '0011 0012 34567', 'pay_account_name' => 'cong ty  tnhh thuan khang', 'payment_qr' => UploadedFile::fake()->image('qr.png', 600, 600),
+        ]))->assertRedirect(route('backend.settings.edit', ['tab' => 'payment']))->assertSessionHas('success');
+        $settings = SiteSettings::all();
+        $this->assertSame(['Vietcombank CN Hà Nội', 'VCB', '0011001234567', 'CONG TY TNHH THUAN KHANG'],
+            [$settings['pay_bank_name'], $settings['pay_bank_code'], $settings['pay_bank_account'], $settings['pay_account_name']]);
+        $qr = $settings['pay_qr'];
+        $this->assertStringStartsWith('settings/', $qr);
+        Storage::disk('public')->assertExists($qr);
+        $bank = VietQr::bank();
+        $this->assertSame(['Vietcombank CN Hà Nội', '0011001234567', 'CONG TY TNHH THUAN KHANG', Storage::disk('public')->url($qr)], [$bank['label'], $bank['account'], $bank['name'], $bank['qr_image']]);
+        $this->assertTrue(VietQr::configured());
+        $this->actingAs($root)->get('/backend/setting?tab=payment')->assertSee('name="pay_bank_account" value="0011001234567"', false)
+            ->assertSee(Storage::disk('public')->url($qr), false)->assertDontSee('Chưa cấu hình');
+
+        // Lỗi: mở lại đúng tab Thanh toán
+        $this->actingAs($root)->from('/backend/setting')->put('/backend/setting', $this->valid(['pay_bank_account' => '0011-ABC!']))->assertSessionHasErrors('pay_bank_account');
+        $this->actingAs($root)->from('/backend/setting')->followingRedirects()->put('/backend/setting', $this->valid(['pay_bank_account' => '0011-ABC!']))->assertOk()
+            ->assertSee('<h1 class="page-topbar-title" id="page-title">Thanh toán</h1>', false)->assertSee('Số tài khoản chỉ gồm chữ số (và chữ in hoa).');
+        $this->actingAs($root)->from('/backend/setting')->put('/backend/setting', $this->valid(['payment_qr' => UploadedFile::fake()->create('qr.svg', 10, 'image/svg+xml')]))
+            ->assertSessionHasErrors(['payment_qr' => 'Ảnh mã QR phải là ảnh PNG, JPG hoặc WEBP.']);
+        $this->actingAs($root)->from('/backend/setting')->put('/backend/setting', $this->valid(['payment_qr' => UploadedFile::fake()->image('to.png')->size(2049)]))
+            ->assertSessionHasErrors(['payment_qr' => 'Ảnh mã QR tối đa 2 MB.']);
+
+        // Người có quyền sửa Cài đặt nhưng không phải Root admin: thấy nhưng không sửa được tài khoản nhận tiền / ảnh QR
+        $editor = User::factory()->create(['group_id' => Group::factory()->withPermissions('setting', 'setting/edit')->create()->id]);
+        $this->actingAs($editor)->get('/backend/setting?tab=payment')->assertOk()
+            ->assertSee('Chỉ Root admin được sửa thông tin chuyển khoản và mã QR')->assertSee('data-card="payment-bank"  inert', false);
+        $this->actingAs($editor)->put('/backend/setting', $this->valid(['site_name' => 'Tên mới', 'pay_bank_account' => '999999999', 'pay_account_name' => 'KE GIAN',
+            'payment_qr' => UploadedFile::fake()->image('qr-gia.png', 600, 600), 'remove_payment_qr' => '1',
+        ]))->assertSessionHas('success');
+        $settings = SiteSettings::all();
+        $this->assertSame(['Tên mới', '0011001234567', 'CONG TY TNHH THUAN KHANG', $qr], [$settings['site_name'], $settings['pay_bank_account'], $settings['pay_account_name'], $settings['pay_qr']]);
+        Storage::disk('public')->assertExists($qr);
+
+        // Root admin thay ảnh: ảnh cũ bị xóa; bỏ ảnh: xóa file
+        $this->actingAs($root)->put('/backend/setting', $this->valid(['pay_bank_account' => '0011001234567', 'payment_qr' => UploadedFile::fake()->image('qr2.jpg', 600, 600)]));
+        $new = SiteSettings::all()['pay_qr'];
+        $this->assertNotSame($qr, $new);
+        Storage::disk('public')->assertMissing($qr);
+        $this->actingAs($root)->put('/backend/setting', $this->valid(['remove_payment_qr' => '1']));
+        $this->assertSame('', SiteSettings::all()['pay_qr']);
+        Storage::disk('public')->assertMissing($new);
+        $this->assertFalse(VietQr::configured()); // lần lưu cuối không gửi số tài khoản → đã xóa
     }
 }

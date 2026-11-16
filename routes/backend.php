@@ -16,6 +16,7 @@ use App\Http\Controllers\Backend\GroupController;
 use App\Http\Controllers\Backend\KycController;
 use App\Http\Controllers\Backend\MemberController;
 use App\Http\Controllers\Backend\MenuController;
+use App\Http\Controllers\Backend\NotificationSettingController;
 use App\Http\Controllers\Backend\OrderController;
 use App\Http\Controllers\Backend\PageController;
 use App\Http\Controllers\Backend\PickupPointController;
@@ -140,9 +141,14 @@ Route::prefix('backend')->group(function () {
         Route::get('menu/create', [MenuController::class, 'legacy'])->can('menu');
         Route::get('menu/{menu}/edit', [MenuController::class, 'legacy'])->can('menu');
 
-        // Cài đặt website (quyền: setting, setting/edit) — một form, 4 tab (?tab=general|social|seo|tracking)
+        // Cài đặt website (quyền: setting, setting/edit) — một form, 5 tab (?tab=general|payment|social|seo|tracking)
         Route::get('setting', [SettingController::class, 'edit'])->name('settings.edit')->can('setting');
         Route::put('setting', [SettingController::class, 'update'])->name('settings.update')->can('setting/edit');
+        // Tab "Thông báo" của Cài đặt: Telegram + email báo đơn hàng cho kế toán (sửa / gửi thử: thêm điều kiện Root admin)
+        Route::get('setting/notification', [NotificationSettingController::class, 'edit'])->name('settings.notification.edit')->can('setting');
+        Route::put('setting/notification', [NotificationSettingController::class, 'update'])->name('settings.notification.update')->can('setting/edit');
+        Route::post('setting/notification/test/{channel}', [NotificationSettingController::class, 'test'])->name('settings.notification.test')
+            ->can('setting/edit')->whereIn('channel', ['telegram', 'mail'])->middleware('throttle:6,1');
 
         // Danh mục mọi loại trên một trang: /category?type=project&id=3 (?new: thêm mới) — Category::KINDS.
         // Gate 'category[/add|/edit|/delete]' nhận {kind} → quyền news_category/…; trang chỉ hiện

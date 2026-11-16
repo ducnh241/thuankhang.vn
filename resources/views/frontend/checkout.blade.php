@@ -1,7 +1,8 @@
 @extends('frontend.layouts.app')
 
 {{-- Thanh toán (S5): người nhận, hình thức nhận (giao tận nơi: tỉnh + địa chỉ, có phí ship; nhận tại VP: tỉnh → điểm,
-     hiện địa chỉ / giờ mở cửa, miễn phí), ghi chú, tóm tắt đơn. JS: [data-checkout] trong frontend/js/app.js. --}}
+     hiện địa chỉ / giờ mở cửa, miễn phí), ghi chú, tóm tắt đơn (không tách VAT — giá sản phẩm đã gồm VAT), nút "Thanh toán"
+     tạo đơn rồi sang trang đơn có thông tin chuyển khoản + mã QR. JS: [data-checkout] trong frontend/js/app.js. --}}
 @php
     use App\Models\Order;
     use App\Models\PickupPoint;
@@ -114,12 +115,12 @@
           @endforeach
         </ul>
         <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
-          <div class="flex justify-between"><dt class="text-slate-500">Tiền hàng (gồm VAT)</dt><dd class="font-medium">{{ Money::format($subtotal) }}đ</dd></div>
+          <div class="flex justify-between"><dt class="text-slate-500">Tiền hàng</dt><dd class="font-medium">{{ Money::format($subtotal) }}đ</dd></div>
           <div class="flex justify-between"><dt class="text-slate-500">Phí giao hàng</dt><dd class="font-medium" data-summary-shipping>{{ Money::format($delivery === Order::DELIVERY_PICKUP ? 0 : $shippingFee) }}đ</dd></div>
           <div class="flex justify-between border-t border-slate-100 pt-3 text-base"><dt class="font-semibold text-slate-900">Tổng thanh toán</dt><dd class="font-bold text-brand-700" data-summary-total>{{ Money::format($subtotal + ($delivery === Order::DELIVERY_PICKUP ? 0 : $shippingFee)) }}đ</dd></div>
         </dl>
-        <button type="submit" class="mt-5 w-full rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700">Đặt hàng</button>
-        <p class="mt-3 text-xs text-slate-500">Sau khi đặt, bạn chuyển khoản đúng số tiền và nội dung là mã đơn để đơn được xác nhận.</p>
+        <button type="submit" class="mt-5 w-full rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700" data-checkout-submit>Thanh toán</button>
+        <p class="mt-3 text-xs text-slate-500">Bấm Thanh toán để nhận thông tin chuyển khoản và mã QR. Chuyển khoản xong, bấm “Tôi đã chuyển khoản” để hoàn tất đơn.</p>
         <a href="{{ route('shop.cart') }}" class="mt-3 block text-center text-sm text-brand-700 hover:underline">Quay lại giỏ hàng</a>
       </aside>
     </form>

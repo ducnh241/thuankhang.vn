@@ -18,6 +18,7 @@ class SettingController extends Controller
     /** Tab của trang (?tab=…): khóa => [tên, icon, các ô thuộc tab — để mở đúng tab có lỗi]. */
     public const TABS = [
         'general' => ['Chung', 'setting', ['site_', 'logo', 'favicon']],
+        'payment' => ['Thanh toán', 'credit-card', ['pay_', 'payment_qr']],
         'social' => ['Mạng xã hội', 'share-alt', ['social_']],
         'seo' => ['SEO', 'global', ['seo_']],
         'tracking' => ['Tracking', 'code', ['code_']],
@@ -39,6 +40,7 @@ class SettingController extends Controller
             'tab' => $tab,
             'canEdit' => $request->user()->can('setting/edit'),
             'canEditCode' => $request->user()->isSuperAdmin(),
+            'isRoot' => $request->user()->isSuperAdmin(),
         ]);
     }
 
@@ -49,7 +51,9 @@ class SettingController extends Controller
 
         // Ảnh: chọn ảnh mới thì thay ảnh cũ; bỏ ảnh thì xóa. Ảnh cũ chỉ xóa sau khi lưu xong.
         $oldImages = [];
-        foreach (['logo' => 'site_logo', 'favicon' => 'site_favicon'] as $field => $key) {
+        // Ảnh mã QR chuyển khoản (tab Thanh toán): chỉ Root admin thay / bỏ được
+        $imageFields = ['logo' => 'site_logo', 'favicon' => 'site_favicon', ...($request->user()->isSuperAdmin() ? ['payment_qr' => 'pay_qr'] : [])];
+        foreach ($imageFields as $field => $key) {
             if ($request->hasFile($field)) {
                 $values[$key] = $request->file($field)->store(SiteSettings::IMAGE_DIRECTORY, 'public');
                 $oldImages[] = $current[$key];

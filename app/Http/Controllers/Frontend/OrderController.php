@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Order;
+use App\Services\OrderNotifier;
 use App\Support\VietQr;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,8 +31,10 @@ class OrderController extends Controller
 
         return view('frontend.orders.show', [
             'order' => $order->load(['items.product.cover', 'items.variant.image', 'pickupPoint']),
-            'bank' => VietQr::bank(),
-            'qr' => $order->isAwaitingPayment() ? VietQr::imageUrl($order) : null,
+            'bank' => $bank = VietQr::bank(),
+            // Ảnh mã QR công ty tải lên (ưu tiên), không có thì mã VietQR tự tạo theo đơn
+            'qr' => $order->isAwaitingPayment() ? ($bank['qr_image'] ?? VietQr::imageUrl($order, $bank)) : null,
+            'qrIsStatic' => (bool) $bank['qr_image'],
         ]);
     }
 
@@ -50,6 +53,10 @@ class OrderController extends Controller
 
             return true;
         });
+
+        if ($done) {
+            OrderNotifier::orderTransferred($order->refresh()->load('pickupPoint')); // báo kế toán vào xác nhận thanh toán
+        }
 
         return back()->with($done ? 'success' : 'error', $done
             ? 'Cảm ơn bạn! Chúng tôi sẽ đối chiếu và xác nhận thanh toán sớm nhất.'

@@ -1,6 +1,7 @@
 @extends('layouts.backend')
 
-{{-- Cài đặt website (theo settings.html của template): một form, 4 tab (?tab=general|social|seo|tracking) chuyển bằng JS, thanh
+{{-- Cài đặt website (theo settings.html của template): một form, 5 tab (?tab=general|payment|social|seo|tracking) chuyển bằng JS
+     (tab "Thông báo" là trang riêng settings/notification), thanh
      trên cùng "Cài đặt › tab" có dải "Chưa lưu thay đổi". Lưu vào bảng settings sẵn có (App\Support\SiteSettings), dùng
      cho website bên ngoài. Chỉ có quyền xem (thiếu setting/edit): các ô khóa lại (inert), không có nút lưu.
      JS: settings.js (tab, ảnh, chân trang Tiptap, xem trước), edit-form.js (thay đổi chưa lưu). --}}
@@ -55,11 +56,7 @@
   @method('PUT')
   <input type="hidden" name="_tab" value="{{ $tab }}" />
 
-  <nav class="ant-card ant-card-bordered settings-nav" role="tablist" aria-label="Các mục cài đặt">
-    @foreach (SettingController::TABS as $key => [$label, $tabIcon])
-      <button type="button" @class(['settings-tab', 'is-active' => $key === $tab]) role="tab" data-tab="{{ $key }}" aria-selected="{{ $key === $tab ? 'true' : 'false' }}" aria-controls="settings-{{ $key }}">{{ ant_icon($tabIcon) }}<span>{{ $label }}</span></button>
-    @endforeach
-  </nav>
+  @include('backend.settings._nav', ['active' => $tab])
 
   <div class="flex min-w-0 flex-col gap-4">
     @unless ($canEdit)
@@ -86,39 +83,7 @@
             </div>
             <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
               @foreach ($images as $field => [$key, $label, $accept, $maxSize, $hint, $typeMessage, $sizeMessage])
-                @php $src = SiteSettings::imageUrl($settings[$key]); @endphp
-                {{-- Chọn ảnh thì xem trước ngay, lưu form mới tải lên; ⓧ trên ảnh = bỏ ảnh --}}
-                <div class="ant-row ant-form-item mb-0{{ $hasError($field) }}" data-image-field="{{ $field }}" data-max-size="{{ $maxSize }}" data-type-message="{{ $typeMessage }}" data-size-message="{{ $sizeMessage }}">
-                  <div class="ant-col ant-form-item-label"><label for="{{ $field }}-file" title="{{ $label }}">{{ $label }}</label></div>
-                  <div class="ant-col ant-form-item-control">
-                    <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                      <div class="ant-upload-picture-card-wrapper">
-                        <div class="ant-upload-list ant-upload-list-picture-card settings-image" data-current="{{ $src }}">
-                          @if ($src)
-                            <div class="ant-upload-list-picture-card-container">
-                              <div class="ant-upload-list-item ant-upload-list-item-done ant-upload-list-item-list-type-picture-card">
-                                <div class="ant-upload-list-item-info">
-                                  <span><a class="ant-upload-list-item-thumbnail" href="{{ $src }}" target="_blank" rel="noopener noreferrer"><img src="{{ $src }}" alt="" class="ant-upload-list-item-image" /></a></span>
-                                </div>
-                                <span class="ant-upload-list-item-actions"><a href="{{ $src }}" target="_blank" rel="noopener noreferrer" title="Xem ảnh">{{ ant_icon('eye') }}</a><button title="Bỏ ảnh" type="button" class="ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only remove-file">{{ ant_icon('delete') }}</button></span>
-                              </div>
-                            </div>
-                          @endif
-                          <div @class(['ant-upload ant-upload-select ant-upload-select-picture-card', 'hidden' => $src])>
-                            <span tabindex="0" class="ant-upload" role="button" data-image-pick aria-label="Chọn {{ mb_strtolower($label) }}">
-                              <div>{{ ant_icon('plus') }}<div class="mt-2">Tải lên</div></div>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      {{-- Ô chọn tệp thật nằm ngoài khung .ant-upload (controls.js xóa tệp của ô nằm trong khung sau khi đọc) --}}
-                      <input type="file" name="{{ $field }}" id="{{ $field }}-file" accept="{{ $accept }}" class="hidden" />
-                      <input type="checkbox" name="remove_{{ $field }}" value="1" class="hidden" data-image-remove />
-                    </div></div>
-                    {!! $error($field) !!}
-                    <div class="ant-form-item-extra">{{ $hint }}</div>
-                  </div>
-                </div>
+                @include('backend.settings._image')
               @endforeach
             </div>
           </div>
@@ -196,6 +161,58 @@
               </div>
             </div>
             <div class="settings-map hidden" id="site-map-preview"></div>
+          </div>
+        </div>
+      </section>
+
+      {{-- Tab Thanh toán: thông tin chuyển khoản + ảnh mã QR của công ty, hiện cho khách ở trang đơn sau khi bấm Thanh toán.
+           Chỉ Root admin sửa được (đây là nơi tiền của khách chuyển về). --}}
+      <section @class(['flex flex-col gap-4', 'hidden' => $tab !== 'payment']) id="settings-payment" role="tabpanel" data-panel="payment">
+        @unless ($isRoot)
+          <div class="ant-alert ant-alert-info" role="note">
+            <span class="ant-alert-icon">{{ ant_icon('exclamation-circle') }}</span>
+            <div class="ant-alert-content"><div class="ant-alert-message">Chỉ Root admin được sửa thông tin chuyển khoản và mã QR — đây là tài khoản khách chuyển tiền vào.</div></div>
+          </div>
+        @endunless
+        <div class="ant-card ant-card-bordered" data-card="payment-bank" @unless ($isRoot) inert @endunless>
+          <div class="ant-card-head"><div class="ant-card-head-wrapper">
+            <div class="ant-card-head-title">Thông tin chuyển khoản</div>
+            <div class="ant-card-extra">@if ($settings['pay_bank_account'] === '')<span class="ant-tag ant-tag-orange m-0">Chưa cấu hình</span>@endif</div>
+          </div></div>
+          <div class="ant-card-body">
+            <p class="settings-card-desc">Hiện cho khách ở trang đơn hàng sau khi bấm Thanh toán, kèm số tiền và nội dung chuyển khoản (mã đơn).</p>
+            <div class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+              @foreach ([
+                  'pay_bank_name' => ['Tên ngân hàng', 100, 'VD: Vietcombank – CN Hà Nội', '', 'Tên hiện cho khách.'],
+                  'pay_bank_code' => ['Mã ngân hàng (VietQR)', 20, 'VD: VCB hoặc 970436', 'uppercase', 'Tên viết tắt hoặc mã BIN theo VietQR. Có mã này thì hệ thống tự tạo mã QR theo từng đơn khi chưa tải ảnh QR.'],
+                  'pay_bank_account' => ['Số tài khoản', 30, 'VD: 0011001234567', 'uppercase tabular-nums', ''],
+                  'pay_account_name' => ['Tên chủ tài khoản', 100, 'VD: CONG TY TNHH THUAN KHANG', 'uppercase', 'In hoa, không dấu, đúng như trên ngân hàng.'],
+              ] as $name => [$label, $max, $placeholder, $class, $hint])
+                <div class="ant-row ant-form-item{{ $hasError($name) }}">
+                  <div class="ant-col ant-form-item-label"><label for="{{ $name }}" title="{{ $label }}">{{ $label }}</label></div>
+                  <div class="ant-col ant-form-item-control">
+                    <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
+                      <input type="text" id="{{ $name }}" name="{{ $name }}" value="{{ $value($name) }}" class="ant-input placeholder:normal-case {{ $class }}" maxlength="{{ $max }}" placeholder="{{ $placeholder }}" spellcheck="false" />
+                    </div></div>
+                    {!! $error($name) !!}
+                    @if ($hint)<div class="ant-form-item-extra">{{ $hint }}</div>@endif
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        </div>
+
+        <div class="ant-card ant-card-bordered" data-card="payment-qr" @unless ($isRoot) inert @endunless>
+          <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Mã QR chuyển khoản</div></div></div>
+          <div class="ant-card-body">
+            <p class="settings-card-desc">Tải ảnh mã QR của tài khoản công ty (lưu từ app ngân hàng). Khách quét mã này ở trang đơn rồi nhập số tiền và nội dung chuyển khoản.</p>
+            @php
+                [$field, $key, $label, $accept, $maxSize, $hint, $typeMessage, $sizeMessage] = ['payment_qr', 'pay_qr', 'Ảnh mã QR', 'image/png,image/jpeg,image/webp', 2 * 1024 * 1024,
+                    'PNG, JPG hoặc WEBP, tối đa 2 MB. Không tải ảnh: nếu đã nhập mã ngân hàng và số tài khoản thì hệ thống tự tạo mã VietQR có sẵn số tiền và mã đơn.',
+                    'Chọn ảnh PNG, JPG hoặc WEBP.', 'Ảnh mã QR tối đa 2 MB.'];
+            @endphp
+            @include('backend.settings._image')
           </div>
         </div>
       </section>

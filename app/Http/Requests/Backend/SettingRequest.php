@@ -4,6 +4,7 @@ namespace App\Http\Requests\Backend;
 
 use App\Support\SiteSettings;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class SettingRequest extends FormRequest
 {
@@ -14,6 +15,13 @@ class SettingRequest extends FormRequest
             // Không nhận SVG: ảnh nằm cùng tên miền, SVG có thể chứa mã chạy khi mở trực tiếp
             'logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
             'favicon' => ['nullable', 'file', 'mimes:png,ico,webp', 'max:512'],
+            // Tab Thanh toán: thông tin chuyển khoản + ảnh mã QR của công ty
+            'pay_bank_name' => ['nullable', 'string', 'max:100'],
+            'pay_bank_code' => ['nullable', 'string', 'max:20', 'regex:/^[0-9A-Z]+$/'],
+            'pay_bank_account' => ['nullable', 'string', 'max:30', 'regex:/^[0-9A-Z]+$/'],
+            'pay_account_name' => ['nullable', 'string', 'max:100'],
+            'payment_qr' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+            'remove_payment_qr' => ['nullable', 'boolean'],
             'remove_logo' => ['nullable', 'boolean'],
             'remove_favicon' => ['nullable', 'boolean'],
             'site_hotline' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+().\s-]+$/'],
@@ -48,6 +56,8 @@ class SettingRequest extends FormRequest
             'site_map' => 'bản đồ', 'seo_title' => 'tiêu đề', 'seo_description' => 'mô tả', 'seo_keywords' => 'từ khóa',
             'seo_keywords.*' => 'từ khóa', 'code_head' => 'mã trong head', 'code_body' => 'mã đầu body',
             'code_bottom' => 'mã cuối body',
+            'pay_bank_name' => 'tên ngân hàng', 'pay_bank_code' => 'mã ngân hàng', 'pay_bank_account' => 'số tài khoản',
+            'pay_account_name' => 'tên chủ tài khoản', 'payment_qr' => 'ảnh mã QR',
         ];
         foreach (SiteSettings::SOCIALS as $key => [$label]) {
             $names['social_'.$key] = 'link '.$label;
@@ -61,6 +71,10 @@ class SettingRequest extends FormRequest
         $messages = [
             'logo.mimes' => 'Logo phải là ảnh PNG, JPG hoặc WEBP.',
             'favicon.mimes' => 'Favicon phải là ảnh PNG, ICO hoặc WEBP.',
+            'payment_qr.mimes' => 'Ảnh mã QR phải là ảnh PNG, JPG hoặc WEBP.',
+            'payment_qr.max' => 'Ảnh mã QR tối đa 2 MB.',
+            'pay_bank_code.regex' => 'Mã ngân hàng chỉ gồm chữ in hoa và số (VD: VCB hoặc 970436).',
+            'pay_bank_account.regex' => 'Số tài khoản chỉ gồm chữ số (và chữ in hoa).',
             'site_hotline.regex' => 'Hotline chỉ gồm số, dấu cách và các dấu + - . ( ).',
             'seo_keywords.max' => 'Tối đa 30 từ khóa.',
             'seo_keywords.*.not_regex' => 'Từ khóa không được chứa dấu phẩy.',
@@ -78,16 +92,30 @@ class SettingRequest extends FormRequest
         if (is_array($keywords = $this->input('seo_keywords'))) {
             $this->merge(['seo_keywords' => array_values(array_filter($keywords, fn ($k) => $k !== null && $k !== ''))]);
         }
+        // Thông tin chuyển khoản: mã ngân hàng / số tài khoản bỏ khoảng trắng + in hoa; tên chủ tài khoản in hoa, gọn khoảng trắng
+        $data = [];
+        foreach (['pay_bank_code', 'pay_bank_account'] as $key) {
+            if (is_string($value = $this->input($key))) {
+                $data[$key] = Str::upper(preg_replace('/[\s.\-]/', '', $value));
+            }
+        }
+        if (is_string($name = $this->input('pay_account_name'))) {
+            $data['pay_account_name'] = Str::upper(Str::squish($name));
+        }
+        if (is_string($bank = $this->input('pay_bank_name'))) {
+            $data['pay_bank_name'] = Str::squish($bank);
+        }
+        $this->merge($data);
     }
 
-    /** Giá trị lưu vào bảng settings (logo / favicon xử lý riêng ở controller). Ô trống → null. Mã theo dõi: chỉ Root admin. */
+    /** Giá trị lưu vào bảng settings (logo / favicon / ảnh QR xử lý riêng ở controller). Ô trống → null. Mã theo dõi và thông tin chuyển khoản: chỉ Root admin. */
     public function settings(): array
     {
         $data = [];
-        $canEditCode = $this->user()->isSuperAdmin();
+        $isRoot = $this->user()->isSuperAdmin();
         foreach ([...SiteSettings::TEXT_KEYS, ...SiteSettings::socialKeys()] as $key) {
-            // Mã theo dõi: không phải Root admin thì giữ nguyên giá trị đang lưu, kể cả khi tự gửi ô này lên
-            if (! $canEditCode && in_array($key, SiteSettings::CODE_KEYS, true)) {
+            // Mã theo dõi, thông tin chuyển khoản: không phải Root admin thì giữ nguyên giá trị đang lưu, kể cả khi tự gửi lên
+            if (! $isRoot && in_array($key, SiteSettings::rootOnlyKeys(), true)) {
                 continue;
             }
             $value = $this->validated($key);

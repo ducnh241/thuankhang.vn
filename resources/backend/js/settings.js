@@ -6,7 +6,7 @@ import initImage from './image-field';
 
 /*
  * Trang Cài đặt (backend/settings/edit.blade.php, theo template settings.js; ?tab=general|social|seo|tracking): một form
- * cho cả 4 tab, chuyển tab không tải lại trang. Dải "Chưa lưu thay đổi" / chống bấm đúp / hỏi khi rời trang: edit-form.js.
+ * cho cả 5 tab, chuyển tab không tải lại trang. Dải "Chưa lưu thay đổi" / chống bấm đúp / hỏi khi rời trang: edit-form.js.
  * Ở đây:
  *   - tab: đổi tab thì cập nhật tiêu đề, ?tab= trên URL và ô _tab (lưu xong quay về đúng tab);
  *   - chân trang: trình soạn thảo Tiptap (editor.js, tải khi cần) ghi HTML vào ô ẩn site_footer;
@@ -37,7 +37,7 @@ function initTabs($form) {
   const suffix = $form.attr('data-title-suffix');
   const show = tab => {
     const name = titles[tab] ? tab : 'general';
-    $('.settings-tab').each(function () {
+    $('.settings-tab[data-tab]').each(function () {
       const on = $(this).attr('data-tab') === name;
       $(this).toggleClass('is-active', on).attr('aria-selected', on);
     });
@@ -51,7 +51,8 @@ function initTabs($form) {
     url.searchParams.set('tab', name);
     history.replaceState(history.state, '', url);
   };
-  $('.settings-nav').on('click', '.settings-tab', function () {
+  // Tab "Thông báo" là link sang trang riêng (không có data-tab): để trình duyệt tự chuyển trang
+  $('.settings-nav').on('click', '.settings-tab[data-tab]', function () {
     show($(this).attr('data-tab'));
   });
   return show;
@@ -106,7 +107,7 @@ export default async function initSettings() {
     });
     // Chấm đỏ trên tab có ô lỗi (lỗi ở tab đang ẩn vẫn thấy). forms.js báo lỗi sau khi sự kiện tới document → đợi một nhịp
     setTimeout(() =>
-      $('.settings-tab').each(function () {
+      $('.settings-tab[data-tab]').each(function () {
         const tab = $(this).attr('data-tab');
         $(this).toggleClass('has-error', $form.find(`[data-panel="${tab}"] .ant-form-item-has-error`).length > 0);
       }),

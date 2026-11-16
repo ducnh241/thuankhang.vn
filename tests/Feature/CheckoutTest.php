@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Models\Order;
 use App\Models\PickupPoint;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Support\AffiliateSettings;
 use App\Support\Cart;
 use Database\Seeders\AffiliateConfigSeeder;
@@ -156,7 +157,10 @@ class CheckoutTest extends TestCase
 
     public function test_member_sees_only_own_orders_and_payment_info(): void
     {
-        AffiliateSettings::save(['bank_code' => 'MB', 'bank_account' => '0123456789', 'bank_account_name' => 'CONG TY THUAN KHANG']);
+        // Tài khoản nhận tiền: Cài đặt → tab Thanh toán (khóa pay_*); chưa tải ảnh QR → mã VietQR tự tạo theo đơn
+        foreach (['pay_bank_code' => 'MB', 'pay_bank_account' => '0123456789', 'pay_account_name' => 'CONG TY THUAN KHANG'] as $key => $value) {
+            Setting::put($key, $value);
+        }
         $member = Member::factory()->create();
         $mine = Order::factory()->create(['member_id' => $member->id, 'total_amount' => 1230000]);
         $overdue = Order::factory()->create(['member_id' => $member->id, 'expires_at' => now()->subMinute()]);
