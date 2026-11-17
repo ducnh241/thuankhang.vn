@@ -205,7 +205,7 @@ class MemberAuthTest extends TestCase
         $this->actingAs($huyen, 'member')->get('/tai-khoan')->assertOk()
             ->assertSee('<span class="text-xl font-bold text-slate-900" data-f1-count>1</span>', false)
             ->assertSee('<a href="'.route('member.team').'"', false)->assertSee('Xem chi tiết')
-            ->assertSeeInOrder(['Thành viên chi nhánh của bạn', '<div class="mt-2 text-xl font-bold text-slate-900" data-team-count>3</div>'], false)
+            ->assertSeeInOrder(['uppercase">Thành viên</div>', '<div class="mt-2 text-xl font-bold text-slate-900" data-team-count>3</div>'], false)
             // Người giới thiệu vẫn xem được ở phần Thông tin tài khoản
             ->assertSeeInOrder(['Thông tin tài khoản', 'Người giới thiệu bạn', 'Đinh T. Hà']);
 

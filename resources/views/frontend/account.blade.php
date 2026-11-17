@@ -38,9 +38,9 @@
           <a href="{{ route('member.team') }}" class="text-sm font-medium text-brand-700 hover:underline">Xem chi tiết ›</a>
         </div>
       </div>
-      {{-- Thành viên chi nhánh của bạn: mọi người nằm dưới vị trí của mình trong cây nhị phân, tính xuống tất cả các nhánh con --}}
+      {{-- Thành viên (của chi nhánh mình): mọi người nằm dưới vị trí của mình trong cây nhị phân, tính xuống tất cả các nhánh con --}}
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên chi nhánh của bạn</div>
+        <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Thành viên</div>
         <div class="mt-2 text-xl font-bold text-slate-900" data-team-count>{{ number_format($teamCount, 0, ',', '.') }}</div>
       </div>
     </div>
