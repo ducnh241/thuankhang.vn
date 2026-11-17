@@ -83,6 +83,7 @@ class Order extends Model
     {
         return [
             'sales_counted_at' => 'datetime',
+            'commissioned_at' => 'datetime',
             'goods_amount' => 'integer',
             'vat_amount' => 'integer',
             'shipping_fee' => 'integer',
@@ -106,6 +107,12 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** Các dòng hoa hồng F1 / F2 của đơn (ghi lúc xác nhận thanh toán). */
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class)->orderBy('tier');
     }
 
     public function confirmer(): BelongsTo

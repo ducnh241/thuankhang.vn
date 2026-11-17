@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Backend\MemberReferrerRequest;
 use App\Models\AuditLog;
+use App\Models\Commission;
 use App\Models\Level;
 use App\Models\Member;
 use App\Services\BinaryTree;
 use App\Services\LevelEngine;
+use App\Support\AffiliateSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,6 +100,7 @@ class MemberController extends Controller
             'orders' => $member->orders()->latest('id')->limit(10)->get(),
             'orderCount' => $member->orders()->count(),
             'legs' => BinaryTree::legs($member),
+            'wallet' => $member->walletSummary(),
             'levelHistory' => $member->levelHistories()->with(['fromLevel:id,name', 'toLevel:id,name', 'order:id,code'])->limit(20)->get(),
             'nextLevel' => LevelEngine::nextLevel($member),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)
@@ -122,6 +125,30 @@ class MemberController extends Controller
             // Màu tag theo thứ tự cấp (cấp gốc không màu)
             'levelColors' => Level::ordered()->pluck('id')->values()->flip()->map(fn ($index) => self::LEVEL_COLORS[min($index, count(self::LEVEL_COLORS) - 1)])->all(),
             'levels' => Level::ordered()->get(['id', 'name']),
+        ]);
+    }
+
+    /**
+     * Sổ hoa hồng của một thành viên (nút "Xem sổ hoa hồng" ở trang chi tiết) để đối chiếu: mọi dòng F1 / F2 mà thành viên
+     * là người hưởng — đơn, người mua, cấp + tỉ lệ lúc tính, tiền hàng → cơ sở → hoa hồng, số dư ví sau bút
+     * toán; cả dòng không được nhận kèm lý do. Lọc ?tier=F1|F2, ?status=credited|skipped. Quyền: member hoặc commission.
+     */
+    public function commissions(Request $request, Member $member): View
+    {
+        abort_unless($request->user()->canAny(['member', 'commission']), 403);
+        $filter = ['tier' => $this->queryString($request, 'tier'), 'status' => $this->queryString($request, 'status')];
+        $filter['tier'] = array_key_exists($filter['tier'], Commission::TIERS) ? $filter['tier'] : '';
+        $filter['status'] = array_key_exists($filter['status'], Commission::STATUSES) ? $filter['status'] : '';
+
+        return view('backend.members.commissions', [
+            'member' => $member->load('level'),
+            'filter' => $filter,
+            'wallet' => $member->walletSummary(),
+            'feePercent' => AffiliateSettings::get('business_fee_percent'),
+            'lines' => $member->commissions()->with(['order:id,code', 'buyer:id,full_name', 'walletTransaction:id,commission_id,balance_after'])
+                ->when($filter['tier'] !== '', fn (Builder $query) => $query->where('tier', $filter['tier']))
+                ->when($filter['status'] !== '', fn (Builder $query) => $query->where('status', $filter['status']))
+                ->paginate(50)->withQueryString(),
         ]);
     }
 

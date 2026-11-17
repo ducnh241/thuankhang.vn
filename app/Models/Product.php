@@ -143,7 +143,7 @@ class Product extends Model
         $query->where('status', true);
     }
 
-    /** Giá trước VAT (đồng, làm tròn xuống): giá đã gồm VAT / (1 + VAT%). Hoa hồng tính trên giá này (đặc tả 8.3). */
+    /** Giá trước VAT (đồng, làm tròn xuống): giá đã gồm VAT / (1 + VAT%). Chỉ để hiển thị — hoa hồng tính trên giá bán, không tách VAT. */
     public function priceBeforeVat(): int
     {
         return intdiv($this->price * 10000, 10000 + (int) round((float) $this->vat_rate * 100));

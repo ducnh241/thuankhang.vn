@@ -74,6 +74,8 @@ Route::prefix('backend')->group(function () {
         Route::get('member', [MemberController::class, 'index'])->name('members.index')->can('member');
         Route::get('member/{member}', [MemberController::class, 'show'])->name('members.show')->can('member')->whereNumber('member');
         Route::get('member/{member}/tree', [MemberController::class, 'tree'])->name('members.tree')->can('member')->whereNumber('member');
+        // Sổ hoa hồng của một thành viên: quyền member hoặc commission (Kế toán) — kiểm tra trong controller
+        Route::get('member/{member}/commissions', [MemberController::class, 'commissions'])->name('members.commissions')->whereNumber('member');
         Route::post('member/{member}/lock', [MemberController::class, 'lock'])->name('members.lock')->can('member/lock');
         Route::post('member/{member}/activate', [MemberController::class, 'activate'])->name('members.activate')->can('member/activate');
         Route::put('member/{member}/referrer', [MemberController::class, 'updateReferrer'])->name('members.referrer')->can('member/referrer');

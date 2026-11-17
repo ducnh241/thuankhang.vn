@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Commission;
 use App\Models\Member;
 use App\Models\Order;
 use App\Models\PickupPoint;
-use App\Services\LevelEngine;
+use App\Services\OrderPayment;
 use App\Support\AffiliateSettings;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
@@ -83,7 +84,7 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $order->load(['member.level', 'items.product', 'pickupPoint', 'confirmer']);
+        $order->load(['member.level', 'items.product', 'pickupPoint', 'confirmer', 'commissions.beneficiary:id,full_name']);
 
         return view('backend.orders.show', [
             'order' => $order,
@@ -95,7 +96,7 @@ class OrderController extends Controller
      * Xác nhận đã thanh toán sau khi đối chiếu sao kê: bắt buộc mã giao dịch ngân hàng (duy nhất toàn hệ thống) và số tiền thực
      * nhận (không thấp hơn tổng đơn). Đơn đã hủy (tiền về muộn) được khôi phục, bắt buộc ghi chú.
      * Cùng transaction: LevelEngine::orderPaid() cộng doanh số cộng dồn, kích hoạt tài khoản ở đơn đầu, xét lên cấp (Step 7).
-     * TODO Step 8: ghi hoa hồng F1 / F2.
+     * Step 8: ghi hoa hồng F1 / F2 vào ví tuyến trên. Toàn bộ nằm trong App\Services\OrderPayment::confirm().
      */
     public function confirmPayment(Request $request, Order $order): RedirectResponse
     {
@@ -116,35 +117,18 @@ class OrderController extends Controller
             'payment_note.required' => 'Đơn đã hủy: ghi chú lý do khôi phục (VD: tiền về sau khi quá hạn).',
         ], ['payment_reference' => 'mã giao dịch', 'paid_amount' => 'số tiền', 'payment_note' => 'ghi chú']);
 
-        $done = DB::transaction(function () use ($order, $data, $request) {
-            $order = Order::lockForUpdate()->findOrFail($order->id);
-            if (! $order->canConfirmPayment()) {
-                return false;
-            }
-            $old = $order->status;
-            $reference = $data['payment_reference'];
-            $note = isset($data['payment_note']) ? trim($data['payment_note']) : null;
-            $order->forceFill([
-                'status' => Order::STATUS_PAID, 'paid_at' => now(), 'paid_amount' => (int) $data['paid_amount'],
-                'payment_reference' => $reference, 'payment_note' => $note ?: null, 'confirmed_by' => $request->user('web')->id,
-            ])->save();
-            // Đơn hủy được khôi phục: giữ hàng lại (tồn có thể âm nếu đã bán hết — kho cần kiểm tra)
-            $order->load('items')->takeStock();
-            AuditLog::record('updated', $order,
-                ['old' => ['status' => $old], 'new' => ['status' => Order::STATUS_PAID, 'paid_amount' => (int) $data['paid_amount'], 'payment_reference' => $reference]],
-                "Xác nhận đã thanh toán đơn {$order->code} — GD {$reference}, ".Money::format($data['paid_amount']).' đ'
-                .($old === Order::STATUS_CANCELLED ? ' (khôi phục đơn đã hủy)' : '').($note ? ". Ghi chú: {$note}" : ''));
-
-            // Step 7: cộng doanh số cộng dồn của người mua, kích hoạt ở đơn đầu, xét lên cấp — cùng transaction
-            return LevelEngine::orderPaid($order);
-        });
+        $done = OrderPayment::confirm($order, $data, $request->user('web')->id);
         if ($done === false) {
             return back()->with('error', 'Đơn đã được thanh toán hoặc đang ở trạng thái không xác nhận được.');
         }
 
+        $commissions = $done['commissions']->map(fn (Commission $line) => $line->tier.' '.$line->beneficiary->full_name.' '
+            .($line->isCredited() ? '+'.Money::format($line->amount).' đ' : 'không nhận'))->implode(', ');
+
         return back()->with('success', "Đã xác nhận thanh toán đơn {$order->code}."
-            .($done['activated'] ? ' Tài khoản thành viên được kích hoạt.' : '')
-            .($done['to'] ? ' Thành viên lên cấp '.$done['to']->name.'.' : ''));
+            .($done['level']['activated'] ? ' Tài khoản thành viên được kích hoạt.' : '')
+            .($done['level']['to'] ? ' Thành viên lên cấp '.$done['level']['to']->name.'.' : '')
+            .($commissions !== '' ? " Hoa hồng: {$commissions}." : ''));
     }
 
     /** Khách báo đã chuyển nhưng chưa thấy tiền: trả về "Đơn mới", tính lại hạn thanh toán từ bây giờ. */

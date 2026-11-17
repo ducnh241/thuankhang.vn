@@ -21,6 +21,8 @@ class AccountController extends Controller
         return view('frontend.account', [
             'member' => $member,
             'f1Count' => $member->referrals()->count(),
+            // Ví hoa hồng: số dư + hoa hồng tháng này (chi tiết ở /tai-khoan/vi)
+            'wallet' => $member->walletSummary(),
             // Thành viên chi nhánh: mọi người nằm dưới vị trí của mình trong cây nhị phân (nhánh trái + nhánh phải)
             'teamCount' => $legs[BinaryTree::LEFT]['count'] + $legs[BinaryTree::RIGHT]['count'],
             // Cấp kế tiếp + các cấp đang bật (trừ cấp gốc) để hiện tiến độ lên cấp

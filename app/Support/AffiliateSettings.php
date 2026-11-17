@@ -27,7 +27,7 @@ class AffiliateSettings
     public const UNITS = ['payment_expiry_hours' => 'giờ', 'ref_cookie_days' => 'ngày', 'max_vp_per_province' => 'VP / tỉnh'];
 
     public const FIELDS = [
-        'business_fee_percent' => ['commission', 'Phí doanh nghiệp trừ khi tính hoa hồng', 'percent', '5.00', ['required'], 'Cơ sở hoa hồng = giá trước VAT × (1 − phí). Không tính phí ship.'],
+        'business_fee_percent' => ['commission', 'Phí doanh nghiệp trừ khi tính hoa hồng', 'percent', '5.00', ['required'], 'Cơ sở hoa hồng = tiền hàng (giá bán đã gồm thuế) × (1 − phí). Không tính phí ship.'],
         'commission_warning_percent' => ['commission', 'Ngưỡng cảnh báo F1 + F2', 'percent', '30.00', ['required'], 'Lưu ma trận hoa hồng có cấp vượt ngưỡng này phải xác nhận thêm.'],
         'min_withdraw' => ['commission', 'Số tiền rút tối thiểu', 'money', 500000, ['required', 'max:1000000000'], null],
         'pit_percent' => ['commission', 'Thuế TNCN khấu trừ khi rút', 'percent', null, ['nullable'], 'Chờ kế toán chốt. Chưa cấu hình thì chưa mở rút tiền (Step 9).'],

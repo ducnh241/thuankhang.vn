@@ -105,6 +105,45 @@ class Member extends Authenticatable
         return $this->hasMany(LevelHistory::class)->latest('id');
     }
 
+    /** Sổ hoa hồng: các dòng F1 / F2 mà thành viên này là người hưởng (mới nhất trước), gồm cả dòng không được nhận. */
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class, 'beneficiary_id')->latest('id');
+    }
+
+    /** Bút toán ví (mới nhất trước). */
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class)->latest('id');
+    }
+
+    /** Số dư ví = tổng mọi bút toán (ví chỉ ghi thêm). */
+    public function walletBalance(): int
+    {
+        return (int) WalletTransaction::where('member_id', $this->id)->sum('amount');
+    }
+
+    /**
+     * Tóm tắt ví hoa hồng: balance (số dư), total (tổng hoa hồng đã nhận), month (nhận trong tháng này), f1 / f2 (theo tầng),
+     * lines (số dòng đã cộng ví), skipped (số dòng không được nhận).
+     *
+     * @return array{balance: int, total: int, month: int, f1: int, f2: int, lines: int, skipped: int}
+     */
+    public function walletSummary(): array
+    {
+        $credited = fn () => Commission::where('beneficiary_id', $this->id)->credited();
+
+        return [
+            'balance' => $this->walletBalance(),
+            'total' => (int) $credited()->sum('amount'),
+            'month' => (int) $credited()->where('created_at', '>=', now()->startOfMonth())->sum('amount'),
+            'f1' => (int) $credited()->where('tier', 'F1')->sum('amount'),
+            'f2' => (int) $credited()->where('tier', 'F2')->sum('amount'),
+            'lines' => $credited()->count(),
+            'skipped' => Commission::where('beneficiary_id', $this->id)->where('status', Commission::STATUS_SKIPPED)->count(),
+        ];
+    }
+
     /** Hồ sơ KYC (CCCD + tài khoản ngân hàng) — mỗi thành viên một hồ sơ. */
     public function kyc(): HasOne
     {

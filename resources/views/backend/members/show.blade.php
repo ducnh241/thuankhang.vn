@@ -207,6 +207,22 @@
 
   {{-- Cột phụ --}}
   <div class="flex min-w-0 flex-col gap-4">
+    {{-- Ví hoa hồng (Step 8): số dư = tổng hoa hồng F1 / F2 đã cộng; chi tiết từng dòng ở trang Sổ hoa hồng --}}
+    <div class="ant-card ant-card-bordered" data-card="wallet">
+      <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Ví hoa hồng</div></div></div>
+      <div class="ant-card-body">
+        <div class="text-xs {{ $muted }}">Số dư ví</div>
+        <div class="text-2xl font-semibold tabular-nums" data-wallet-balance>{{ Money::format($wallet['balance']) }} đ</div>
+        <dl class="profile-facts m-0 mt-3">
+          <dt>Tháng này</dt><dd class="tabular-nums" data-wallet-month>{{ Money::format($wallet['month']) }} đ</dd>
+          <dt>F1 (trực tiếp)</dt><dd class="tabular-nums">{{ Money::format($wallet['f1']) }} đ</dd>
+          <dt>F2 (gián tiếp)</dt><dd class="tabular-nums">{{ Money::format($wallet['f2']) }} đ</dd>
+          <dt>Số dòng</dt><dd class="tabular-nums">{{ $count($wallet['lines']) }} đã cộng ví{{ $wallet['skipped'] ? ' · '.$count($wallet['skipped']).' không được nhận' : '' }}</dd>
+        </dl>
+        <a href="{{ route('backend.members.commissions', $member) }}" class="ant-btn mt-3" id="view-commissions">{{ ant_icon('wallet') }}<span>Xem sổ hoa hồng</span></a>
+      </div>
+    </div>
+
     {{-- Cây nhị phân: vị trí của thành viên + hai nhánh bên dưới (số người, doanh số tháng). Nhánh yếu hơn là nhánh mà
          người đăng ký tiếp theo bằng mã của thành viên này sẽ được xếp vào. Vị trí gán một lần, không sửa được. --}}
     @php

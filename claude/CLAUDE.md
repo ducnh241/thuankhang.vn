@@ -15,7 +15,7 @@ Nếu đặc tả và file Excel mâu thuẫn, hỏi lại người dùng, khôn
 - Hoa hồng 2 tầng F1/F2, tỉ lệ theo **cấp của người hưởng** (ma trận cấu hình; mặc định F1: CTV 10%, Đại lý 20%). Áp dụng cho mọi đơn, kể cả mua lại.
 - Người hưởng phải **đã kích hoạt** (≥1 đơn thanh toán) và không bị khoá; nếu không → ledger `skipped` kèm lý do.
 - Tự mua không có hoa hồng/giảm giá cho chính mình, nhưng vẫn sinh F1/F2 cho tuyến trên.
-- Cơ sở hoa hồng = giá trước VAT × (1 − 5% phí DN), không tính ship. Làm tròn xuống từng dòng.
+- Cơ sở hoa hồng = tiền hàng của đơn (giá bán, đã gồm thuế — KHÔNG tách VAT, chủ dự án chốt 17/11/2026) × (1 − 5% phí DN), không tính ship. Làm tròn xuống từng dòng.
 - Người giới thiệu gắn cố định khi đăng ký (link `?ref=CODE`, cookie 30 ngày).
 - Thanh toán: VietQR động (số tiền + mã đơn), tiền về TK công ty, xác nhận qua webhook ngân hàng (SePay/PayOS/Casso), idempotent theo mã giao dịch. Không khớp → hàng chờ xử lý tay.
 - Nhận hàng: giao tận nơi (khách trả ship) hoặc nhận tại VP tỉnh (hàng của VP). Tồn kho theo dõi tùy chọn từng sản phẩm (để trống = không theo dõi) — tồn chung của công ty, trừ cho mọi đơn kể cả nhận tại VP (giả định, chờ xác nhận).
@@ -28,7 +28,7 @@ Nếu đặc tả và file Excel mâu thuẫn, hỏi lại người dùng, khôn
 - Thanh toán tiền hàng cho VP tỉnh – chỉ có báo cáo đơn theo VP.
 
 ## Giả định đang chờ xác nhận
-- Phí 5% tính trên giá trước VAT; doanh số xét cấp = tiền hàng gồm VAT, không gồm ship.
+- Doanh số xét cấp = tiền hàng gồm VAT, không gồm ship. (Phí 5%: đã chốt 17/11/2026 — tính trên tiền hàng, không tách VAT.)
 - Mốc cấp Nhân viên; tên 2 mức VP tỉnh; tài khoản gốc cho người đăng ký không có mã; tỉ lệ TNCN.
 
 ## Nguyên tắc kỹ thuật
@@ -125,13 +125,46 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   hộp "Sửa ảnh": alt, chiều rộng (px hoặc "Rộng 100%" → thuộc tính `width`, cao tự theo tỉ lệ), xóa. `RichText::clean` giữ `data-align`,
   `width`, thẻ `<a>` bao ảnh, và đổi `style="text-align: …"` của đoạn / tiêu đề thành thuộc tính `align` (bộ lọc bỏ mọi `style` — trước đó căn lề chữ bị mất trên website).
 
-## Xóa đơn thử trước khi chạy thật (17/11/2026)
+## Hoa hồng F1 / F2 + ví (17/11/2026 — Step 8; CHƯA có rút tiền, sổ hoa hồng tổng A12, xuất Excel)
 
-- Migration `2026_11_23_000001_clear_test_orders`: xóa TOÀN BỘ đơn + dòng đơn đang có lúc chạy (không hoàn tác — sao lưu
-  trước). Kèm theo: trả tồn kho của đơn đang giữ hàng, doanh số cộng dồn mọi thành viên về 0, xóa vết lên cấp theo đơn và
-  đưa thành viên lên cấp nhờ đơn thử về cấp trước đó (về cấp gốc thì bỏ ngày kích hoạt), id đơn bắt đầu lại từ 1 (MySQL).
-  Không đụng: thành viên không có vết lên cấp theo đơn (giữ cấp + kích hoạt), cây nhị phân, KYC, đánh giá, audit log.
-  Test: `tests/Feature/ClearTestOrdersMigrationTest.php`. Chưa chạy trên database local (chủ dự án tự chạy `migrate`).
+- Chủ dự án chốt 17/11/2026: giá sản phẩm đã gồm thuế nên **không tách VAT khi tính hoa hồng**; hoa hồng tính trên tiền
+  hàng (không gồm phí ship) trừ 5% phí doanh nghiệp; cộng ví **ngay khi xác nhận thanh toán**. Ví dụ của chủ dự án: tiền hàng
+  15tr × 95% × 20% = 2.850.000 (F1), × 7% = 997.500 (F2). Chủ dự án sẽ tự đặt VAT sản phẩm về 0% sau (không ảnh hưởng hoa hồng).
+- Công thức (`App\Services\CommissionEngine`): cơ sở = floor(`orders.goods_amount` × (1 − `business_fee_percent`)); hoa hồng =
+  floor(cơ sở × tỉ lệ). F1 → người giới thiệu của người mua, F2 → người giới thiệu của người đó; tỉ lệ theo **cấp người hưởng
+  lúc tính**, phiên bản ma trận có hiệu lực lúc `paid_at`. Người hưởng chưa kích hoạt / bị khóa / tỉ lệ 0% → vẫn ghi dòng
+  `skipped` kèm lý do, không cộng ví, không tính bù.
+- Bảng (migration `2026_11_24_000001`, chỉ ghi thêm): `commission_ledger` (model `Commission`; unique order_id + tier;
+  snapshot cấp, tỉ lệ, phí, tiền hàng / cơ sở) và `wallet_transactions` (model `WalletTransaction`; amount có
+  dấu, balance_after). Số dư ví = tổng bút toán (`Member::walletBalance()`, tóm tắt `Member::walletSummary()`).
+  `orders.commissioned_at` = đơn đã tính hoa hồng (không bao giờ tính hai lần).
+- Điểm duy nhất chuyển đơn sang "Đã thanh toán": `App\Services\OrderPayment::confirm()` — một transaction: ghi thanh toán,
+  giữ hàng, `CommissionEngine::orderPaid()` (khóa người mua + tuyến trên theo thứ tự id), rồi `LevelEngine::orderPaid()`.
+  Đơn đã thanh toán không hủy được ở admin → chưa có thu hồi hoa hồng (ngoài phạm vi Phase 1).
+- Hiển thị: website `/tai-khoan` có thẻ "Ví hoa hồng" → `/tai-khoan/vi` (`Frontend\WalletController`, chỉ dòng đã cộng ví,
+  không lộ SĐT người mua). Quản trị: chi tiết thành viên có thẻ "Ví hoa hồng" + nút "Xem sổ hoa hồng" →
+  `backend/member/{member}/commissions` (quyền `member` HOẶC `commission`; lọc `?tier`, `?status`; đủ các bước tính + số dư
+  ví sau từng bút toán + dòng không được nhận); chi tiết đơn có thẻ "Hoa hồng"; thông báo xác nhận thanh toán kèm hoa hồng.
+- Dữ liệu mẫu (chỉ máy phát triển): `php artisan db:seed --class=DemoCommissionSeeder` — F0 = thành viên id 1, 4 thành viên
+  F2 "(mẫu)" (SĐT 09000001xx), 22 đơn đã thanh toán có mã giao dịch `DEMO-HH-01..22` (đã chạy ở local 17/11/2026, chủ dự án
+  giữ lại để đối chiếu — đừng xóa). Test: `tests/Feature/CommissionEngineTest.php`.
+
+## Live có đơn thật — KHÔNG xóa đơn; tính bù hoa hồng cho đơn cũ (17/11/2026)
+
+- Chủ dự án 17/11/2026: live đã có đơn thật (9 đơn lúc đó), **tuyệt đối không xóa đơn / không làm mất dữ liệu live**.
+- Migration `2026_11_23_000001_clear_test_orders` từng xóa sạch đơn hàng → **đã vô hiệu hóa, `up()` để trống** (giữ file để
+  `migrate` ghi nhận tên mà không làm gì). Không khôi phục logic xóa đơn; không viết migration / lệnh nào xóa đơn nữa.
+- Tính bù hoa hồng cho đơn đã thanh toán từ trước khi có engine: `php artisan commissions:backfill` (mặc định CHỈ XEM
+  TRƯỚC, in từng đơn sẽ trả cho ai) → `php artisan commissions:backfill --apply` (ghi, một transaction, kèm audit log từng
+  đơn; chạy lại không tính đôi). Chỉ thêm dòng vào `commission_ledger` / `wallet_transactions` + đánh dấu
+  `orders.commissioned_at`. Cấp + kích hoạt của người hưởng lấy **tại lúc đơn được thanh toán**
+  (`CommissionEngine::stateAt`: tổng đơn tự mua đã thanh toán trước đó + ngày kích hoạt; không cao hơn cấp hiện tại); tỉ lệ
+  theo phiên bản có hiệu lực lúc đó; người hưởng đang bị khóa thì không nhận. Lệnh dừng nếu còn đơn đã thanh toán chưa cộng
+  doanh số (`levels:count-paid-orders` phải chạy trước). Test: `tests/Feature/CommissionBackfillTest.php`.
+- Quy trình live: sao lưu DB → pull code → `php artisan migrate:status` (xem migration nào còn Pending) →
+  `php artisan migrate --force` → `php artisan commissions:backfill` → (nếu được nhắc) `php artisan levels:count-paid-orders`
+  → `php artisan commissions:backfill --apply`. Đã diễn tập trên bản sao MySQL: dữ liệu cũ y nguyên, kết quả tính bù trùng
+  với kết quả engine tính lúc thanh toán.
 
 ## Cây nhị phân + mặt trời (16/11/2026 — đã có xếp cây; CHƯA tính thưởng nhóm)
 - Mô hình: kết hợp **hệ mặt trời** (cây giới thiệu `members.referrer_id`: hoa hồng F1 / F2 theo người giới thiệu) và **hệ nhị
@@ -178,7 +211,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Hiển thị: trang Tài khoản của thành viên có khung "Cấp bậc của bạn" (đã mua, còn thiếu bao nhiêu để lên cấp kế, danh
   sách cấp); trang chi tiết thành viên trong quản trị có "Lịch sử lên cấp".
 - Đơn đã thanh toán từ trước khi có engine: chạy một lần `php artisan levels:count-paid-orders` (có `--dry-run`).
-- Chưa làm: hoa hồng F1 / F2 + ví (Step 8). Test: `tests/Feature/LevelEngineTest.php`.
+- Hoa hồng F1 / F2 + ví: xem mục riêng bên dưới. Test: `tests/Feature/LevelEngineTest.php`.
 
 ## Luồng mua hàng + thông báo cho kế toán (16/11/2026)
 - Luồng: **Thêm vào giỏ** (ở lại trang, thông báo có nút "Xem giỏ hàng" / "Thanh toán") hoặc **Mua ngay** (sang thẳng

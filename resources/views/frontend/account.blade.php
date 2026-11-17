@@ -21,7 +21,17 @@
       </div>
     </div>
 
-    <div class="mt-6 grid gap-4 md:grid-cols-3">
+    {{-- Ví hoa hồng: số dư + hoa hồng tháng này; chi tiết từng dòng ở trang Ví --}}
+    <a href="{{ route('member.wallet') }}" class="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl border border-brand-100 bg-brand-50 p-5 hover:border-brand-300" data-wallet-card>
+      <div>
+        <div class="text-xs font-medium tracking-wide text-brand-800 uppercase">Ví hoa hồng</div>
+        <div class="mt-2 text-2xl font-bold text-brand-800 tabular-nums" data-wallet-balance>{{ \App\Support\Money::format($wallet['balance']) }}đ</div>
+        <p class="mt-1 text-xs text-brand-800/80">Tháng này: <strong>+{{ \App\Support\Money::format($wallet['month']) }}đ</strong></p>
+      </div>
+      <span class="text-sm font-medium text-brand-700">Xem chi tiết ›</span>
+    </a>
+
+    <div class="mt-4 grid gap-4 md:grid-cols-3">
       <div class="rounded-2xl border border-slate-200 bg-white p-5">
         <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Cấp hiện tại</div>
         <div class="mt-2 text-xl font-bold text-brand-700" data-member-level>{{ $member->level?->name }}</div>

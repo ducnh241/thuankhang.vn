@@ -108,6 +108,34 @@
       </div>
     @endif
 
+    {{-- Hoa hồng F1 / F2 của đơn (ghi lúc xác nhận thanh toán): người hưởng, cấp + tỉ lệ lúc tính, cơ sở, số tiền --}}
+    @if ($order->paid_at)
+      <div class="ant-card ant-card-bordered" data-card="commissions">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Hoa hồng</div></div></div>
+        <div class="ant-card-body">
+          @forelse ($order->commissions as $line)
+            <div @class(['flex flex-wrap items-baseline gap-x-2 text-sm', 'mt-2' => ! $loop->first]) data-commission="{{ $line->tier }}">
+              <span class="ant-tag ant-tag-{{ $line->tier === 'F1' ? 'blue' : 'purple' }} m-0">{{ $line->tier }}</span>
+              @canany(['member', 'commission'])<a href="{{ route('backend.members.commissions', $line->beneficiary_id) }}" class="font-medium" title="Mở sổ hoa hồng của người hưởng">{{ $line->beneficiary?->full_name }}</a>@else<span class="font-medium">{{ $line->beneficiary?->full_name }}</span>@endcanany
+              <span class="text-[rgba(0,0,0,0.45)]">{{ $line->level_name ?? '—' }} · {{ \App\Models\Commission::percentLabel($line->rate_percent) }} × {{ Money::format($line->base_amount) }} đ</span>
+              @if ($line->isCredited())
+                <strong class="ml-auto tabular-nums">+{{ Money::format($line->amount) }} đ</strong>
+              @else
+                <span class="ml-auto"><span class="ant-tag m-0">Không được nhận</span></span>
+                <span class="w-full text-xs text-[rgba(0,0,0,0.45)]">{{ $line->skip_reason }}</span>
+              @endif
+            </div>
+          @empty
+            <p class="m-0 text-[rgba(0,0,0,0.45)]">{{ $order->commissioned_at ? 'Người mua không có người giới thiệu nên đơn không phát sinh hoa hồng.' : 'Đơn thanh toán trước khi có tính hoa hồng — chưa được tính (tính bù bằng lệnh commissions:backfill).' }}</p>
+          @endforelse
+          @if ($order->commissions->isNotEmpty())
+            @php $first = $order->commissions->first(); @endphp
+            <p class="m-0 mt-3 text-xs text-[rgba(0,0,0,0.45)]">Cơ sở = tiền hàng {{ Money::format($first->goods_amount) }} đ − {{ \App\Models\Commission::percentLabel($first->fee_percent) }} phí doanh nghiệp = {{ Money::format($first->base_amount) }} đ (không tính phí giao hàng).</p>
+          @endif
+        </div>
+      </div>
+    @endif
+
     <div class="ant-card ant-card-bordered" data-card="delivery">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Nhận hàng — {{ Order::DELIVERIES[$order->delivery_type] ?? $order->delivery_type }}</div></div></div>
       <div class="ant-card-body">
