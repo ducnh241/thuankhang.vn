@@ -96,19 +96,20 @@ document.addEventListener('click', async e => {
 /*
  * KYC (S10): ô ảnh CCCD [data-kyc-image] — xem trước ảnh vừa chọn. Ảnh chụp bằng điện thoại thường nặng 3–8 MB, trong khi
  * máy chủ hay giới hạn dung lượng một lần gửi (nginx mặc định 1 MB cho cả form) → thu nhỏ ngay trên máy trước khi gửi:
- * lần lượt thử các mức (cạnh dài, chất lượng JPEG) cho tới khi ảnh ≤ 480 KB — hai ảnh vẫn dưới 1 MB, chữ trên thẻ vẫn
- * đọc rõ. Không thu nhỏ được (trình duyệt cũ, ảnh lỗi) thì gửi ảnh gốc; ảnh vượt mức máy chủ cho phép thì báo ngay.
+ * lần lượt thử các mức (cạnh dài, chất lượng JPEG) cho tới khi ảnh ≤ mức đích của ô (data-target-bytes; mặc định 360 KB
+ * cho ảnh CCCD, 200 KB cho ảnh mã QR) — cả form KYC (2 ảnh CCCD + 1 ảnh QR) vẫn dưới 1 MB, chữ trên thẻ vẫn đọc rõ. Không thu nhỏ được (trình duyệt cũ, ảnh lỗi) thì gửi ảnh gốc; ảnh vượt mức máy chủ cho phép thì báo ngay.
  */
-const KYC_TARGET_BYTES = 480 * 1024;
+const KYC_TARGET_BYTES = 360 * 1024;
 const KYC_STEPS = [
   [1600, 0.82],
   [1600, 0.7],
   [1280, 0.7],
   [1280, 0.55],
   [1024, 0.55],
+  [800, 0.5],
 ];
-async function shrinkImage(file) {
-  if (file.size <= KYC_TARGET_BYTES) return file;
+async function shrinkImage(file, target = KYC_TARGET_BYTES) {
+  if (file.size <= target) return file;
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();
@@ -128,7 +129,7 @@ async function shrinkImage(file) {
       if (blob && blob.size < best.size) {
         best = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
       }
-      if (best.size <= KYC_TARGET_BYTES) break;
+      if (best.size <= target) break;
     }
     return best;
   } catch {
@@ -142,6 +143,8 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
   const preview = box.querySelector('[data-kyc-preview]');
   const note = box.querySelector('[data-kyc-note]');
   const maxBytes = Number(box.dataset.maxBytes) || 0;
+  const targetBytes = Number(box.dataset.targetBytes) || KYC_TARGET_BYTES;
+  const current = box.querySelector('[data-kyc-current]'); // ảnh đang lưu (mã QR): ẩn khi đã chọn ảnh mới
   const say = (text, bad = false) => {
     note.textContent = text;
     note.hidden = !text;
@@ -153,13 +156,14 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
     if (preview.src) URL.revokeObjectURL(preview.src);
     preview.removeAttribute('src');
     preview.hidden = true;
+    if (current) current.hidden = false;
     say('');
     if (!file) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
       input.value = '';
       return say('Chọn ảnh JPG, PNG hoặc WEBP.', true);
     }
-    const small = await shrinkImage(file);
+    const small = await shrinkImage(file, targetBytes);
     if (small !== file) {
       try {
         const transfer = new DataTransfer();
@@ -176,6 +180,7 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
     }
     preview.src = URL.createObjectURL(file);
     preview.hidden = false;
+    if (current) current.hidden = true;
     say('Đã chọn ảnh. Bấm vào ảnh để đổi.'); // không hiện tên tệp: tên ảnh từ điện thoại / Zalo rất dài, tràn sang ô bên cạnh
   });
 });

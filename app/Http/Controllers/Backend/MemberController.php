@@ -14,6 +14,7 @@ use App\Support\AffiliateSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -27,6 +28,9 @@ class MemberController extends Controller
     public const TABS = ['' => 'Tất cả', 'activated' => 'Đã kích hoạt', 'inactive' => 'Chưa kích hoạt', 'locked' => 'Đang khóa'];
 
     /** Trang cây nhị phân: số tầng bên dưới [ít nhất, nhiều nhất] và mặc định; màu tag Ant Design theo thứ tự cấp. */
+    /** Quyền được xem ảnh mã QR nhận tiền của thành viên (có một trong các quyền này). */
+    public const QR_ABILITIES = ['member', 'kyc', 'commission', 'withdrawal'];
+
     public const TREE_DEPTHS = [2, 6];
 
     public const TREE_DEFAULT_DEPTH = 4;
@@ -149,6 +153,23 @@ class MemberController extends Controller
                 ->when($filter['tier'] !== '', fn (Builder $query) => $query->where('tier', $filter['tier']))
                 ->when($filter['status'] !== '', fn (Builder $query) => $query->where('status', $filter['status']))
                 ->paginate(50)->withQueryString(),
+        ]);
+    }
+
+    /**
+     * Ảnh mã QR nhận tiền của thành viên (đã giải mã) — để kế toán quét khi chi hoa hồng, quản trị đối chiếu với tài khoản
+     * ngân hàng trong hồ sơ KYC. Quyền: member, kyc, commission hoặc withdrawal.
+     */
+    public function qr(Request $request, Member $member): Response
+    {
+        abort_unless($request->user()->canAny(self::QR_ABILITIES), 403);
+        $image = $member->qrImage();
+        abort_if($image === null, 404);
+
+        return response($image['contents'], 200, [
+            'Content-Type' => $image['mime'],
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

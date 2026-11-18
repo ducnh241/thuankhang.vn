@@ -80,6 +80,19 @@
               <span class="ant-tag ant-tag-red ml-1">Khác họ tên CCCD</span>
             @endif
           </dd>
+          {{-- Mã QR nhận tiền thành viên tải lên (form KYC hoặc trang thông tin tài khoản) — đối chiếu với số tài khoản trên --}}
+          <dt>Mã QR nhận tiền</dt>
+          <dd data-kyc-qr>
+            @if ($member?->hasQr())
+              @php $qrSrc = route('backend.members.qr', $member).'?v='.$member->qr_uploaded_at?->timestamp; @endphp
+              <a href="{{ $qrSrc }}" target="_blank" rel="noopener" title="Mở ảnh cỡ đầy đủ ở tab mới"><img src="{{ $qrSrc }}" alt="Mã QR nhận tiền" loading="lazy" style="width: 160px; height: 160px; object-fit: contain; border: 1px solid #f0f0f0; border-radius: 6px; background: #fff" /></a>
+              <div class="text-xs {{ $muted }}">Tải lên {{ $member->qr_uploaded_at?->format('d/m/Y H:i') }}
+                @if ($member->qrChangedAfterKyc())<span class="ant-tag ant-tag-gold m-0 ml-1">Đổi sau khi duyệt KYC</span>@endif
+              </div>
+            @else
+              <span class="{{ $muted }}">Chưa tải lên</span>
+            @endif
+          </dd>
         </dl>
       </div>
     </div>

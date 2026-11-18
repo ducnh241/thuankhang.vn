@@ -56,6 +56,18 @@
               Chưa gửi hồ sơ
             @endif
           </dd>
+          <dt>Mã QR nhận tiền</dt>
+          <dd data-member-qr>
+            @if ($member->hasQr())
+              @php $qrSrc = route('backend.members.qr', $member).'?v='.$member->qr_uploaded_at?->timestamp; @endphp
+              <a href="{{ $qrSrc }}" target="_blank" rel="noopener" title="Mở ảnh cỡ đầy đủ ở tab mới"><img src="{{ $qrSrc }}" alt="Mã QR nhận tiền" loading="lazy" style="width: 120px; height: 120px; object-fit: contain; border: 1px solid #f0f0f0; border-radius: 6px; background: #fff" /></a>
+              <div class="text-xs {{ $muted }}">Tải lên {{ $member->qr_uploaded_at?->format('d/m/Y H:i') }}
+                @if ($member->qrChangedAfterKyc())<span class="ant-tag ant-tag-gold m-0 ml-1" title="Đối chiếu lại với tài khoản ngân hàng trong hồ sơ KYC trước khi chuyển tiền">Đổi sau khi duyệt KYC</span>@endif
+              </div>
+            @else
+              Chưa có
+            @endif
+          </dd>
           <dt>Tham gia</dt><dd class="tabular-nums">{{ $member->created_at?->format('d/m/Y H:i') }}</dd>
           <dt>Đăng nhập gần nhất</dt><dd class="tabular-nums">{{ $member->last_login_at?->format('d/m/Y H:i') ?? '—' }}</dd>
         </dl>

@@ -16,7 +16,7 @@ use Throwable;
 
 /**
  * KYC của thành viên (S10) ở /tai-khoan/kyc: chưa gửi / bị từ chối → form (thông tin CCCD, tài khoản ngân hàng, ảnh 2 mặt
- * CCCD); đã gửi → trạng thái "Chờ duyệt" / "Đã duyệt" + thông tin đã gửi (số che bớt). Hồ sơ chờ duyệt / đã duyệt không
+ * CCCD, mã QR nhận tiền — không bắt buộc, lưu theo thành viên); đã gửi → trạng thái "Chờ duyệt" / "Đã duyệt" + thông tin đã gửi (số che bớt). Hồ sơ chờ duyệt / đã duyệt không
  * sửa được; bị từ chối thì gửi lại (đè hồ sơ cũ, ảnh cũ bị xóa). Quản trị duyệt ở /backend/kyc.
  */
 class KycController extends Controller
@@ -37,7 +37,7 @@ class KycController extends Controller
     public function store(KycRequest $request): RedirectResponse
     {
         $member = $request->user('member');
-        $data = $request->safe()->except(['front_image', 'back_image']);
+        $data = $request->safe()->except(['front_image', 'back_image', 'qr_image']);
         $stored = [];
 
         try {
@@ -78,6 +78,10 @@ class KycController extends Controller
             return redirect()->route('member.kyc')->with('error', 'Hồ sơ KYC của bạn đã được gửi trước đó.');
         }
         MemberKyc::deleteImages(...$result['old']);
+        // Mã QR nhận tiền (nếu có chọn): lưu theo thành viên, thay ảnh cũ
+        if ($request->hasFile('qr_image')) {
+            $member->replaceQr($request->file('qr_image'), 'form KYC');
+        }
         StaffNotifier::kycSubmitted($result['kyc']->setRelation('member', $member), $result['resubmit']); // báo để vào duyệt (gửi sau khi trả trang)
 
         return redirect()->route('member.kyc')->with('success', 'Đã gửi hồ sơ KYC. Chúng tôi sẽ duyệt trong thời gian sớm nhất.');

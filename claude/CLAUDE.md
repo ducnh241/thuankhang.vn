@@ -246,6 +246,20 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   `setting` chỉ xem. Máy chủ SMTP chỉ nhận tên miền + cổng 25 / 465 / 587 / 2525. Tin chỉ gồm mã đơn, tên người nhận, số
   tiền, hình thức nhận, link đơn trong quản trị. Test: `tests/Feature/OrderNotificationTest.php`.
 
+## Mã QR nhận tiền + sửa thông tin tài khoản (18/11/2026)
+
+- Mã QR nhận tiền = ảnh QR tài khoản ngân hàng của thành viên, để kế toán quét khi chi hoa hồng. Lưu THEO THÀNH VIÊN
+  (`members.qr_image` + `qr_uploaded_at`, migration `2026_11_26_000001`), file mã hóa trên disk riêng tư như ảnh CCCD
+  (`MemberKyc::storeImage / readImage`; `Member::replaceQr()`, `qrImage()`, `hasQr()`, luật kiểm tra `Member::qrImageRules()`).
+  KHÔNG bắt buộc. Tải ở hai nơi: ô "Mã QR nhận tiền" trong form KYC (`qr_image`) và trang sửa thông tin.
+- Website: `/tai-khoan/thong-tin` (`Frontend\ProfileController`, nút "Sửa" ở mục Thông tin tài khoản): đổi họ tên hiển thị
+  (không đổi họ tên trong hồ sơ KYC) + tải / đổi mã QR; số điện thoại, email không sửa ở đây. Ảnh của mình: `/tai-khoan/ma-qr`.
+  Mỗi thay đổi ghi audit log. JS ô ảnh dùng chung `[data-kyc-image]`, mức thu nhỏ theo `data-target-bytes` (CCCD 360 KB,
+  QR 200 KB → cả form KYC dưới 1 MB vì nginx mặc định giới hạn 1 MB).
+- Quản trị: trang chi tiết thành viên và hồ sơ KYC hiện ảnh QR (`backend/member/{member}/qr`, quyền một trong `member`, `kyc`,
+  `commission`, `withdrawal`); nhãn "Đổi sau khi duyệt KYC" khi QR tải sau `reviewed_at` của hồ sơ đã duyệt
+  (`Member::qrChangedAfterKyc()`) — đối chiếu lại trước khi chuyển tiền. Test: `tests/Feature/MemberProfileTest.php`.
+
 ## KYC thành viên (16/11/2026 — phần KYC của Step 9; ví / rút tiền chưa làm)
 - Luồng: thành viên vào Tài khoản → **Xác minh tài khoản (KYC)** `/tai-khoan/kyc` → nhập họ tên theo CCCD, số CCCD (12 số),
   ngày sinh, ngân hàng (`config/banks.php`) + số tài khoản + tên chủ tài khoản, tải ảnh 2 mặt CCCD → gửi. Quản trị duyệt ở

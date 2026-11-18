@@ -147,7 +147,7 @@ class MemberKyc extends Model
         return min(self::MAX_KILOBYTES, FileUpload::maxKilobytes());
     }
 
-    /** Lưu một ảnh CCCD (đã mã hóa) vào disk riêng tư, trả về đường dẫn. */
+    /** Lưu một ảnh (CCCD, mã QR nhận tiền) đã mã hóa vào disk riêng tư, trả về đường dẫn. */
     public static function storeImage(UploadedFile $file, int $memberId): string
     {
         $path = self::DIRECTORY.'/'.$memberId.'/'.Str::random(40).'.enc';
@@ -159,7 +159,12 @@ class MemberKyc extends Model
     /** Nội dung ảnh (đã giải mã) + kiểu MIME; null nếu file mất / không giải mã được. */
     public function image(string $side): ?array
     {
-        $path = $side === 'front' ? $this->front_image : ($side === 'back' ? $this->back_image : null);
+        return self::readImage($side === 'front' ? $this->front_image : ($side === 'back' ? $this->back_image : null));
+    }
+
+    /** Đọc một ảnh đã lưu bằng storeImage(): nội dung đã giải mã + kiểu MIME; null nếu không có / hỏng. */
+    public static function readImage(?string $path): ?array
+    {
         if (! $path || ! Storage::disk(self::DISK)->exists($path)) {
             return null;
         }

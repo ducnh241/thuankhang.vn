@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Frontend;
 
+use App\Models\Member;
 use App\Models\MemberKyc;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -10,7 +11,7 @@ use Illuminate\Validation\Validator;
 
 /**
  * Hồ sơ KYC của thành viên (S10): họ tên theo CCCD, số CCCD (12 số), ngày sinh (gõ ngày/tháng/năm), ngân hàng + số tài khoản + tên chủ tài
- * khoản, ảnh 2 mặt CCCD. Tên chủ tài khoản phải trùng họ tên trên CCCD (so không dấu). 1 CCCD = 1 tài khoản = 1 số tài
+ * khoản, ảnh 2 mặt CCCD, ảnh mã QR nhận tiền (không bắt buộc). Tên chủ tài khoản phải trùng họ tên trên CCCD (so không dấu). 1 CCCD = 1 tài khoản = 1 số tài
  * khoản ngân hàng: CCCD / số tài khoản đang nằm trong hồ sơ chờ duyệt / đã duyệt của thành viên khác thì chặn.
  */
 class KycRequest extends FormRequest
@@ -28,6 +29,8 @@ class KycRequest extends FormRequest
             'bank_account_name' => ['required', 'string', 'max:100'],
             'front_image' => $image,
             'back_image' => $image,
+            // Mã QR nhận tiền của tài khoản ngân hàng trên — không bắt buộc, lưu theo thành viên (sửa được ở trang thông tin)
+            'qr_image' => Member::qrImageRules()[0],
         ];
     }
 
@@ -36,7 +39,7 @@ class KycRequest extends FormRequest
         return [
             'full_name' => 'họ tên', 'id_number' => 'số CCCD', 'birth_date' => 'ngày sinh', 'bank_code' => 'ngân hàng',
             'bank_account_number' => 'số tài khoản', 'bank_account_name' => 'tên chủ tài khoản',
-            'front_image' => 'ảnh mặt trước CCCD', 'back_image' => 'ảnh mặt sau CCCD',
+            'front_image' => 'ảnh mặt trước CCCD', 'back_image' => 'ảnh mặt sau CCCD', 'qr_image' => 'ảnh mã QR',
         ];
     }
 
@@ -69,6 +72,7 @@ class KycRequest extends FormRequest
             'bank_account_number.regex' => 'Số tài khoản chỉ gồm chữ số (6–20 số).',
             'bank_account_name.required' => 'Nhập tên chủ tài khoản.',
             ...$imageMessages,
+            ...Member::qrImageRules()[1],
         ];
     }
 

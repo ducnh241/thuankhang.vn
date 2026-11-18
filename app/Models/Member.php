@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -53,6 +54,7 @@ class Member extends Authenticatable
             'cumulative_amount' => 'integer',
             'activated_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'qr_uploaded_at' => 'datetime',
         ];
     }
 
@@ -145,6 +147,60 @@ class Member extends Authenticatable
             'lines' => $credited()->count(),
             'skipped' => Commission::where('beneficiary_id', $this->id)->where('status', Commission::STATUS_SKIPPED)->count(),
         ];
+    }
+
+    /**
+     * Luật kiểm tra ảnh mã QR nhận tiền (không bắt buộc) + thông báo lỗi — dùng chung cho form KYC và trang sửa thông tin.
+     *
+     * @return array{0: array<int, mixed>, 1: array<string, string>}
+     */
+    public static function qrImageRules(string $field = 'qr_image'): array
+    {
+        $max = MemberKyc::maxKilobytes();
+        $size = $max >= 1024 ? round($max / 1024, 1).' MB' : $max.' KB';
+
+        return [
+            ['nullable', 'file', 'mimes:'.implode(',', MemberKyc::IMAGE_TYPES), 'max:'.$max, 'dimensions:min_width=150,min_height=150'],
+            [
+                "$field.file" => 'Ảnh mã QR tải lên không thành công. Hãy chọn lại ảnh.',
+                "$field.uploaded" => "Ảnh mã QR tải lên không thành công (ảnh quá lớn?). Ảnh tối đa $size.",
+                "$field.mimes" => 'Ảnh mã QR phải là ảnh JPG, PNG hoặc WEBP.',
+                "$field.max" => "Ảnh mã QR quá lớn. Ảnh tối đa $size.",
+                "$field.dimensions" => 'Ảnh mã QR quá nhỏ, không quét được. Hãy chọn ảnh rõ hơn.',
+            ],
+        ];
+    }
+
+    /** Đã tải mã QR nhận tiền chưa. */
+    public function hasQr(): bool
+    {
+        return $this->qr_image !== null;
+    }
+
+    /**
+     * Lưu ảnh mã QR nhận tiền mới (mã hóa, disk riêng tư — như ảnh CCCD) và xóa ảnh cũ. Ghi nhật ký (không lưu nội dung ảnh).
+     * $source: nơi tải lên, để ghi vào nhật ký ("form KYC" / "trang thông tin tài khoản").
+     */
+    public function replaceQr(UploadedFile $file, string $source): void
+    {
+        $old = $this->qr_image;
+        $this->forceFill(['qr_image' => MemberKyc::storeImage($file, $this->id), 'qr_uploaded_at' => now()])->saveQuietly();
+        MemberKyc::deleteImages($old);
+        AuditLog::record('updated', $this, null, "Thành viên {$this->full_name} ({$this->referral_code}) ".($old ? 'đổi' : 'tải lên')." mã QR nhận tiền ở {$source}");
+    }
+
+    /** Ảnh mã QR nhận tiền: nội dung đã giải mã + kiểu MIME; null nếu chưa có / file hỏng. */
+    public function qrImage(): ?array
+    {
+        return MemberKyc::readImage($this->qr_image);
+    }
+
+    /** Mã QR được đổi SAU khi hồ sơ KYC đã duyệt — quản trị cần đối chiếu lại với tài khoản ngân hàng đã xác minh. */
+    public function qrChangedAfterKyc(): bool
+    {
+        $kyc = $this->kyc;
+
+        return $this->qr_uploaded_at !== null && $kyc?->isApproved() && $kyc->reviewed_at !== null && $this->qr_uploaded_at->gt($kyc->reviewed_at);
     }
 
     /** Hồ sơ KYC (CCCD + tài khoản ngân hàng) — mỗi thành viên một hồ sơ. */

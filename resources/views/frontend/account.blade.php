@@ -133,12 +133,25 @@
     </section>
 
     <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-      <h2 class="text-lg font-bold text-slate-900">Thông tin tài khoản</h2>
+      <div class="flex items-center justify-between gap-4">
+        <h2 class="text-lg font-bold text-slate-900">Thông tin tài khoản</h2>
+        <a href="{{ route('member.profile.edit') }}" class="shrink-0 rounded-full border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:border-brand-500 hover:text-brand-700" data-profile-edit>Sửa</a>
+      </div>
       <dl class="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[160px_minmax(0,1fr)]">
         <dt class="text-slate-500">Họ và tên</dt><dd class="font-medium text-slate-900">{{ $member->full_name }}</dd>
         <dt class="text-slate-500">Số điện thoại</dt><dd class="font-medium text-slate-900">{{ $member->phone }}</dd>
         <dt class="text-slate-500">Email</dt><dd class="font-medium text-slate-900">{{ $member->email ?: '—' }}</dd>
         <dt class="text-slate-500">Người giới thiệu bạn</dt><dd class="font-medium text-slate-900" data-referrer>{{ $member->referrer?->shortName() ?? '—' }}</dd>
+        <dt class="text-slate-500">Mã QR nhận tiền</dt>
+        <dd class="font-medium text-slate-900" data-account-qr>
+          @if ($member->hasQr())
+            <a href="{{ route('member.profile.edit') }}" class="inline-block" title="Xem / đổi mã QR">
+              <img src="{{ route('member.qr') }}?v={{ $member->qr_uploaded_at?->timestamp }}" alt="Mã QR nhận tiền" loading="lazy" class="size-28 rounded-lg border border-slate-200 bg-white object-contain" />
+            </a>
+          @else
+            Chưa có — <a href="{{ route('member.profile.edit') }}" class="text-brand-700 hover:underline">thêm mã QR</a>
+          @endif
+        </dd>
       </dl>
     </section>
   </div>

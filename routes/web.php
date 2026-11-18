@@ -13,6 +13,7 @@ use App\Http\Controllers\Frontend\KycController;
 use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\Frontend\ProductReviewController;
+use App\Http\Controllers\Frontend\ProfileController;
 use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\TeamController;
 use App\Http\Controllers\Frontend\WalletController;
@@ -48,6 +49,10 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
         // Thành viên trực tiếp (F1) của tôi: họ tên + cấp hiện tại
         Route::get('tai-khoan/thanh-vien', TeamController::class)->name('member.team');
         Route::get('tai-khoan/vi', WalletController::class)->name('member.wallet');
+        // Sửa thông tin tài khoản (họ tên, ảnh mã QR nhận tiền)
+        Route::get('tai-khoan/thong-tin', [ProfileController::class, 'edit'])->name('member.profile.edit');
+        Route::put('tai-khoan/thong-tin', [ProfileController::class, 'update'])->name('member.profile.update')->middleware('throttle:10,1');
+        Route::get('tai-khoan/ma-qr', [ProfileController::class, 'qr'])->name('member.qr');
         // KYC (S10): form + trạng thái; ảnh CCCD của chính mình (side = front | back)
         Route::get('tai-khoan/kyc', [KycController::class, 'show'])->name('member.kyc');
         Route::post('tai-khoan/kyc', [KycController::class, 'store'])->name('member.kyc.store')->middleware('throttle:10,1');

@@ -107,6 +107,26 @@
               {!! $error('bank_account_name') !!}
             </div>
           </div>
+
+          {{-- Mã QR nhận tiền (không bắt buộc): ảnh QR của chính tài khoản ngân hàng trên, kế toán quét khi chi hoa hồng --}}
+          <div class="mt-4 grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center" data-kyc-image data-max-bytes="{{ $maxKilobytes * 1024 }}" data-target-bytes="{{ 200 * 1024 }}">
+            <div class="w-full max-w-[200px]">
+              <label for="f_qr_image" @class(['relative flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border-2 border-dashed bg-slate-50 px-3 text-center transition hover:border-brand-500',
+                'border-rose-300' => $errors->has('qr_image'), 'border-slate-300' => ! $errors->has('qr_image')])>
+                <svg class="size-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="3.5" width="6" height="6" rx="1" /><rect x="14.5" y="3.5" width="6" height="6" rx="1" /><rect x="3.5" y="14.5" width="6" height="6" rx="1" /><path stroke-linecap="round" d="M14.5 14.5h2.5v2.5M20.5 14.5v0M14.5 20.5h0M17 20.5h3.5v-3" /></svg>
+                <span class="text-sm font-medium text-slate-700">{{ $member->hasQr() ? 'Đổi ảnh mã QR' : 'Chọn ảnh mã QR' }}</span>
+                @if ($member->hasQr())<img src="{{ route('member.qr') }}?v={{ $member->qr_uploaded_at?->timestamp }}" alt="Mã QR hiện tại" class="absolute inset-0 size-full bg-white object-contain" data-kyc-current />@endif
+                <img alt="" class="absolute inset-0 size-full bg-white object-contain" hidden data-kyc-preview />
+              </label>
+              <input id="f_qr_image" name="qr_image" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" aria-labelledby="l_qr_image" />
+            </div>
+            <div class="min-w-0">
+              <div class="text-sm font-medium text-slate-700" id="l_qr_image">Mã QR nhận tiền <span class="font-normal text-slate-500">(không bắt buộc)</span></div>
+              <p class="mt-1 text-xs text-slate-500">Ảnh mã QR của đúng tài khoản ngân hàng ở trên (lấy trong ứng dụng ngân hàng: mục "QR nhận tiền"). Giúp kế toán chuyển hoa hồng nhanh và chính xác. Có thể thêm hoặc đổi sau ở trang Thông tin tài khoản.</p>
+              <p class="mt-1 text-xs break-words text-slate-500" hidden data-kyc-note></p>
+              {!! $error('qr_image') !!}
+            </div>
+          </div>
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
@@ -153,6 +173,17 @@
               <figcaption class="mt-1 text-center text-xs text-slate-500">{{ $label }}</figcaption>
             </figure>
           @endforeach
+        </div>
+        {{-- Mã QR nhận tiền: xem lại / thêm / đổi ở trang thông tin tài khoản (không cần gửi lại hồ sơ) --}}
+        <div class="mt-5 flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 p-4" data-kyc-qr>
+          @if ($member->hasQr())
+            <img src="{{ route('member.qr') }}?v={{ $member->qr_uploaded_at?->timestamp }}" alt="Mã QR nhận tiền" loading="lazy" class="size-24 rounded-lg border border-slate-200 bg-white object-contain" />
+          @endif
+          <div class="min-w-0 flex-1 text-sm">
+            <div class="font-medium text-slate-900">Mã QR nhận tiền</div>
+            <p class="mt-0.5 text-xs text-slate-500">{{ $member->hasQr() ? 'Đã tải lên '.$member->qr_uploaded_at?->format('d/m/Y').'.' : 'Chưa có. Thêm ảnh mã QR của tài khoản ngân hàng để nhận hoa hồng nhanh hơn.' }}</p>
+          </div>
+          <a href="{{ route('member.profile.edit') }}" class="shrink-0 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:border-brand-500 hover:text-brand-700">{{ $member->hasQr() ? 'Đổi mã QR' : 'Thêm mã QR' }}</a>
         </div>
         @if ($kyc->isApproved())
           <p class="mt-4 text-xs text-slate-500">Cần đổi tài khoản ngân hàng hoặc thông tin đã xác minh? Vui lòng liên hệ hotline để được hỗ trợ.</p>
