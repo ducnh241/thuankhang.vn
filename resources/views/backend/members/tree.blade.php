@@ -1,7 +1,7 @@
 @extends('layouts.backend')
 
-{{-- Cây nhị phân từ một thành viên trở xuống (mở từ nút "Xem cây nhị phân" ở trang chi tiết thành viên). Mỗi node: nhánh
-     trái / phải, họ tên, cấp bậc (màu theo thứ tự cấp), doanh số tháng hiện tại của riêng người đó và của cả nhánh; chỗ
+{{-- Cây nhị phân từ một thành viên trở xuống (mở từ nút "Xem cây nhị phân" ở trang chi tiết thành viên). Mỗi node: Nhánh
+     A (bên trái, L) / Nhánh B (bên phải, R), họ tên, cấp bậc (màu theo thứ tự cấp), doanh số tháng hiện tại của riêng người đó và của cả nhánh; chỗ
      trống vẽ ô nét đứt; nhánh yếu hơn có nhãn. ?depth = số tầng bên dưới. Node ở tầng cuối còn người bên dưới thì có link
      "Xem tiếp" (mở cây từ node đó). Vẽ bằng danh sách lồng nhau + CSS (.btree trong app.css), cuộn ngang khi cây rộng. --}}
 @php
@@ -40,9 +40,9 @@
       <div>
         <div class="text-xs {{ $muted }}">Doanh số tháng {{ $month }} (tiền hàng các đơn đã thanh toán)</div>
         <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" data-tree-summary>
-          <span>Nhánh trái: <strong class="tabular-nums">{{ Money::format($left['branch_sales'] ?? 0) }} đ</strong> <span class="{{ $muted }}">· {{ $count($left['branch_count'] ?? 0) }} người</span></span>
-          <span>Nhánh phải: <strong class="tabular-nums">{{ Money::format($right['branch_sales'] ?? 0) }} đ</strong> <span class="{{ $muted }}">· {{ $count($right['branch_count'] ?? 0) }} người</span></span>
-          @if ($tree['weaker'])<span class="ant-tag ant-tag-gold m-0">Yếu hơn: {{ $tree['weaker'] === 'L' ? 'nhánh trái' : 'nhánh phải' }}</span>@endif
+          <span>Nhánh A: <strong class="tabular-nums">{{ Money::format($left['branch_sales'] ?? 0) }} đ</strong> <span class="{{ $muted }}">· {{ $count($left['branch_count'] ?? 0) }} người</span></span>
+          <span>Nhánh B: <strong class="tabular-nums">{{ Money::format($right['branch_sales'] ?? 0) }} đ</strong> <span class="{{ $muted }}">· {{ $count($right['branch_count'] ?? 0) }} người</span></span>
+          @if ($tree['weaker'])<span class="ant-tag ant-tag-gold m-0">Yếu hơn: {{ $tree['weaker'] === 'L' ? 'Nhánh A' : 'Nhánh B' }}</span>@endif
         </div>
       </div>
       <div class="ml-auto flex flex-wrap items-center gap-2">

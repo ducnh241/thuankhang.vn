@@ -17,7 +17,9 @@ use Tests\TestCase;
 /**
  * Cây nhị phân của thành viên (BinaryTree): ông tổng là gốc; người mới bắt đầu từ người giới thiệu, vào nhánh còn trống
  * (trái trước), hai nhánh đã có người thì đi xuống nhánh yếu hơn — doanh số tháng thấp hơn, bằng nhau thì ít người hơn,
- * vẫn bằng thì nhánh trái. Vị trí gán một lần, cố định.
+ * vẫn bằng thì nhánh trái. Vị trí gán một lần, cố định. Đó là quy tắc cho thành viên KHÔNG có nhánh tự chọn (dữ liệu cũ);
+ * từ 18/11/2026 người đăng ký tự chọn Nhánh A (L) / Nhánh B (R) của người giới thiệu và được xếp vào vị trí trống ngoài
+ * cùng của nhánh đó (không còn tự chia vào nhánh yếu).
  */
 class BinaryTreeTest extends TestCase
 {
@@ -136,13 +138,55 @@ class BinaryTreeTest extends TestCase
         }
     }
 
+    public function test_member_who_chose_a_branch_goes_to_the_outer_end_of_that_branch_of_the_sponsor(): void
+    {
+        $tong = $this->member('Tổng');
+        $x = $this->member('X', $tong);                       // dữ liệu cũ: tự xếp, nhánh A của Tổng
+        $choose = fn (string $name, Member $sponsor, string $side) => Member::factory()->create(['full_name' => $name, 'referrer_id' => $sponsor->id, 'sponsor_side' => $side])->fresh();
+
+        // Nhánh còn trống → đứng ngay dưới người giới thiệu, đúng phía đã chọn (kể cả khi phía kia cũng trống)
+        $b1 = $choose('B1', $x, 'R');
+        $this->assertSame(['X', 'R'], $this->slot($b1));
+        // Chọn tiếp nhánh B của X: đã có B1 → xuống dưới B1, vẫn phía B; rồi dưới B2…
+        $b2 = $choose('B2', $x, 'R');
+        $b3 = $choose('B3', $x, 'R');
+        $this->assertSame([['B1', 'R'], ['B2', 'R']], [$this->slot($b2), $this->slot($b3)]);
+        // Nhánh A của X vẫn trống dù nhánh B đã có 3 người và đang "mạnh" hơn: không tự chia vào nhánh yếu
+        $this->assertNull(Member::where('parent_id', $x->id)->where('position', 'L')->first());
+        $a1 = $choose('A1', $x, 'L');
+        $this->assertSame(['X', 'L'], $this->slot($a1));
+
+        // Doanh số không ảnh hưởng: nhánh A của X bán nhiều, người chọn A vẫn vào A
+        $this->paid($a1, 50_000_000);
+        $a2 = $choose('A2', $x, 'L');
+        $this->assertSame(['A1', 'L'], $this->slot($a2));
+
+        // Người do B2 giới thiệu chọn nhánh A của B2: tính từ B2, không phải từ X hay Tổng
+        $c = $choose('C', $b2, 'L');
+        $this->assertSame(['B2', 'L'], $this->slot($c));
+        // Chọn nhánh B của Tổng (còn trống) → ngay dưới Tổng
+        $d = $choose('D', $tong, 'R');
+        $this->assertSame(['Tổng', 'R'], $this->slot($d));
+        // Chọn nhánh A của Tổng: X đang ở đó → đi xuống phía A: X → A1 → A2 → dưới A2
+        $e = $choose('E', $tong, 'L');
+        $this->assertSame(['A2', 'L'], $this->slot($e));
+
+        // Mọi người vẫn nằm trong nhánh của người giới thiệu mình
+        $this->assertEqualsCanonicalizing([$b1->id, $b2->id, $b3->id, $a1->id, $a2->id, $c->id, $e->id], $x->branchIds());
+
+        // Xếp lại từ đầu (công cụ quản trị) giữ nguyên nhánh đã chọn
+        $before = Member::orderBy('id')->get(['id', 'parent_id', 'position'])->toArray();
+        BinaryTree::rebuild();
+        $this->assertSame($before, Member::orderBy('id')->get(['id', 'parent_id', 'position'])->toArray());
+    }
+
     public function test_registration_places_new_member_and_account_shows_legs(): void
     {
         $tong = $this->member('Tổng');
         $ha = $this->member('Đinh Thu Hà', $tong);
 
         $this->post('/dang-ky', ['full_name' => 'Nguyễn Thị Huyền', 'phone' => '0912345678', 'email' => '', 'password' => 'matkhau123',
-            'password_confirmation' => 'matkhau123', 'referral_code' => $ha->referral_code])->assertRedirect(route('member.account'));
+            'password_confirmation' => 'matkhau123', 'referral_code' => $ha->referral_code, 'branch' => 'A'])->assertRedirect(route('member.account'));
         $this->post('/dang-xuat'); // đăng ký xong là đăng nhập thật; đăng xuất để các bước sau dùng actingAs
         $huyen = Member::where('phone', '0912345678')->sole();
         $this->assertSame(['Đinh Thu Hà', 'L'], $this->slot($huyen));
@@ -153,12 +197,12 @@ class BinaryTreeTest extends TestCase
 
         // Huyền: 1 F1 (Yến), nhánh 3 người (Yến + A + B) — đều ở nhánh trái
         $this->actingAs($huyen->fresh(), 'member')->get('/tai-khoan')->assertOk()
-            ->assertSee('data-f1-count>1<', false)->assertSee('data-team-count>3<', false)->assertDontSee('Nhánh trái');
+            ->assertSee('data-f1-count>1<', false)->assertSee('data-team-count>3<', false)->assertDontSee('Nhánh A');
         $this->get('/tai-khoan/thanh-vien')->assertSee('data-team-total>3<', false);
         // Tổng: nhánh trái 5 người (Hà, Huyền, Yến, A, B), nhánh phải trống
         auth('member')->logout(); // đổi sang tài khoản khác: bỏ phiên của Huyền trước (phiên cũ giữ dấu mật khẩu của Huyền)
         $this->flushSession();
-        $this->actingAs($tong->fresh(), 'member')->get('/tai-khoan')->assertOk()->assertSee('data-team-count>5<', false)->assertDontSee('Nhánh phải');
+        $this->actingAs($tong->fresh(), 'member')->get('/tai-khoan')->assertOk()->assertSee('data-team-count>5<', false)->assertDontSee('Nhánh B');
     }
 
     public function test_command_places_existing_members_in_registration_order(): void
@@ -281,12 +325,17 @@ class BinaryTreeTest extends TestCase
         $tuyet = $this->member('Tuyết', $tong); // xuống nhánh Huyền (yếu hơn)
 
         $this->actingAs($ops, 'web')->get(route('backend.members.show', $tong))->assertOk()
-            ->assertSeeInOrder(['Cây nhị phân', 'Ông tổng', 'Nhánh trái', '1 thành viên', 'Đinh Thu Hà', '2.000.000 đ', 'Nhánh phải', 'Yếu hơn', '2 thành viên', 'Nguyễn Thị Huyền', '0 đ'])
-            ->assertSee('sẽ vào <strong>nhánh phải</strong> (nhánh yếu hơn', false);
+            ->assertSeeInOrder(['Cây nhị phân', 'Ông tổng', 'Nhánh A', '1 thành viên', 'Đinh Thu Hà', '2.000.000 đ', 'Nhánh B', 'Yếu hơn', '2 thành viên', 'Nguyễn Thị Huyền', '0 đ'])
+            ->assertSee('tự chọn <strong>Nhánh A</strong> hoặc <strong>Nhánh B</strong> lúc đăng ký', false)->assertDontSee('data-binary-chosen', false);
         $this->actingAs($ops, 'web')->get(route('backend.members.show', $tuyet))->assertOk()
-            ->assertSeeInOrder(['Cây nhị phân', 'nhánh trái của', 'Nguyễn Thị Huyền', 'Còn trống', 'Còn trống'])
-            ->assertSee('sẽ vào <strong>nhánh trái</strong> (nhánh còn trống)', false)->assertDontSee('Ông tổng');
-        $this->actingAs($ops, 'web')->get(route('backend.members.show', $huyen))->assertSee('nhánh phải của')->assertSee('sẽ vào <strong>nhánh phải</strong> (nhánh còn trống)', false);
+            ->assertSeeInOrder(['Cây nhị phân', 'Nhánh A của', 'Nguyễn Thị Huyền', 'Nhánh tự chọn khi đăng ký:', 'không có (đăng ký trước khi có lựa chọn', 'Còn trống', 'Còn trống'])
+            ->assertDontSee('Ông tổng')->assertDontSee('nhánh trái')->assertDontSee('nhánh phải');
+        $this->actingAs($ops, 'web')->get(route('backend.members.show', $huyen))->assertSee('Nhánh B của');
+
+        // Thành viên tự chọn nhánh lúc đăng ký: trang chi tiết ghi rõ nhánh đã chọn của người giới thiệu
+        $chosen = Member::factory()->create(['full_name' => 'Người Chọn Nhánh', 'referrer_id' => $ha->id, 'sponsor_side' => 'R']);
+        $this->actingAs($ops, 'web')->get(route('backend.members.show', $chosen))->assertOk()
+            ->assertSeeInOrder(['Nhánh B của', 'Đinh Thu Hà', 'Nhánh tự chọn khi đăng ký:', '<strong>Nhánh B</strong> của', 'Đinh Thu Hà'], false);
     }
 
     public function test_admin_binary_tree_page_shows_levels_sides_and_monthly_sales_per_node(): void
@@ -314,7 +363,7 @@ class BinaryTreeTest extends TestCase
         $html = $this->actingAs($ops, 'web')->get(route('backend.members.tree', $trung))->assertOk()
             ->assertSee('<title>Cây nhị phân - Nguyen văn trung - '.config('app.name').'</title>', false)
             // Tóm tắt hai nhánh: doanh số tháng + số người, nhánh yếu hơn (phải: 1.200.000 < trái 2.500.000)
-            ->assertSeeInOrder(['Doanh số tháng '.now()->format('m/Y'), 'Nhánh trái:', '2.500.000 đ', '2 người', 'Nhánh phải:', '1.200.000 đ', '3 người', 'Yếu hơn: nhánh phải'])
+            ->assertSeeInOrder(['Doanh số tháng '.now()->format('m/Y'), 'Nhánh A:', '2.500.000 đ', '2 người', 'Nhánh B:', '1.200.000 đ', '3 người', 'Yếu hơn: Nhánh B'])
             // Chú giải cấp bậc theo cấu hình
             ->assertSeeInOrder(['Cấp bậc:', 'Chưa kích hoạt', 'Nhân viên', 'Cộng tác viên', 'Đại lý'])
             ->getContent();
@@ -328,10 +377,10 @@ class BinaryTreeTest extends TestCase
         // Mỗi node: nhánh, họ tên, cấp bậc, doanh số tháng của riêng người đó; node có tuyến dưới thêm dòng "Cả nhánh"
         $this->assertSame(['', 'L', 'R', 'L', 'L', 'L'], array_map($side, [$trung, $ha, $huyen, $chung, $yen, $quoc]));
         $this->assertSame('Gốc Nguyen văn trung Chưa kích hoạt 0 đ Cả nhánh: 6 người · 3.700.000 đ', $card($trung));
-        $this->assertSame('Trái Đinh Thu Hà Cộng tác viên 2.000.000 đ Cả nhánh: 2 người · 2.500.000 đ Xem từ đây', $card($ha));
-        $this->assertSame('Phải Yếu hơn Lê Ngọc Huyền Đại lý 0 đ Cả nhánh: 3 người · 1.200.000 đ Xem từ đây', $card($huyen));
-        $this->assertSame('Trái Chung Nguyễn Chưa kích hoạt 500.000 đ', $card($chung));
-        $this->assertSame('Trái Nguyễn Văn Quốc Chưa kích hoạt 1.200.000 đ', $card($quoc));
+        $this->assertSame('Nhánh A Đinh Thu Hà Cộng tác viên 2.000.000 đ Cả nhánh: 2 người · 2.500.000 đ Xem từ đây', $card($ha));
+        $this->assertSame('Nhánh B Yếu hơn Lê Ngọc Huyền Đại lý 0 đ Cả nhánh: 3 người · 1.200.000 đ Xem từ đây', $card($huyen));
+        $this->assertSame('Nhánh A Chung Nguyễn Chưa kích hoạt 500.000 đ', $card($chung));
+        $this->assertSame('Nhánh A Nguyễn Văn Quốc Chưa kích hoạt 1.200.000 đ', $card($quoc));
         // Cấp bậc có màu riêng theo thứ tự cấp
         $this->assertStringContainsString('<span class="ant-tag m-0 ant-tag-cyan">Cộng tác viên</span>', $html);
         $this->assertStringContainsString('<span class="ant-tag m-0 ant-tag-green">Đại lý</span>', $html);

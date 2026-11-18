@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Frontend;
 
 use App\Models\Member;
+use App\Services\BinaryTree;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,7 @@ use Illuminate\Validation\Validator;
 
 /**
  * Đăng ký thành viên (S3): họ tên, số di động (tên đăng nhập), email (tuỳ chọn), mật khẩu, mã người giới thiệu
- * (BẮT BUỘC — điền sẵn từ cookie ?ref=). Mã phải là của thành viên đang hoạt động. Ngoại lệ duy nhất: hệ thống chưa có
+ * (BẮT BUỘC — điền sẵn từ cookie ?ref=) và nhánh A / B của người giới thiệu (bắt buộc khi có mã). Mã phải là của thành viên đang hoạt động. Ngoại lệ duy nhất: hệ thống chưa có
  * thành viên nào thì tài khoản đầu tiên đăng ký được không cần mã.
  */
 class RegisterRequest extends FormRequest
@@ -25,12 +26,14 @@ class RegisterRequest extends FormRequest
             'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
             // Bắt buộc có mã người giới thiệu (trừ tài khoản đầu tiên của hệ thống — chưa có ai để giới thiệu)
             'referral_code' => [Rule::requiredIf(fn () => Member::query()->exists()), 'nullable', 'string', 'max:20'],
+            // Nhánh A / B của người giới thiệu — thành viên tự chọn theo hướng dẫn của người giới thiệu; bắt buộc khi có mã
+            'branch' => [Rule::requiredIf(fn () => $this->filled('referral_code')), 'nullable', 'string', Rule::in(array_keys(BinaryTree::BRANCHES))],
         ];
     }
 
     public function attributes(): array
     {
-        return ['full_name' => 'họ tên', 'phone' => 'số điện thoại', 'email' => 'email', 'password' => 'mật khẩu', 'referral_code' => 'mã người giới thiệu'];
+        return ['full_name' => 'họ tên', 'phone' => 'số điện thoại', 'email' => 'email', 'password' => 'mật khẩu', 'referral_code' => 'mã người giới thiệu', 'branch' => 'nhánh'];
     }
 
     public function messages(): array
@@ -43,6 +46,8 @@ class RegisterRequest extends FormRequest
             'password.required' => 'Nhập mật khẩu.',
             'password.confirmed' => 'Mật khẩu nhập lại không khớp.',
             'referral_code.required' => 'Nhập mã người giới thiệu. Chỉ đăng ký được khi có mã của người giới thiệu.',
+            'branch.required' => 'Chọn Nhánh A hoặc Nhánh B. Hỏi người giới thiệu bạn nên chọn nhánh nào.',
+            'branch.in' => 'Nhánh không hợp lệ. Chọn Nhánh A hoặc Nhánh B.',
         ];
     }
 
@@ -61,6 +66,9 @@ class RegisterRequest extends FormRequest
         }
         if (is_string($code = $this->input('referral_code'))) {
             $data['referral_code'] = Str::upper(trim($code));
+        }
+        if (is_string($branch = $this->input('branch'))) {
+            $data['branch'] = Str::upper(trim($branch));
         }
         $this->merge($data);
     }

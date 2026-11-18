@@ -10,18 +10,21 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Cây nhị phân của thành viên (kết hợp với cây giới thiệu "mặt trời"). Mỗi người có tối đa 2 nhánh: trái (L), phải (R).
+ * Cây nhị phân của thành viên (kết hợp với cây giới thiệu "mặt trời"). Mỗi người có tối đa 2 nhánh: L và R — trên giao
+ * diện gọi là "Nhánh A" (L, vẽ bên trái) và "Nhánh B" (R, vẽ bên phải).
  * "Ông tổng" = gốc của cây chính: thành viên có mã cấu hình ở Tham số chung (root_member_code); chưa cấu hình thì là
  * thành viên không có người giới thiệu đăng ký sớm nhất. Thành viên KHÔNG có người giới thiệu khác (tài khoản thử, dữ liệu
  * cũ) là gốc của một cây riêng — không bị trộn vào cây của ông tổng.
  *
- * Quy tắc xếp người mới (gán một lần, cố định):
- *   - Bắt đầu từ người giới thiệu X.
- *   - Đang đứng ở một người còn trống nhánh → vào nhánh trống đó (trái trước, phải sau).
- *   - Cả hai nhánh đã có người → đi xuống NHÁNH YẾU HƠN rồi lặp lại. Nhánh yếu hơn = nhánh có doanh số trong tháng thấp
- *     hơn (tổng tiền hàng các đơn đã thanh toán trong tháng của mọi người trong nhánh); bằng nhau → nhánh ít người hơn;
- *     vẫn bằng → nhánh trái.
- * Vì luôn bắt đầu từ X nên người do X giới thiệu luôn nằm trong nhánh của X.
+ * Quy tắc xếp người mới (gán một lần, cố định) — từ 18/11/2026 thành viên TỰ CHỌN nhánh lúc đăng ký (members.sponsor_side,
+ * người giới thiệu hướng dẫn nên chọn A hay B), KHÔNG còn tự động chia vào nhánh yếu:
+ *   - Bắt đầu từ người giới thiệu X, đi xuống đúng nhánh đã chọn (A = L, B = R): nhánh đó của X còn trống → đứng ngay dưới
+ *     X; đã có người → đi tiếp xuống cùng phía đó cho tới vị trí trống đầu tiên (vị trí ngoài cùng của nhánh).
+ * Vì luôn bắt đầu từ X nên người do X giới thiệu luôn nằm trong nhánh đã chọn của X.
+ *
+ * Thành viên KHÔNG có lựa chọn (sponsor_side = NULL: dữ liệu cũ trước 18/11/2026, tạo từ công cụ / seeder) vẫn theo quy
+ * tắc cũ: chỗ trống của X trước (A rồi B); cả hai đã có người → đi xuống nhánh yếu hơn (doanh số tháng thấp hơn → ít
+ * người hơn → nhánh A). "Nhánh yếu hơn" còn dùng để hiển thị và để tính thưởng nhóm sau này.
  */
 class BinaryTree
 {
@@ -29,7 +32,10 @@ class BinaryTree
 
     public const RIGHT = 'R';
 
-    public const SIDES = [self::LEFT => 'Nhánh trái', self::RIGHT => 'Nhánh phải'];
+    public const SIDES = [self::LEFT => 'Nhánh A', self::RIGHT => 'Nhánh B'];
+
+    /** Lựa chọn trên form đăng ký (A / B) → nhánh lưu trong cơ sở dữ liệu. */
+    public const BRANCHES = ['A' => self::LEFT, 'B' => self::RIGHT];
 
     /** Ông tổng: thành viên có mã cấu hình ở Tham số chung; chưa cấu hình → người không có người giới thiệu đăng ký sớm nhất. */
     public static function root(): ?Member
@@ -66,7 +72,10 @@ class BinaryTree
         });
     }
 
-    /** Xóa toàn bộ vị trí rồi xếp lại từ đầu theo thứ tự đăng ký (chỉ dùng trước khi vận hành thật / khi đổi quy tắc). */
+    /**
+     * Xóa toàn bộ vị trí rồi xếp lại từ đầu theo thứ tự đăng ký (chỉ dùng trước khi vận hành thật). Nhánh thành viên đã tự
+     * chọn lúc đăng ký (sponsor_side) được giữ và áp dụng lại; thành viên không có lựa chọn xếp theo quy tắc cũ.
+     */
     public static function rebuild(): int
     {
         return DB::transaction(function () {
@@ -164,7 +173,8 @@ class BinaryTree
     }
 
     /**
-     * Gán chỗ cho một thành viên chưa có chỗ: bắt đầu từ người giới thiệu, đi xuống theo nhánh yếu hơn. Không có người giới
+     * Gán chỗ cho một thành viên chưa có chỗ: bắt đầu từ người giới thiệu, đi xuống nhánh thành viên đã chọn lúc đăng ký
+     * (sponsor_side) tới vị trí trống ngoài cùng; không có lựa chọn (dữ liệu cũ) thì theo nhánh yếu hơn. Không có người giới
      * thiệu → là gốc của một cây, không gán. Người giới thiệu chưa có chỗ (vd quản trị đổi người giới thiệu sang người đăng
      * ký sau) thì xếp người giới thiệu trước.
      */
@@ -186,8 +196,20 @@ class BinaryTree
             return; // chặn vòng: mình đang là tuyến trên của người giới thiệu
         }
         $children = self::childrenMap($nodes);
-        $sales = self::monthSales($nodes->keys()->all(), $asOf ?? now());
         $current = $sponsor->id;
+        if (in_array($member->sponsor_side, [self::LEFT, self::RIGHT], true)) {
+            // Nhánh tự chọn: đi xuống đúng phía đó cho tới vị trí trống đầu tiên
+            $side = $member->sponsor_side;
+            while (isset($children[$current][$side])) {
+                $current = $children[$current][$side];
+            }
+            $member->forceFill(['parent_id' => $current, 'position' => $side, 'placed_at' => now()])->saveQuietly();
+
+            return;
+        }
+
+        // Không có lựa chọn (dữ liệu cũ): chỗ trống trước, rồi nhánh yếu hơn
+        $sales = self::monthSales($nodes->keys()->all(), $asOf ?? now());
         while (true) {
             $kids = $children[$current] ?? [];
             if (! isset($kids[self::LEFT]) || ! isset($kids[self::RIGHT])) {
@@ -201,7 +223,7 @@ class BinaryTree
         $member->forceFill(['parent_id' => $current, 'position' => $side, 'placed_at' => now()])->saveQuietly();
     }
 
-    /** Nhánh yếu hơn: doanh số tháng thấp hơn → ít người hơn → trái. */
+    /** Nhánh yếu hơn: doanh số tháng thấp hơn → ít người hơn → nhánh A (L). */
     private static function weakerSide(array $left, array $right): string
     {
         if ($left['sales'] !== $right['sales']) {

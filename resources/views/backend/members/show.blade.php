@@ -223,11 +223,10 @@
       </div>
     </div>
 
-    {{-- Cây nhị phân: vị trí của thành viên + hai nhánh bên dưới (số người, doanh số tháng). Nhánh yếu hơn là nhánh mà
-         người đăng ký tiếp theo bằng mã của thành viên này sẽ được xếp vào. Vị trí gán một lần, không sửa được. --}}
+    {{-- Cây nhị phân: vị trí của thành viên + hai nhánh bên dưới — Nhánh A (L) và Nhánh B (R): số người, doanh số tháng,
+         nhánh yếu hơn (để tính thưởng nhóm). Người đăng ký tự chọn nhánh; vị trí gán một lần, không sửa được. --}}
     @php
         $sides = \App\Services\BinaryTree::SIDES;
-        $nextSide = ! $legs['L']['head'] ? 'L' : (! $legs['R']['head'] ? 'R' : $legs['weaker']);
     @endphp
     <div class="ant-card ant-card-bordered" data-card="binary">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Cây nhị phân</div></div></div>
@@ -235,7 +234,7 @@
         <div class="mb-3" data-binary-position>
           <span class="{{ $muted }}">Vị trí:</span>
           @if ($member->parent)
-            {{ mb_strtolower($sides[$member->position] ?? 'Nhánh') }} của {!! $memberLink($member->parent) !!}
+            {{ $sides[$member->position] ?? 'Nhánh' }} của {!! $memberLink($member->parent) !!}
           @elseif ($member->isRoot())
             <span class="ant-tag ant-tag-blue m-0">Ông tổng</span> gốc của cây
           @elseif ($member->referrer_id === null)
@@ -244,6 +243,16 @@
             <span class="ant-tag ant-tag-orange m-0">Chưa xếp</span>
           @endif
         </div>
+        @if ($member->referrer)
+          <div class="mb-3 text-sm" data-binary-chosen>
+            <span class="{{ $muted }}">Nhánh tự chọn khi đăng ký:</span>
+            @if ($member->sponsor_side)
+              <strong>{{ $sides[$member->sponsor_side] }}</strong> của {!! $memberLink($member->referrer) !!}
+            @else
+              <span class="{{ $muted }}">không có (đăng ký trước khi có lựa chọn — hệ thống tự xếp)</span>
+            @endif
+          </div>
+        @endif
         @foreach ($sides as $side => $label)
           @php $leg = $legs[$side]; @endphp
           <div @class(['rounded border border-[#f0f0f0] px-3 py-2', 'mt-2' => ! $loop->first]) data-leg="{{ $side }}">
@@ -261,7 +270,7 @@
           </div>
         @endforeach
         <a href="{{ route('backend.members.tree', $member) }}" class="ant-btn mt-3" id="view-binary-tree">{{ ant_icon('apartment') }}<span>Xem cây nhị phân</span></a>
-        <div class="mt-3 text-xs {{ $muted }}" data-binary-next>Người đăng ký tiếp theo bằng mã của thành viên này sẽ vào <strong>{{ mb_strtolower($sides[$nextSide]) }}</strong>{{ $legs['L']['head'] && $legs['R']['head'] ? ' (nhánh yếu hơn: doanh số tháng thấp hơn, bằng nhau thì nhánh ít người hơn)' : ' (nhánh còn trống)' }}. Vị trí đã xếp là cố định.</div>
+<div class="mt-3 text-xs {{ $muted }}" data-binary-next>Người đăng ký bằng mã của thành viên này tự chọn <strong>Nhánh A</strong> hoặc <strong>Nhánh B</strong> lúc đăng ký và được xếp vào vị trí trống ngoài cùng của nhánh đã chọn. Vị trí đã xếp là cố định.</div>
       </div>
     </div>
 

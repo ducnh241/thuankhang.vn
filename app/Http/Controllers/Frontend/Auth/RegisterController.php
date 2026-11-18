@@ -7,6 +7,7 @@ use App\Http\Middleware\CaptureReferralCode;
 use App\Http\Requests\Frontend\RegisterRequest;
 use App\Models\Level;
 use App\Models\Member;
+use App\Services\BinaryTree;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ use Illuminate\View\View;
  * Đăng ký thành viên (S3, Step 3). Chỉ đăng ký được khi có mã người giới thiệu hợp lệ (của thành viên đang hoạt động): ô
  * "Mã người giới thiệu" điền sẵn từ cookie ref (link ?ref=CODE), sửa được trước khi gửi; trang hiện tên rút gọn của người
  * giới thiệu để xác nhận. Ngoại lệ: hệ thống chưa có thành viên nào thì tài khoản đầu tiên không cần mã. Người giới thiệu
- * gắn cố định; cấp mặc định là cấp gốc "Chưa kích hoạt".
+ * gắn cố định; cấp mặc định là cấp gốc "Chưa kích hoạt". Người đăng ký tự chọn Nhánh A / Nhánh B của người giới thiệu (người
+ * giới thiệu hướng dẫn nên chọn nhánh nào) — không còn tự động chia vào nhánh yếu.
  */
 class RegisterController extends Controller
 {
@@ -48,6 +50,8 @@ class RegisterController extends Controller
             'password' => $request->validated('password'),
             'referral_code' => Member::generateReferralCode(),
             'referrer_id' => $referrer?->id,
+            // Nhánh tự chọn (A = L, B = R): vị trí trong cây nhị phân được gán theo nhánh này ngay khi tạo
+            'sponsor_side' => $referrer ? BinaryTree::BRANCHES[$request->validated('branch')] : null,
             'level_id' => Level::where('threshold_amount', 0)->orderBy('sort_order')->value('id'),
         ]));
 

@@ -1,7 +1,7 @@
 {{-- Một node của cây nhị phân (đệ quy). Biến: $node (BinaryTree::tree) hoặc null = chỗ trống; $side (L | R | null ở node
      gốc đang xem); $weak (nhánh yếu hơn trong hai nhánh con của node cha); $isTop (node đang xem). Biến dùng chung từ view
      cha: $levelColors, $depth, $muted, $count. --}}
-@php use App\Support\Money; $sideLabel = ['L' => 'Trái', 'R' => 'Phải'][$side] ?? null; @endphp
+@php use App\Support\Money; $sideLabel = ['L' => 'Nhánh A', 'R' => 'Nhánh B'][$side] ?? null; @endphp
 <li>
   @if ($node === null)
     <div class="btree-node btree-empty" data-node="empty" data-side="{{ $side }}">

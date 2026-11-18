@@ -178,7 +178,14 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Lưu trữ: `members.parent_id` (người đứng ngay trên trong cây nhị phân), `members.position` (`L` / `R`), `placed_at`;
   unique (`parent_id`, `position`). Gốc cây (ông tổng / gốc cây riêng): `parent_id` null. Doanh số nhánh không lưu, tính
   từ đơn đã thanh toán.
-- Quy tắc xếp (`App\Services\BinaryTree`, tự chạy ở sự kiện `Member::created` — mọi đường tạo thành viên đều được xếp):
+- **Từ 18/11/2026 (chủ dự án yêu cầu): người đăng ký TỰ CHỌN nhánh, bỏ tự động chia vào nhánh yếu.** Form `/dang-ky` có ô
+  bắt buộc "Chọn nhánh": **Nhánh A** (= L) / **Nhánh B** (= R) (`branch` = A | B, `BinaryTree::BRANCHES`); người giới thiệu
+  hướng dẫn F1 nên chọn nhánh nào. Lưu vào `members.sponsor_side` (migration `2026_11_25_000001`, NULL = dữ liệu cũ). Xếp:
+  từ người giới thiệu đi xuống đúng phía đã chọn tới vị trí trống đầu tiên (ngoài cùng của nhánh). Thành viên không có lựa
+  chọn (dữ liệu cũ, factory, seeder) vẫn theo quy tắc cũ bên dưới. `rebuild` giữ nguyên nhánh đã chọn.
+  **Trên mọi giao diện gọi là "Nhánh A" / "Nhánh B"** (`BinaryTree::SIDES`), không dùng "trái / phải". Trang chi tiết thành
+  viên (admin) có dòng "Nhánh tự chọn khi đăng ký". "Nhánh yếu hơn" chỉ còn để hiển thị / tính thưởng nhóm sau này.
+- Quy tắc xếp cho thành viên KHÔNG có nhánh tự chọn (`App\Services\BinaryTree`, tự chạy ở sự kiện `Member::created` — mọi đường tạo thành viên đều được xếp):
   bắt đầu từ **người giới thiệu X** (không có người giới thiệu → là gốc một cây, không xếp); đang ở người còn trống nhánh → vào nhánh trống (trái trước);
   kín cả hai → đi xuống **nhánh yếu hơn** rồi lặp lại. Nhánh yếu hơn = **doanh số trong tháng** thấp hơn (tổng
   `goods_amount` đơn đã thanh toán trong tháng của mọi người trong nhánh); bằng nhau → nhánh ít người hơn; vẫn bằng → trái.

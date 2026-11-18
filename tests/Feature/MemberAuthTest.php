@@ -29,7 +29,7 @@ class MemberAuthTest extends TestCase
     {
         return [
             'full_name' => 'Nguyễn Văn Bình', 'phone' => '0912 345 678', 'email' => '', 'password' => 'matkhau123',
-            'password_confirmation' => 'matkhau123', 'referral_code' => '', ...$data,
+            'password_confirmation' => 'matkhau123', 'referral_code' => '', 'branch' => 'A', ...$data,
         ];
     }
 
@@ -41,13 +41,18 @@ class MemberAuthTest extends TestCase
         $this->get('/?ref=anhtm88')->assertCookie(CaptureReferralCode::COOKIE, 'ANHTM88');
         $this->withCookie(CaptureReferralCode::COOKIE, 'ANHTM88')->get('/dang-ky')->assertOk()
             ->assertSee('value="ANHTM88"', false)->assertSee('Người giới thiệu: <strong>Trần T. M. Anh</strong>', false);
-        $this->get('/dang-ky?ref=anhtm88')->assertSee('value="ANHTM88"', false);
+        $this->get('/dang-ky?ref=anhtm88')->assertSee('value="ANHTM88"', false)
+            // Chọn nhánh của người giới thiệu: hai lựa chọn A / B, chưa chọn sẵn cái nào
+            ->assertSeeInOrder(['Chọn nhánh', 'name="branch" value="A"', 'Nhánh A', 'name="branch" value="B"', 'Nhánh B', 'Hỏi người giới thiệu bạn nên chọn Nhánh A hay Nhánh B'], false)
+            ->assertDontSee('" checked', false);
 
         $this->post('/dang-ky', $this->form(['phone' => '+84 912.345.678', 'email' => 'Binh@Example.com', 'referral_code' => 'anhtm88']))
             ->assertRedirect(route('member.account'))->assertSessionHas('success');
 
         $member = Member::where('phone', '0912345678')->sole();
         $this->assertSame([$a->id, 'binh@example.com', 'Nguyễn Văn Bình'], [$member->referrer_id, $member->email, $member->full_name]);
+        // Nhánh A = L: đứng ngay dưới người giới thiệu ở nhánh A
+        $this->assertSame(['L', $a->id, 'L'], [$member->sponsor_side, $member->parent_id, $member->position]);
         $this->assertSame('Chưa kích hoạt', $member->level->name);
         $this->assertNull($member->activated_at);
         $this->assertMatchesRegularExpression('/^[2-9A-HJKMNP-Z]{7}$/', $member->referral_code);
@@ -91,11 +96,11 @@ class MemberAuthTest extends TestCase
     {
         $this->withoutMiddleware(ThrottleRequests::class);
 
-        // Hệ thống chưa có thành viên nào: tài khoản đầu tiên đăng ký được không cần mã (chưa có ai để giới thiệu)
-        $this->get('/dang-ky')->assertOk()->assertDontSee('Bắt buộc: chỉ đăng ký được khi có mã của người giới thiệu');
-        $this->post('/dang-ky', $this->form(['phone' => '0911111111']))->assertRedirect(route('member.account'));
+        // Hệ thống chưa có thành viên nào: tài khoản đầu tiên đăng ký được không cần mã (chưa có ai để giới thiệu), không chọn nhánh
+        $this->get('/dang-ky')->assertOk()->assertDontSee('Bắt buộc: chỉ đăng ký được khi có mã của người giới thiệu')->assertDontSee('name="branch"', false);
+        $this->post('/dang-ky', $this->form(['phone' => '0911111111', 'branch' => null]))->assertRedirect(route('member.account'));
         $first = Member::where('phone', '0911111111')->sole();
-        $this->assertNull($first->referrer_id);
+        $this->assertSame([null, null, null], [$first->referrer_id, $first->sponsor_side, $first->parent_id]);
         $this->post('/dang-xuat');
 
         // Từ đó trở đi: bắt buộc có mã, và mã phải hợp lệ
@@ -107,12 +112,24 @@ class MemberAuthTest extends TestCase
         }
         $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => 'SAIMA99']))->assertSessionHasErrors('referral_code');
         $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => ['x']]))->assertSessionHasErrors('referral_code');
+        // Có mã thì bắt buộc chọn nhánh A hoặc B
+        foreach (['', null] as $empty) {
+            $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => $first->referral_code, 'branch' => $empty]))
+                ->assertSessionHasErrors(['branch' => 'Chọn Nhánh A hoặc Nhánh B. Hỏi người giới thiệu bạn nên chọn nhánh nào.']);
+        }
+        foreach (['C', 'L', 'R', ['A']] as $invalid) {
+            $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => $first->referral_code, 'branch' => $invalid]))->assertSessionHasErrors('branch');
+        }
+        $this->from('/dang-ky')->followingRedirects()->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => $first->referral_code, 'branch' => '']))
+            ->assertOk()->assertSee('Chọn Nhánh A hoặc Nhánh B. Hỏi người giới thiệu bạn nên chọn nhánh nào.');
         $this->assertSame(1, Member::count());
         $this->assertGuest('member');
 
         // Có mã hợp lệ (không phân biệt hoa thường): đăng ký được, gắn đúng người giới thiệu
-        $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => strtolower($first->referral_code)]))->assertRedirect(route('member.account'));
-        $this->assertSame($first->id, Member::where('phone', '0922222222')->value('referrer_id'));
+        $this->post('/dang-ky', $this->form(['phone' => '0922222222', 'referral_code' => strtolower($first->referral_code), 'branch' => 'b']))->assertRedirect(route('member.account'));
+        $second = Member::where('phone', '0922222222')->sole();
+        // Nhánh B = R
+        $this->assertSame([$first->id, 'R', $first->id, 'R'], [$second->referrer_id, $second->sponsor_side, $second->parent_id, $second->position]);
     }
 
     public function test_referrer_lookup(): void

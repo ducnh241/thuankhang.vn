@@ -29,14 +29,17 @@ class Member extends Authenticatable
     /** Ký tự mã giới thiệu: bỏ 0 / O / 1 / I / L cho khỏi đọc nhầm. */
     private const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
-    protected $fillable = ['phone', 'email', 'full_name', 'password', 'referral_code', 'referrer_id', 'level_id', 'status'];
+    protected $fillable = ['phone', 'email', 'full_name', 'password', 'referral_code', 'referrer_id', 'sponsor_side', 'level_id', 'status'];
 
     protected $attributes = [
         'status' => self::STATUS_ACTIVE,
         'cumulative_amount' => 0,
     ];
 
-    /** Thành viên mới (đăng ký, hoặc tạo từ bất kỳ đâu) được xếp ngay vào cây nhị phân — vị trí cố định từ đó. */
+    /**
+     * Thành viên mới (đăng ký, hoặc tạo từ bất kỳ đâu) được xếp ngay vào cây nhị phân — vị trí cố định từ đó. Đăng ký trên
+     * website luôn kèm nhánh tự chọn (sponsor_side: L = Nhánh A, R = Nhánh B).
+     */
     protected static function booted(): void
     {
         static::created(fn (Member $member) => BinaryTree::place($member));
@@ -64,7 +67,7 @@ class Member extends Authenticatable
         return $this->belongsTo(self::class, 'parent_id');
     }
 
-    /** Hai người đứng ngay dưới trong cây nhị phân (nhánh trái L / phải R). */
+    /** Hai người đứng ngay dưới trong cây nhị phân (Nhánh A = L / Nhánh B = R). */
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')->orderBy('position');
