@@ -19,7 +19,7 @@ Nếu đặc tả và file Excel mâu thuẫn, hỏi lại người dùng, khôn
 - Người giới thiệu gắn cố định khi đăng ký (link `?ref=CODE`, cookie 30 ngày).
 - Thanh toán: VietQR động (số tiền + mã đơn), tiền về TK công ty, xác nhận qua webhook ngân hàng (SePay/PayOS/Casso), idempotent theo mã giao dịch. Không khớp → hàng chờ xử lý tay.
 - Nhận hàng: giao tận nơi (khách trả ship) hoặc nhận tại VP tỉnh (hàng của VP). Tồn kho theo dõi tùy chọn từng sản phẩm (để trống = không theo dõi) — tồn chung của công ty, trừ cho mọi đơn kể cả nhận tại VP (giả định, chờ xác nhận).
-- Hoa hồng vào ví ngay. Rút tối thiểu 500k, cần KYC (CCCD + STK chính chủ, 1 CCCD = 1 tài khoản = 1 STK). Thuế TNCN khấu trừ riêng khi rút.
+- Hoa hồng vào ví ngay, chia 70% ví có thể rút / 20% ví tái tiêu dùng / 10% thuế TNCN khấu trừ ngay (19/11/2026). Rút tối thiểu 500k, cần KYC (CCCD + STK chính chủ, 1 CCCD = 1 tài khoản = 1 STK).
 - Mọi tỉ lệ, mốc, tham số đều cấu hình trong Admin; đơn lưu snapshot tỉ lệ/cấp.
 
 ## Ngoài phạm vi Phase 1 (không code)
@@ -148,6 +148,31 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Dữ liệu mẫu (chỉ máy phát triển): `php artisan db:seed --class=DemoCommissionSeeder` — F0 = thành viên id 1, 4 thành viên
   F2 "(mẫu)" (SĐT 09000001xx), 22 đơn đã thanh toán có mã giao dịch `DEMO-HH-01..22` (đã chạy ở local 17/11/2026, chủ dự án
   giữ lại để đối chiếu — đừng xóa). Test: `tests/Feature/CommissionEngineTest.php`.
+
+## Chia hoa hồng vào hai ví + thuế TNCN (19/11/2026)
+
+- Chủ dự án yêu cầu: mỗi khoản hoa hồng X (cách tính X không đổi — vẫn KHÔNG tách VAT, đã hỏi lại 19/11/2026) chia
+  **70% ví có thể rút** / **20% ví tái tiêu dùng** / **10% thuế TNCN** khấu trừ ngay (không vào ví nào). Tỉ lệ ở Tham số
+  chung: `pit_percent` (mặc định 10, trước đây là "thuế khi rút" chưa cấu hình) + `reconsume_percent` (20); ví rút = phần còn
+  lại; tổng hai tỉ lệ ≤ 100%. `CommissionEngine::split()`: thuế = floor(X × thuế), tái tiêu dùng = floor(X × tỉ lệ), rút
+  được = X − hai phần trên (nhận phần lẻ). VD 2.280.000 → 1.596.000 / 456.000 / 228.000.
+- Lưu: `commission_ledger.{reconsume_percent, tax_percent, cash_amount, reconsume_amount, tax_amount}` (snapshot; `tax_percent`
+  NULL = chưa chia) và `wallet_transactions.wallet` (`cash` | `reconsume`, `balance_after` theo từng ví). Mỗi dòng hoa hồng
+  sinh tối đa 2 bút toán (mỗi ví một). `Member::walletBalance($wallet = 'cash')`; `walletSummary()` thêm `reconsume`, `tax`,
+  `month_cash`. `Commission::walletTransaction()` = bút toán ví rút.
+- Dữ liệu cũ (đã cộng 100%): migration `2026_11_28_000001_split_commission_wallets` chia lại giống đơn mới, CHỈ GHI THÊM
+  (mỗi dòng: bút toán `split` trừ ví rút phần tái tiêu dùng + thuế, bút toán cộng ví tái tiêu dùng), chạy lại không chia đôi,
+  ghi một dòng nhật ký. Đã chạy ở local 19/11/2026, số dư khớp.
+- Hiển thị: `/tai-khoan/vi` chỉ có 2 thẻ Ví có thể rút / Ví tái tiêu dùng (đã bỏ thẻ F1 / F2 / Tổng / Thuế theo yêu cầu
+  19/11/2026). Lịch sử lọc theo kỳ `?ky=tuan|thang|thang-truoc|nam` (mặc định tháng này, `WalletController::PERIODS`, tuần
+  bắt đầu thứ Hai), 20 dòng / trang; khung tổng kỳ (hoa hồng, rút được / tái tiêu dùng / thuế) so với kỳ trước (% tăng
+  giảm) + biểu đồ lũy kế hai kỳ (SVG vẽ ở server, theo ngày; năm thì theo tháng; kỳ này dừng ở hôm nay; rê / chạm hiện
+  tooltip — JS `[data-wallet-chart]`). Mỗi dòng gọn (tầng, người mua, ngày, mã đơn, số vào ví rút), bấm mở `<dialog>`
+  chi tiết cách tính (tiền hàng + từng sản phẩm → −5% phí DN → cơ sở × tỉ lệ = hoa hồng → 3 phần) — JS chung
+  `[data-dialog-open]` / `[data-dialog-close]`, bấm nền tối để đóng. `/tai-khoan` hiện cả hai
+  ví. Admin: sổ hoa hồng có cột ví rút / tái tiêu dùng / thuế; chi tiết thành viên + chi tiết đơn có phần chia.
+  Ví tái tiêu dùng CHƯA dùng được để thanh toán đơn (chờ chốt luồng). Test: `tests/Feature/WalletSplitTest.php` (các test
+  hoa hồng cũ đặt tỉ lệ chia 0% để giữ số đối chiếu).
 
 ## Live có đơn thật — KHÔNG xóa đơn; tính bù hoa hồng cho đơn cũ (17/11/2026)
 

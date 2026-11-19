@@ -2,7 +2,7 @@
 
 {{-- Sổ hoa hồng của một thành viên (mở từ nút "Xem sổ hoa hồng" ở trang chi tiết) — để quản trị đối chiếu với ví thành viên
      thấy trên website. Mỗi dòng = hoa hồng F1 hoặc F2 của một đơn đã thanh toán: đơn, người mua, cấp + tỉ lệ của người hưởng
-     lúc tính, tiền hàng → cơ sở (trừ phí doanh nghiệp) → hoa hồng, số dư ví ngay sau bút toán. Dòng không được
+     lúc tính, tiền hàng → cơ sở (trừ phí doanh nghiệp) → hoa hồng → chia ví có thể rút / tái tiêu dùng / thuế TNCN. Dòng không được
      nhận (chưa kích hoạt / bị khóa / tỉ lệ 0%) vẫn hiện kèm lý do. Lọc ?tier, ?status. --}}
 @php
     use App\Models\Commission;
@@ -34,10 +34,18 @@
 <div class="mx-auto flex w-full max-w-[1400px] flex-col gap-4">
   <div class="ant-card ant-card-bordered" data-card="wallet-summary">
     {{-- Lưới nằm trong một div riêng: .ant-card-body có ::before / ::after (clearfix) sẽ chiếm ô nếu đặt grid thẳng lên nó --}}
-    <div class="ant-card-body"><div class="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-5">
+    <div class="ant-card-body"><div class="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4 xl:grid-cols-7">
       <div>
-        <div class="text-xs {{ $muted }}">Số dư ví</div>
+        <div class="text-xs {{ $muted }}">Ví có thể rút</div>
         <div class="text-xl font-semibold tabular-nums" data-wallet-balance>{{ Money::format($wallet['balance']) }} đ</div>
+      </div>
+      <div>
+        <div class="text-xs {{ $muted }}">Ví tái tiêu dùng</div>
+        <div class="text-xl font-semibold tabular-nums" data-wallet-reconsume>{{ Money::format($wallet['reconsume']) }} đ</div>
+      </div>
+      <div>
+        <div class="text-xs {{ $muted }}">Thuế TNCN đã trừ</div>
+        <div class="text-xl font-semibold tabular-nums" data-wallet-tax>{{ Money::format($wallet['tax']) }} đ</div>
       </div>
       <div>
         <div class="text-xs {{ $muted }}">Tổng hoa hồng đã nhận</div>
@@ -59,6 +67,7 @@
     <div class="border-t border-[#f0f0f0] px-6 py-3 text-xs {{ $muted }}">
       Cấp hiện tại: <strong class="text-[rgba(0,0,0,0.85)]">{{ $member->level?->name ?? '—' }}</strong> ·
       Hoa hồng = floor(cơ sở × tỉ lệ theo cấp của người hưởng lúc đơn được thanh toán). Cơ sở = tiền hàng của đơn (giá bán đã gồm thuế) × (1 − phí doanh nghiệp, hiện {{ Commission::percentLabel($feePercent) }}), không tính phí giao hàng.
+      Mỗi khoản hoa hồng chia: ví có thể rút = hoa hồng − tái tiêu dùng − thuế TNCN; ví tái tiêu dùng = floor(hoa hồng × tỉ lệ); thuế TNCN = floor(hoa hồng × thuế) — tỉ lệ ở Tham số chung, lưu theo từng dòng.
       F1: đơn của người do thành viên này trực tiếp giới thiệu; F2: đơn của người do F1 giới thiệu.
     </div>
   </div>
@@ -99,7 +108,9 @@
               <th class="ant-table-cell" style="text-align: right">Cơ sở</th>
               <th class="ant-table-cell" style="text-align: right">Tỉ lệ</th>
               <th class="ant-table-cell" style="text-align: right">Hoa hồng</th>
-              <th class="ant-table-cell" style="text-align: right">Số dư ví sau</th>
+              <th class="ant-table-cell" style="text-align: right">Ví có thể rút</th>
+              <th class="ant-table-cell" style="text-align: right">Ví tái tiêu dùng</th>
+              <th class="ant-table-cell" style="text-align: right">Thuế TNCN</th>
             </tr>
           </thead>
           <tbody class="ant-table-tbody" data-commission-rows>
@@ -116,10 +127,16 @@
                 <td class="ant-table-cell tabular-nums whitespace-nowrap" style="text-align: right" title="Tiền hàng − {{ Commission::percentLabel($line->fee_percent) }} phí doanh nghiệp">{{ Money::format($line->base_amount) }} đ</td>
                 <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Commission::percentLabel($line->rate_percent) }}</td>
                 @if ($line->isCredited())
-                  <td class="ant-table-cell tabular-nums whitespace-nowrap font-semibold" style="text-align: right">+{{ Money::format($line->amount) }} đ</td>
-                  <td class="ant-table-cell tabular-nums whitespace-nowrap {{ $muted }}" style="text-align: right">{{ $line->walletTransaction ? Money::format($line->walletTransaction->balance_after).' đ' : '—' }}</td>
+                  <td class="ant-table-cell tabular-nums whitespace-nowrap font-semibold" style="text-align: right">{{ Money::format($line->amount) }} đ</td>
+                  @if ($line->tax_percent !== null)
+                    <td class="ant-table-cell tabular-nums whitespace-nowrap" style="text-align: right" data-line-cash>+{{ Money::format($line->cash_amount) }} đ<div class="text-xs {{ $muted }}">{{ Commission::percentLabel($line->cashPercent()) }}</div></td>
+                    <td class="ant-table-cell tabular-nums whitespace-nowrap" style="text-align: right" data-line-reconsume>+{{ Money::format($line->reconsume_amount) }} đ<div class="text-xs {{ $muted }}">{{ Commission::percentLabel($line->reconsume_percent) }}</div></td>
+                    <td class="ant-table-cell tabular-nums whitespace-nowrap" style="text-align: right" data-line-tax>−{{ Money::format($line->tax_amount) }} đ<div class="text-xs {{ $muted }}">{{ Commission::percentLabel($line->tax_percent) }}</div></td>
+                  @else
+                    <td class="ant-table-cell {{ $muted }}" colspan="3" style="text-align: right">Chưa chia ví</td>
+                  @endif
                 @else
-                  <td class="ant-table-cell whitespace-nowrap" colspan="2" style="text-align: right">
+                  <td class="ant-table-cell whitespace-nowrap" colspan="4" style="text-align: right">
                     <span class="ant-tag m-0">Không được nhận</span>
                     <div class="text-xs {{ $muted }}">{{ $line->skip_reason }}</div>
                   </td>
@@ -127,7 +144,7 @@
               </tr>
             @empty
               <tr class="ant-table-placeholder">
-                <td colspan="10" class="ant-table-cell">
+                <td colspan="12" class="ant-table-cell">
                   <div class="ant-empty ant-empty-normal">
                     <div class="ant-empty-image">{{ ant_icon('wallet', '', 'font-size: 40px; color: rgba(0, 0, 0, 0.25)') }}</div>
                     @if ($filter['tier'] !== '' || $filter['status'] !== '')

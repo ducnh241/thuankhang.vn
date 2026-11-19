@@ -122,17 +122,18 @@ class Member extends Authenticatable
         return $this->hasMany(WalletTransaction::class)->latest('id');
     }
 
-    /** Số dư ví = tổng mọi bút toán (ví chỉ ghi thêm). */
-    public function walletBalance(): int
+    /** Số dư một ví (mặc định ví có thể rút) = tổng bút toán của ví đó (ví chỉ ghi thêm). */
+    public function walletBalance(string $wallet = WalletTransaction::WALLET_CASH): int
     {
-        return (int) WalletTransaction::where('member_id', $this->id)->sum('amount');
+        return (int) WalletTransaction::where('member_id', $this->id)->where('wallet', $wallet)->sum('amount');
     }
 
     /**
-     * Tóm tắt ví hoa hồng: balance (số dư), total (tổng hoa hồng đã nhận), month (nhận trong tháng này), f1 / f2 (theo tầng),
-     * lines (số dòng đã cộng ví), skipped (số dòng không được nhận).
+     * Tóm tắt ví hoa hồng: balance (số dư ví có thể rút), reconsume (số dư ví tái tiêu dùng), total (tổng hoa hồng đã nhận,
+     * trước khi chia), tax (tổng thuế TNCN đã khấu trừ), month / month_cash (hoa hồng tháng này: tổng / phần vào ví có thể
+     * rút), f1 / f2 (tổng hoa hồng theo tầng), lines (số dòng đã cộng ví), skipped (số dòng không được nhận).
      *
-     * @return array{balance: int, total: int, month: int, f1: int, f2: int, lines: int, skipped: int}
+     * @return array{balance: int, reconsume: int, total: int, tax: int, month: int, month_cash: int, f1: int, f2: int, lines: int, skipped: int}
      */
     public function walletSummary(): array
     {
@@ -140,8 +141,11 @@ class Member extends Authenticatable
 
         return [
             'balance' => $this->walletBalance(),
+            'reconsume' => $this->walletBalance(WalletTransaction::WALLET_RECONSUME),
             'total' => (int) $credited()->sum('amount'),
+            'tax' => (int) $credited()->sum('tax_amount'),
             'month' => (int) $credited()->where('created_at', '>=', now()->startOfMonth())->sum('amount'),
+            'month_cash' => (int) $credited()->where('created_at', '>=', now()->startOfMonth())->sum('cash_amount'),
             'f1' => (int) $credited()->where('tier', 'F1')->sum('amount'),
             'f2' => (int) $credited()->where('tier', 'F2')->sum('amount'),
             'lines' => $credited()->count(),

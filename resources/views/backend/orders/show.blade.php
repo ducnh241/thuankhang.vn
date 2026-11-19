@@ -120,6 +120,9 @@
               <span class="text-[rgba(0,0,0,0.45)]">{{ $line->level_name ?? '—' }} · {{ \App\Models\Commission::percentLabel($line->rate_percent) }} × {{ Money::format($line->base_amount) }} đ</span>
               @if ($line->isCredited())
                 <strong class="ml-auto tabular-nums">+{{ Money::format($line->amount) }} đ</strong>
+                @if ($line->tax_percent !== null)
+                  <span class="w-full text-xs text-[rgba(0,0,0,0.45)] tabular-nums" data-commission-split>Ví có thể rút +{{ Money::format($line->cash_amount) }} đ · tái tiêu dùng +{{ Money::format($line->reconsume_amount) }} đ · thuế TNCN −{{ Money::format($line->tax_amount) }} đ</span>
+                @endif
               @else
                 <span class="ml-auto"><span class="ant-tag m-0">Không được nhận</span></span>
                 <span class="w-full text-xs text-[rgba(0,0,0,0.45)]">{{ $line->skip_reason }}</span>

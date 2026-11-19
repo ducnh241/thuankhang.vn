@@ -29,6 +29,9 @@ class CommissionBackfillTest extends TestCase
     {
         parent::setUp();
         $this->seed(AffiliateConfigSeeder::class);
+        // Chia ví 70 / 20 / 10 có test riêng (WalletSplitTest); ở đây để 100% hoa hồng vào ví có thể rút cho dễ đối chiếu
+        \App\Models\Setting::put('aff_pit_percent', '0.00');
+        \App\Models\Setting::put('aff_reconsume_percent', '0.00');
         // Phiên bản tỉ lệ có hiệu lực từ 60 ngày trước (trước mọi đơn cũ); bản mặc định của seeder có hiệu lực từ "bây giờ"
         foreach (['Nhân viên' => [0, 0], 'Cộng tác viên' => [10, 7], 'Đại lý' => [20, 7]] as $name => [$f1, $f2]) {
             $levelId = Level::where('name', $name)->value('id');

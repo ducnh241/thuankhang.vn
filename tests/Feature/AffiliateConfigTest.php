@@ -96,9 +96,10 @@ class AffiliateConfigTest extends TestCase
             collect([0, 3])->map(fn ($i) => KpiTier::orderBy('min_amount')->get()[$i])->map(fn ($t) => [$t->min_amount, $t->max_amount, $t->rate_percent, $t->min_f1])->all());
 
         // Tham số chung: mặc định theo đặc tả 6.5
-        $this->assertSame(['5.00', 500000, 24, 30, 10, null], [
+        $this->assertSame(['5.00', 500000, 24, 30, 10, '10.00', '20.00'], [
             AffiliateSettings::get('business_fee_percent'), AffiliateSettings::get('min_withdraw'), AffiliateSettings::get('payment_expiry_hours'),
             AffiliateSettings::get('ref_cookie_days'), AffiliateSettings::get('kpi_pay_day'), AffiliateSettings::get('pit_percent'),
+            AffiliateSettings::get('reconsume_percent'),
         ]);
 
         $this->level('Đại lý')->update(['threshold_amount' => 20_000_000]);
@@ -346,7 +347,7 @@ class AffiliateConfigTest extends TestCase
             ->assertSee('value="500.000"', false)->assertSee('value="5"', false)->assertSee('Chưa cấu hình');
 
         $valid = [
-            'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10',
+            'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10', 'reconsume_percent' => '20',
             'default_vat_percent' => '8', 'shipping_fee' => '35.000', 'order_code_prefix' => ' thk ', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
             'max_vp_per_province' => '',
         ];

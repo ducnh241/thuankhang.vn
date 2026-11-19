@@ -37,6 +37,9 @@ class CommissionEngineTest extends TestCase
         parent::setUp();
         $this->seed(AffiliateConfigSeeder::class);
         $this->seed(RoleSeeder::class);
+        // Chia ví 70 / 20 / 10 có test riêng (WalletSplitTest); ở đây để 100% hoa hồng vào ví có thể rút cho dễ đối chiếu
+        \App\Models\Setting::put('aff_pit_percent', '0.00');
+        \App\Models\Setting::put('aff_reconsume_percent', '0.00');
         $this->accountant = User::factory()->create(['group_id' => Group::where('name', 'Kế toán')->value('id')]);
         // Seeder ghi phiên bản mặc định lúc "bây giờ" → tua đồng hồ để phiên bản của test là bản mới hơn và đã có hiệu lực
         $this->travel(2)->hours();
@@ -276,14 +279,15 @@ class CommissionEngineTest extends TestCase
 
         // A: 418.000 (F1) + 73.150 + 219.450 (F2) = 710.600; dòng lúc bị khóa không hiện
         $this->actingAs($a->fresh(), 'member')->get('/tai-khoan')->assertOk()
-            ->assertSeeInOrder(['Ví hoa hồng', 'data-wallet-balance>710.600đ<', 'Tháng này', '+710.600đ', 'Xem chi tiết'], false)
+            ->assertSeeInOrder(['Ví có thể rút', 'data-wallet-balance>710.600đ<', 'Tháng này', '+710.600đ', 'Ví tái tiêu dùng', 'Xem chi tiết'], false)
             ->assertSee('href="'.route('member.wallet').'"', false);
         $this->get('/tai-khoan/vi')->assertOk()
-            ->assertSee('data-wallet-balance>710.600đ<', false)->assertSee('data-wallet-f1>418.000đ<', false)->assertSee('data-wallet-f2>292.600đ<', false)
-            // Mới nhất trước: F2 đơn thứ hai của C, F1 đơn B tự mua, F2 đơn đầu của C
-            ->assertSeeInOrder(['F2', 'Phạm Văn Cường', $second->code, '3.135.000đ × 7%', '(cấp Đại lý)', '+219.450đ',
-                'F1', 'Lê Thị Bình', $own->code, '2.090.000đ × 20%', '+418.000đ',
-                'F2', 'Phạm Văn Cường', $first->code, '1.045.000đ × 7%', '+73.150đ'], false)
+            ->assertSee('data-wallet-balance>710.600đ<', false)->assertDontSee('data-wallet-f1', false)
+            // Mới nhất trước: F2 đơn thứ hai của C, F1 đơn B tự mua, F2 đơn đầu của C (dòng gọn), rồi popup chi tiết từng dòng
+            ->assertSeeInOrder(['data-wallet-rows', 'F2', 'Phạm Văn Cường', $second->code, '+219.450đ',
+                'F1', 'Lê Thị Bình', $own->code, '+418.000đ',
+                'F2', 'Phạm Văn Cường', $first->code, '+73.150đ',
+                '<dialog', '3.135.000đ × 7%', '(cấp Đại lý)'], false)
             ->assertDontSee($lockedOrder->code)->assertDontSee($c->phone)->assertDontSee($b->phone)
             ->assertSee('trừ 5% phí doanh nghiệp');
 
@@ -291,7 +295,7 @@ class CommissionEngineTest extends TestCase
         $this->actingAs($b->fresh(), 'member')->get('/tai-khoan/vi')->assertOk()
             ->assertSee('data-wallet-balance>418.000đ<', false)->assertSee('+313.500đ')->assertSee('+104.500đ')->assertDontSee('+219.450đ')->assertDontSee($own->code);
         $this->actingAs($c->fresh(), 'member')->get('/tai-khoan/vi')->assertOk()
-            ->assertSee('data-wallet-balance>0đ<', false)->assertSee('Bạn chưa có hoa hồng nào')->assertDontSee('data-wallet-rows', false);
+            ->assertSee('data-wallet-balance>0đ<', false)->assertSee('Không có hoa hồng nào trong tháng này')->assertDontSee('data-wallet-rows', false);
     }
 
     public function test_admin_reconciles_commissions_on_member_and_order_pages(): void
@@ -301,15 +305,15 @@ class CommissionEngineTest extends TestCase
 
         // Chi tiết thành viên: thẻ ví + nút mở sổ hoa hồng
         $this->actingAs($ops, 'web')->get(route('backend.members.show', $a))->assertOk()
-            ->assertSeeInOrder(['Ví hoa hồng', 'data-wallet-balance>710.600 đ<', 'F1 (trực tiếp)', '418.000 đ', 'F2 (gián tiếp)', '292.600 đ', '3 đã cộng ví · 1 không được nhận', 'Xem sổ hoa hồng'], false)
+            ->assertSeeInOrder(['Ví hoa hồng', 'data-wallet-balance>710.600 đ<', 'Ví tái tiêu dùng', 'F1 (trực tiếp)', '418.000 đ', 'F2 (gián tiếp)', '292.600 đ', '3 đã cộng ví · 1 không được nhận', 'Xem sổ hoa hồng'], false)
             ->assertSee('href="'.route('backend.members.commissions', $a).'"', false);
 
-        // Sổ hoa hồng: đủ các bước tính + số dư ví sau từng bút toán; dòng không được nhận có lý do
+        // Sổ hoa hồng: đủ các bước tính + phần vào từng ví; dòng không được nhận có lý do
         $this->get(route('backend.members.commissions', $a))->assertOk()
             ->assertSee('data-wallet-balance>710.600 đ<', false)->assertSee('data-wallet-total>710.600 đ<', false)
-            ->assertSeeInOrder([$second->code, 'Phạm Văn Cường', 'F2', 'Đại lý', '3.300.000 đ', '3.135.000 đ', '7%', '+219.450 đ', '710.600 đ',
-                $own->code, 'Lê Thị Bình', 'F1', '2.200.000 đ', '2.090.000 đ', '20%', '+418.000 đ', '491.150 đ',
-                $first->code, 'F2', '1.045.000 đ', '7%', '+73.150 đ', '73.150 đ',
+            ->assertSeeInOrder([$second->code, 'Phạm Văn Cường', 'F2', 'Đại lý', '3.300.000 đ', '3.135.000 đ', '7%', '219.450 đ', '+219.450 đ',
+                $own->code, 'Lê Thị Bình', 'F1', '2.200.000 đ', '2.090.000 đ', '20%', '418.000 đ', '+418.000 đ',
+                $first->code, 'F2', '1.045.000 đ', '7%', '73.150 đ', '+73.150 đ',
                 $lockedOrder->code, 'F1', 'Không được nhận', 'Tài khoản người hưởng đang bị khóa'], false);
 
         // Lọc theo tầng / trạng thái

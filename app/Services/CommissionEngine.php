@@ -22,6 +22,12 @@ use Illuminate\Support\Collection;
  *
  * Giá bán đã gồm thuế nên không tách VAT khi tính (chủ dự án chốt 17/11/2026): 15.000.000 × 95% × 20% = 2.850.000.
  *
+ * Chia hoa hồng X (chủ dự án yêu cầu 19/11/2026, tỉ lệ ở Tham số chung — split()):
+ *   thuế TNCN        = floor(X × pit_percent)        (10%) — khấu trừ ngay, không vào ví
+ *   ví tái tiêu dùng = floor(X × reconsume_percent)  (20%)
+ *   ví có thể rút    = X − tái tiêu dùng − thuế      (70%, nhận phần lẻ làm tròn)
+ * VD 12.000.000 × 95% × 20% = 2.280.000 → rút được 1.596.000 · tái tiêu dùng 456.000 · thuế 228.000.
+ *
  * Tỉ lệ lấy ở phiên bản ma trận hoa hồng có hiệu lực lúc đơn được thanh toán; cấp của người hưởng đọc tại lúc tính. Người
  * hưởng phải đã kích hoạt, không bị khóa và có tỉ lệ > 0; nếu không thì vẫn ghi dòng "skipped" kèm lý do (không cộng ví,
  * không tính bù về sau). Dòng được nhận thì cộng ví ngay. Mỗi đơn chỉ tính một lần (orders.commissioned_at).
@@ -50,6 +56,25 @@ class CommissionEngine
     }
 
     /**
+     * Chia một khoản hoa hồng vào hai ví + thuế TNCN theo tỉ lệ hiện hành ở Tham số chung.
+     *
+     * @return array{cash: int, reconsume: int, tax: int, reconsume_percent: string, tax_percent: string, cash_percent: string}
+     */
+    public static function split(int $amount): array
+    {
+        $tax = (string) AffiliateSettings::get('pit_percent');
+        $reconsume = (string) AffiliateSettings::get('reconsume_percent');
+        $taxAmount = self::amountOf($amount, $tax);
+        $reconsumeAmount = self::amountOf($amount, $reconsume);
+
+        return [
+            'cash' => $amount - $taxAmount - $reconsumeAmount, 'reconsume' => $reconsumeAmount, 'tax' => $taxAmount,
+            'reconsume_percent' => $reconsume, 'tax_percent' => $tax,
+            'cash_percent' => number_format((10000 - self::basisPoints($tax) - self::basisPoints($reconsume)) / 100, 2, '.', ''),
+        ];
+    }
+
+    /**
      * Gọi TRONG transaction xác nhận thanh toán (đơn đã khóa và đã sang "Đã thanh toán"), trước khi xét lên cấp người mua.
      * Trả về các dòng hoa hồng vừa ghi (rỗng nếu đơn đã tính rồi hoặc người mua không có tuyến trên).
      *
@@ -68,11 +93,16 @@ class CommissionEngine
         foreach (self::plan($order, $asOfPaidAt, lock: true) as [$beneficiary, $attributes]) {
             $line = Commission::create($attributes);
             if ($line->isCredited()) {
-                WalletTransaction::create([
-                    'member_id' => $beneficiary->id, 'type' => WalletTransaction::TYPE_COMMISSION, 'amount' => $line->amount,
-                    'balance_after' => $beneficiary->walletBalance() + $line->amount, 'commission_id' => $line->id,
-                    'note' => "Hoa hồng {$line->tier} đơn {$order->code}", 'created_at' => $line->created_at,
-                ]);
+                foreach ([WalletTransaction::WALLET_CASH => $line->cash_amount, WalletTransaction::WALLET_RECONSUME => $line->reconsume_amount] as $wallet => $amount) {
+                    if ($amount > 0) {
+                        WalletTransaction::create([
+                            'member_id' => $beneficiary->id, 'wallet' => $wallet, 'type' => WalletTransaction::TYPE_COMMISSION,
+                            'amount' => $amount, 'balance_after' => $beneficiary->walletBalance($wallet) + $amount,
+                            'commission_id' => $line->id, 'created_at' => $line->created_at,
+                            'note' => "Hoa hồng {$line->tier} đơn {$order->code}".($wallet === WalletTransaction::WALLET_RECONSUME ? ' — phần tái tiêu dùng' : ''),
+                        ]);
+                    }
+                }
             }
             $lines->push($line->setRelation('beneficiary', $beneficiary));
         }
@@ -157,11 +187,14 @@ class CommissionEngine
                 default => null,
             };
 
+            $split = self::split($reason === null ? $amount : 0);
             $plan[] = [$beneficiary, [
                 'order_id' => $order->id, 'buyer_id' => $order->member_id, 'beneficiary_id' => $beneficiary->id, 'tier' => $tier,
                 'level_id' => $level?->id, 'level_name' => $level?->name, 'rate_percent' => $rate,
                 'goods_amount' => (int) $order->goods_amount, 'fee_percent' => $base['fee_percent'],
                 'base_amount' => $base['base'], 'amount' => $reason === null ? $amount : 0,
+                'reconsume_percent' => $split['reconsume_percent'], 'tax_percent' => $split['tax_percent'],
+                'cash_amount' => $split['cash'], 'reconsume_amount' => $split['reconsume'], 'tax_amount' => $split['tax'],
                 'status' => $reason === null ? Commission::STATUS_CREDITED : Commission::STATUS_SKIPPED, 'skip_reason' => $reason,
                 'created_at' => $paidAt,
             ]];

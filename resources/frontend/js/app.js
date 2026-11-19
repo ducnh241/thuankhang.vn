@@ -560,3 +560,80 @@ if (installBoxes.length) {
   });
   render();
 }
+
+/*
+ * Popup (<dialog>): nút [data-dialog-open="id"] mở, [data-dialog-close] hoặc bấm nền tối thì đóng. Dùng ở trang Ví hoa hồng
+ * (chi tiết cách tính từng dòng).
+ */
+document.addEventListener('click', e => {
+  const opener = e.target.closest('[data-dialog-open]');
+  if (opener) {
+    document.getElementById(opener.dataset.dialogOpen)?.showModal();
+    return;
+  }
+  if (e.target.closest('[data-dialog-close]')) {
+    e.target.closest('dialog')?.close();
+    return;
+  }
+  if (e.target instanceof HTMLDialogElement && e.target.open) {
+    const box = e.target.getBoundingClientRect();
+    if (e.clientX < box.left || e.clientX > box.right || e.clientY < box.top || e.clientY > box.bottom) e.target.close();
+  }
+});
+
+/*
+ * Biểu đồ hoa hồng lũy kế (trang Ví): rê chuột / chạm vào vùng vẽ → đường dọc, chấm trên hai đường, tooltip giá trị kỳ này
+ * và kỳ trước tại điểm gần nhất. Dữ liệu: data-points = [[nhãn trục, nhãn tooltip, kỳ này | null, kỳ trước | null], ...].
+ */
+document.querySelectorAll('[data-wallet-chart]').forEach(chart => {
+  const points = JSON.parse(chart.dataset.points);
+  const plot = chart.querySelector('[data-chart-plot]');
+  const crosshair = plot.querySelector('[data-chart-crosshair]');
+  const tip = plot.querySelector('[data-chart-tip]');
+  const dots = { current: plot.querySelector('[data-chart-dot="current"]'), previous: plot.querySelector('[data-chart-dot="previous"]') };
+  const max = Math.max(...points.flatMap(p => [p[2] ?? 0, p[3] ?? 0]));
+  const money = v => new Intl.NumberFormat('vi-VN').format(v) + 'đ';
+  // Thang y: cùng mốc tròn như server (1 / 2 / 2,5 / 5 × 10^n)
+  const niceMax = (() => {
+    if (!max) return 1;
+    const m = 10 ** Math.floor(Math.log10(max));
+    return [1, 2, 2.5, 5, 10].map(s => s * m).find(v => v >= max);
+  })();
+  const hide = () => [crosshair, tip, dots.current, dots.previous].forEach(el => el.classList.add('hidden'));
+  const show = clientX => {
+    const box = plot.getBoundingClientRect();
+    const n = points.length;
+    const i = Math.max(0, Math.min(n - 1, Math.round(((clientX - box.left) / box.width) * (n - 1))));
+    const [, label, cur, prev] = points[i];
+    const left = n > 1 ? (i / (n - 1)) * 100 : 0;
+    crosshair.style.left = left + '%';
+    crosshair.classList.remove('hidden');
+    for (const [key, value] of [['current', cur], ['previous', prev]]) {
+      dots[key].classList.toggle('hidden', value === null);
+      if (value !== null) {
+        dots[key].style.left = left + '%';
+        dots[key].style.top = 100 - (value / niceMax) * 100 + '%';
+      }
+    }
+    tip.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'mb-1 font-semibold text-slate-900';
+    head.textContent = label;
+    tip.append(head);
+    for (const [name, value, swatch] of [[chart.dataset.currentLabel, cur, 'bg-brand-600'], [chart.dataset.previousLabel, prev, 'bg-slate-400']]) {
+      if (value === null) continue;
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2';
+      row.innerHTML = `<span class="inline-block size-2 rounded-full ${swatch}"></span><span class="text-slate-500"></span><span class="ml-auto font-medium text-slate-900"></span>`;
+      row.children[1].textContent = name;
+      row.children[2].textContent = money(value);
+      tip.append(row);
+    }
+    tip.classList.remove('hidden');
+    const x = (left / 100) * box.width;
+    tip.style.left = Math.min(Math.max(0, x - tip.offsetWidth / 2), box.width - tip.offsetWidth) + 'px';
+  };
+  plot.addEventListener('pointermove', e => show(e.clientX));
+  plot.addEventListener('pointerdown', e => show(e.clientX));
+  plot.addEventListener('pointerleave', e => e.pointerType === 'mouse' && hide());
+});

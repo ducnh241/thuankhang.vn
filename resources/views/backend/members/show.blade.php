@@ -219,14 +219,16 @@
 
   {{-- Cột phụ --}}
   <div class="flex min-w-0 flex-col gap-4">
-    {{-- Ví hoa hồng (Step 8): số dư = tổng hoa hồng F1 / F2 đã cộng; chi tiết từng dòng ở trang Sổ hoa hồng --}}
+    {{-- Ví hoa hồng (Step 8): ví có thể rút (70%) + ví tái tiêu dùng (20%), thuế TNCN (10%) đã trừ; chi tiết ở trang Sổ hoa hồng --}}
     <div class="ant-card ant-card-bordered" data-card="wallet">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Ví hoa hồng</div></div></div>
       <div class="ant-card-body">
-        <div class="text-xs {{ $muted }}">Số dư ví</div>
+        <div class="text-xs {{ $muted }}">Ví có thể rút</div>
         <div class="text-2xl font-semibold tabular-nums" data-wallet-balance>{{ Money::format($wallet['balance']) }} đ</div>
         <dl class="profile-facts m-0 mt-3">
-          <dt>Tháng này</dt><dd class="tabular-nums" data-wallet-month>{{ Money::format($wallet['month']) }} đ</dd>
+          <dt>Ví tái tiêu dùng</dt><dd class="tabular-nums" data-wallet-reconsume>{{ Money::format($wallet['reconsume']) }} đ</dd>
+          <dt>Thuế TNCN đã trừ</dt><dd class="tabular-nums" data-wallet-tax>{{ Money::format($wallet['tax']) }} đ</dd>
+          <dt>Hoa hồng tháng này</dt><dd class="tabular-nums" data-wallet-month>{{ Money::format($wallet['month']) }} đ</dd>
           <dt>F1 (trực tiếp)</dt><dd class="tabular-nums">{{ Money::format($wallet['f1']) }} đ</dd>
           <dt>F2 (gián tiếp)</dt><dd class="tabular-nums">{{ Money::format($wallet['f2']) }} đ</dd>
           <dt>Số dòng</dt><dd class="tabular-nums">{{ $count($wallet['lines']) }} đã cộng ví{{ $wallet['skipped'] ? ' · '.$count($wallet['skipped']).' không được nhận' : '' }}</dd>
