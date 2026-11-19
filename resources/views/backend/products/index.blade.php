@@ -8,7 +8,6 @@
 @php
     use App\Http\Controllers\Backend\ProductController;
     use App\Support\Money;
-    use App\Support\Percent;
 
     $muted = 'text-[rgba(0,0,0,0.45)]';
     $me = auth()->user();
@@ -109,8 +108,7 @@
                   @endif
                   <th class="ant-table-cell">Sản phẩm</th>
                   <th class="ant-table-cell max-md:hidden" data-col="category">Danh mục</th>
-                  <th class="ant-table-cell whitespace-nowrap" data-col="price" style="text-align: right">Giá (gồm VAT)</th>
-                  <th class="ant-table-cell max-md:hidden" data-col="vat" style="text-align: right">VAT</th>
+                  <th class="ant-table-cell whitespace-nowrap" data-col="price" style="text-align: right">Giá</th>
                   <th class="ant-table-cell max-md:hidden" data-col="stock" style="text-align: right">Tồn kho</th>
                   <th class="ant-table-cell" data-col="status">Trạng thái</th>
                   <th class="ant-table-cell product-actions-col max-sm:hidden" style="text-align: right">Thao tác</th>
@@ -142,7 +140,6 @@
                     </td>
                     <td class="ant-table-cell max-md:hidden" data-col="category">{{ $product->category?->name ?? '—' }}</td>
                     <td class="ant-table-cell tabular-nums whitespace-nowrap" data-col="price" style="text-align: right">{{ Money::format($product->price) }} đ</td>
-                    <td class="ant-table-cell tabular-nums max-md:hidden" data-col="vat" style="text-align: right">{{ Percent::format($product->vat_rate) }}%</td>
                     <td class="ant-table-cell tabular-nums max-md:hidden" data-col="stock" style="text-align: right">
                       @if ($product->hasVariants())
                         <span class="text-[rgba(0,0,0,0.45)]">{{ $product->activeVariants->count() }} biến thể</span>
@@ -172,14 +169,14 @@
                   </tr>
                 @empty
                   <tr class="ant-table-placeholder">
-                    <td colspan="{{ $canDelete ? 8 : 7 }}" class="ant-table-cell">
+                    <td colspan="{{ $canDelete ? 7 : 6 }}" class="ant-table-cell">
                       <div class="ant-empty ant-empty-normal">
                         <div class="ant-empty-image">{{ ant_icon('shop', '', 'font-size: 40px; color: rgba(0, 0, 0, 0.25)') }}</div>
                         @if (array_filter($filter))
                           <p class="ant-empty-description"><strong class="block text-[rgba(0,0,0,0.85)]">Không tìm thấy sản phẩm nào</strong>Thử từ khóa khác hoặc bỏ bộ lọc.</p>
                           <div class="ant-empty-footer"><a href="{{ route('backend.products.index') }}" class="ant-btn"><span>Xóa bộ lọc</span></a></div>
                         @else
-                          <p class="ant-empty-description"><strong class="block text-[rgba(0,0,0,0.85)]">Chưa có sản phẩm nào</strong>Thêm sản phẩm để bán trên cửa hàng; giá nhập đã gồm VAT.</p>
+                          <p class="ant-empty-description"><strong class="block text-[rgba(0,0,0,0.85)]">Chưa có sản phẩm nào</strong>Thêm sản phẩm để bán trên cửa hàng.</p>
                           @if ($canAdd)<div class="ant-empty-footer"><a href="{{ route('backend.products.create') }}" class="ant-btn ant-btn-primary">{{ ant_icon('plus') }}<span>Thêm sản phẩm</span></a></div>@endif
                         @endif
                       </div>

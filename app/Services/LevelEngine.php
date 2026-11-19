@@ -10,7 +10,7 @@ use App\Models\Order;
 use App\Support\Money;
 
 /**
- * Engine lên cấp (Step 7). Mỗi đơn ĐÃ THANH TOÁN của thành viên: cộng tiền hàng (đã gồm VAT, không gồm phí giao hàng) vào
+ * Engine lên cấp (Step 7). Mỗi đơn ĐÃ THANH TOÁN của thành viên: cộng tiền hàng (giá bán, không tách VAT, không gồm phí giao hàng) vào
  * doanh số cá nhân cộng dồn; đơn đầu tiên thì kích hoạt tài khoản; rồi xét cấp = cấp đang bật có mốc cao nhất mà doanh số
  * cộng dồn đã ĐẠT (≥ mốc). Một đơn có thể nhảy nhiều cấp. Không bao giờ hạ cấp. Cấp xét theo mốc trong cấu hình
  * (Affiliate → Levels), không theo tên — tên cấp sửa tự do.

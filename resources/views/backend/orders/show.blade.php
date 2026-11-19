@@ -6,7 +6,6 @@
 @php
     use App\Models\Order;
     use App\Support\Money;
-    use App\Support\Percent;
 
     $muted = 'text-[rgba(0,0,0,0.45)]';
     $status = $order->displayStatus();
@@ -50,7 +49,6 @@
                 <th class="ant-table-cell">Sản phẩm</th>
                 <th class="ant-table-cell" style="text-align: right">Đơn giá</th>
                 <th class="ant-table-cell" style="text-align: right">SL</th>
-                <th class="ant-table-cell max-sm:hidden" style="text-align: right">VAT</th>
                 <th class="ant-table-cell" style="text-align: right">Thành tiền</th>
               </tr>
             </thead>
@@ -68,7 +66,6 @@
                   </td>
                   <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Money::format($item->unit_price) }} đ</td>
                   <td class="ant-table-cell tabular-nums" style="text-align: right">{{ $item->qty }}</td>
-                  <td class="ant-table-cell tabular-nums max-sm:hidden" style="text-align: right">{{ Percent::format($item->vat_rate) }}% · {{ Money::format($item->vat_amount) }} đ</td>
                   <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Money::format($item->line_amount) }} đ</td>
                 </tr>
               @endforeach
@@ -78,8 +75,7 @@
       </div>
       <div class="ant-card-body">
         <dl class="ml-auto grid max-w-xs grid-cols-[1fr_auto] gap-x-6 gap-y-1 m-0 tabular-nums">
-          <dt class="{{ $muted }}">Tiền hàng (gồm VAT)</dt><dd class="m-0 text-right">{{ Money::format($order->goods_amount) }} đ</dd>
-          <dt class="{{ $muted }}">Trong đó VAT</dt><dd class="m-0 text-right">{{ Money::format($order->vat_amount) }} đ</dd>
+          <dt class="{{ $muted }}">Tiền hàng</dt><dd class="m-0 text-right">{{ Money::format($order->goods_amount) }} đ</dd>
           <dt class="{{ $muted }}">Phí giao hàng</dt><dd class="m-0 text-right">{{ Money::format($order->shipping_fee) }} đ</dd>
           <dt class="font-medium">Tổng thanh toán</dt><dd class="m-0 text-right text-base font-semibold">{{ Money::format($order->total_amount) }} đ</dd>
         </dl>

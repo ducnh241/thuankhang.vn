@@ -17,7 +17,6 @@ class OrderFactory extends Factory
             'code' => Order::generateCode(),
             'member_id' => Member::factory(),
             'goods_amount' => $goods,
-            'vat_amount' => intdiv($goods, 11),
             'shipping_fee' => 30000,
             'total_amount' => $goods + 30000,
             'delivery_type' => Order::DELIVERY_SHIP,

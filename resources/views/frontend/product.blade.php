@@ -1,12 +1,11 @@
 @extends('frontend.layouts.app')
 
-{{-- Chi tiết sản phẩm (S2, kiểu Shoplife): ảnh (bấm ảnh nhỏ đổi ảnh chính), tên, mã / danh mục / lượt bán, giá đã gồm VAT,
+{{-- Chi tiết sản phẩm (S2, kiểu Shoplife): ảnh (bấm ảnh nhỏ đổi ảnh chính), tên, mã / danh mục / lượt bán, giá bán,
      mô tả ngắn, chọn biến thể (nếu có — giá / tồn theo biến thể), chọn số lượng (−/+) + Thêm vào giỏ / Mua ngay, Chat Zalo / gọi hotline, giới thiệu sản phẩm (thành viên đã
      kích hoạt: link ?ref=, chưa kích hoạt / khách: lời nhắc), mô tả chi tiết (đã lọc HTML), sản phẩm cùng danh mục.
      Điện thoại: thanh mua hàng cố định phía dưới (nút gắn vào form chính qua form="buy-form"). --}}
 @php
     use App\Support\Money;
-    use App\Support\Percent;
     use App\Support\RichText;
 
     $images = $product->images;
@@ -99,7 +98,7 @@
 
         <div class="mt-5 rounded-2xl bg-brand-50 p-5">
           <div class="text-3xl font-bold text-brand-700" data-variant-price>{{ Money::format($displayPrice) }}đ</div>
-          <div class="mt-1 text-xs text-slate-500">Giá đã gồm VAT {{ Percent::format($product->vat_rate) }}%, chưa gồm phí giao hàng</div>
+          <div class="mt-1 text-xs text-slate-500">Giá chưa gồm phí giao hàng</div>
         </div>
 
         @if ($product->short_description)

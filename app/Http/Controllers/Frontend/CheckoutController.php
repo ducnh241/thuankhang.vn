@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\CheckoutRequest;
 use App\Models\Member;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\PickupPoint;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -88,7 +87,6 @@ class CheckoutController extends Controller
                 'code' => Order::generateCode(),
                 'member_id' => $request->user('member')->id,
                 'goods_amount' => $goods,
-                'vat_amount' => (int) $lines->sum(fn ($line) => OrderItem::vatOf($line['line_amount'], $line['product']->vat_rate)),
                 'shipping_fee' => $shipping,
                 'total_amount' => $goods + $shipping,
                 'delivery_type' => $request->validated('delivery_type'),
@@ -106,8 +104,7 @@ class CheckoutController extends Controller
                 $order->items()->create([
                     'product_id' => $product->id, 'variant_id' => $variant?->id, 'product_name' => $product->name, 'variant_name' => $variant?->name,
                     'sku' => $variant?->sku ?? $product->sku, 'qty' => $line['qty'],
-                    'unit_price' => $line['unit_price'], 'vat_rate' => $product->vat_rate, 'line_amount' => $line['line_amount'],
-                    'vat_amount' => OrderItem::vatOf($line['line_amount'], $product->vat_rate),
+                    'unit_price' => $line['unit_price'], 'line_amount' => $line['line_amount'],
                 ]);
             }
             $order->load('items')->takeStock();

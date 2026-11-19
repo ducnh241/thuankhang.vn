@@ -58,7 +58,7 @@
 
         <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5">
           <div class="flex justify-between text-sm"><span class="text-slate-500">Tạm tính</span><span class="font-semibold text-slate-900" data-cart-subtotal>{{ Money::format($subtotal) }}đ</span></div>
-          <p class="mt-2 text-xs text-slate-500">Giá đã gồm VAT. Phí giao hàng tính ở bước thanh toán (nhận tại VP tỉnh: miễn phí).</p>
+          <p class="mt-2 text-xs text-slate-500">Phí giao hàng tính ở bước thanh toán (nhận tại VP tỉnh: miễn phí).</p>
           <a href="{{ route('shop.checkout') }}" class="mt-5 block rounded-full bg-brand-600 px-6 py-3 text-center text-sm font-semibold text-white shadow hover:bg-brand-700">Thanh toán</a>
           <a href="{{ route('home') }}" class="mt-3 block text-center text-sm text-brand-700 hover:underline">Tiếp tục mua sắm</a>
         </aside>

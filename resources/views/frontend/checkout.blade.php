@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
 {{-- Thanh toán (S5): người nhận, hình thức nhận (giao tận nơi: tỉnh + địa chỉ, có phí ship; nhận tại VP: tỉnh → điểm,
-     hiện địa chỉ / giờ mở cửa, miễn phí), ghi chú, tóm tắt đơn (không tách VAT — giá sản phẩm đã gồm VAT), nút "Thanh toán"
+     hiện địa chỉ / giờ mở cửa, miễn phí), ghi chú, tóm tắt đơn, nút "Thanh toán"
      tạo đơn rồi sang trang đơn có thông tin chuyển khoản + mã QR. JS: [data-checkout] trong frontend/js/app.js. --}}
 @php
     use App\Models\Order;

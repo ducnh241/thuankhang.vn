@@ -6,7 +6,6 @@ use App\Models\Commission;
 use App\Models\Level;
 use App\Models\Member;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Services\OrderPayment;
 use App\Support\AffiliateSettings;
@@ -129,7 +128,6 @@ class DemoCommissionSeeder extends Seeder
 
         $order = Order::create([
             'code' => Order::generateCode(), 'member_id' => $buyer->id, 'goods_amount' => $goods,
-            'vat_amount' => (int) $lines->sum(fn ($line) => OrderItem::vatOf($line['line_amount'], $line['product']->vat_rate)),
             'shipping_fee' => $shipping, 'total_amount' => $goods + $shipping, 'delivery_type' => Order::DELIVERY_SHIP,
             'recipient_name' => $buyer->full_name, 'recipient_phone' => $buyer->phone, 'province' => 'ha-noi',
             'address' => 'Số 1 Đường Mẫu (dữ liệu thử hoa hồng)', 'note' => 'Đơn mẫu để đối chiếu hoa hồng',
@@ -139,8 +137,7 @@ class DemoCommissionSeeder extends Seeder
             $product = $line['product'];
             $order->items()->create([
                 'product_id' => $product->id, 'product_name' => $product->name, 'sku' => $product->sku, 'qty' => $line['qty'],
-                'unit_price' => $product->price, 'vat_rate' => $product->vat_rate, 'line_amount' => $line['line_amount'],
-                'vat_amount' => OrderItem::vatOf($line['line_amount'], $product->vat_rate),
+                'unit_price' => $product->price, 'line_amount' => $line['line_amount'],
             ]);
         }
         $order->load('items')->takeStock();

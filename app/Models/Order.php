@@ -70,13 +70,14 @@ class Order extends Model
     private const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
     protected $fillable = [
-        'code', 'member_id', 'status', 'goods_amount', 'vat_amount', 'shipping_fee', 'total_amount', 'delivery_type',
+        'code', 'member_id', 'status', 'goods_amount', 'shipping_fee', 'total_amount', 'delivery_type',
         'pickup_point_id', 'recipient_name', 'recipient_phone', 'province', 'address', 'note', 'expires_at',
     ];
 
     protected $attributes = [
         'status' => self::STATUS_NEW,
         'shipping_fee' => 0,
+        'vat_amount' => 0, // cột cũ, không dùng (chủ dự án bỏ VAT 19/11/2026)
     ];
 
     protected function casts(): array
@@ -85,7 +86,6 @@ class Order extends Model
             'sales_counted_at' => 'datetime',
             'commissioned_at' => 'datetime',
             'goods_amount' => 'integer',
-            'vat_amount' => 'integer',
             'shipping_fee' => 'integer',
             'total_amount' => 'integer',
             'expires_at' => 'datetime',

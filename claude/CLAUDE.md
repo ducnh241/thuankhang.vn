@@ -51,7 +51,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   tham số chung trong `settings` (khóa `aff_*`, đọc qua `App\Support\AffiliateSettings::get()`); màn hình A2–A5 ở
   /backend/affiliate/*; seed `AffiliateConfigSeeder`. Tra tỉ lệ: `CommissionRate::rateFor($levelId, 'F1', $paidAt)`.
 - Step 2 (Sản phẩm): xong — admin danh mục sản phẩm (`Category::TYPE_PRODUCT` = 4) + CRUD sản phẩm /backend/product
-  (`products` xóa mềm, `product_images`; `price` đã gồm VAT; `Product::priceBeforeVat()`); storefront: `/`, `/danh-muc/{slug}`,
+  (`products` xóa mềm, `product_images`; `price` = giá bán — VAT đã bỏ, xem mục "Bỏ VAT"); storefront: `/`, `/danh-muc/{slug}`,
   `/tim-kiem`, `/san-pham/{slug}` (controller App\Http\Controllers\Frontend, view resources/views/frontend, CSS/JS
   resources/frontend, build riêng `vite.frontend.config.js` → public/assets/frontend/build). Sản phẩm hiện trên web: `App\Support\Catalog::products()`. HTML mô tả in ra qua `App\Support\RichText::clean()`.
   Cookie `ref` (?ref=CODE) ghi ở mọi trang website (middleware CaptureReferralCode). Demo: DemoProductSeeder (ảnh Unsplash).
@@ -148,6 +148,17 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Dữ liệu mẫu (chỉ máy phát triển): `php artisan db:seed --class=DemoCommissionSeeder` — F0 = thành viên id 1, 4 thành viên
   F2 "(mẫu)" (SĐT 09000001xx), 22 đơn đã thanh toán có mã giao dịch `DEMO-HH-01..22` (đã chạy ở local 17/11/2026, chủ dự án
   giữ lại để đối chiếu — đừng xóa). Test: `tests/Feature/CommissionEngineTest.php`.
+
+## Bỏ VAT (19/11/2026)
+
+- Chủ dự án: giá sản phẩm là giá bán đã gồm thuế, **không dùng VAT ở đâu nữa**. Cột `products.vat_rate`,
+  `orders.vat_amount`, `order_items.vat_rate` / `vat_amount` **vẫn giữ trong DB** (chủ dự án tự cập nhật dữ liệu cũ về 0) nhưng
+  code không đọc / ghi: bỏ khỏi `$fillable` + cast, model đặt mặc định 0 (`$attributes`) nên bản ghi mới luôn 0.
+- Đã gỡ: ô VAT + "Giá trước VAT" ở form sản phẩm admin (khung giá chỉ còn "Cơ sở tính hoa hồng" = giá × (1 − phí DN)), cột VAT
+  ở danh sách sản phẩm, `Product::priceBeforeVat()`, `OrderItem::vatOf()`, tham số chung `default_vat_percent`, `vat_rate` ở
+  API `/api/v1/products` (không nhận, không trả) + tài liệu skill, cột VAT / dòng "Trong đó VAT" ở chi tiết đơn admin, chữ
+  "Giá đã gồm VAT" ở trang sản phẩm / giỏ hàng. Checkout không tính VAT nữa.
+- Mọi phép tính tiền (doanh số lên cấp, hoa hồng, doanh số nhóm) dùng `goods_amount` / `price` nguyên giá bán.
 
 ## Chia hoa hồng vào hai ví + thuế TNCN (19/11/2026)
 

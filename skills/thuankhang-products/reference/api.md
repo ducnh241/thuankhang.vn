@@ -40,7 +40,7 @@ trước. Trả `data[]` (`id, name, slug, sku, url, category, price, status, is
 `GET /products/{id|slug}` — chi tiết:
 
 ```json
-{"data": {"id": 9, "name": "…", "slug": "…", "sku": "…", "price": 210000, "vat_rate": 10, "stock": null,
+{"data": {"id": 9, "name": "…", "slug": "…", "sku": "…", "price": 210000, "stock": null,
   "brand": "…", "origin": null, "short_description": "…", "description": "<h2>…</h2>", "meta_title": null,
   "meta_description": null, "status": true, "is_featured": true, "sort_order": 0, "variant_label": "Loại",
   "url": "https://…/san-pham/…", "category": {"id": 7, "name": "Gia dụng", "slug": "gia-dung"},
@@ -56,10 +56,9 @@ mềm (đơn hàng cũ vẫn giữ tên / giá đã mua).
 |---|---|---|
 | `name` | chuỗi ≤ 255 | bắt buộc khi tạo |
 | `category_id` | số | bắt buộc khi tạo; danh mục sản phẩm |
-| `price` | số nguyên ≥ 0 | bắt buộc khi tạo; VNĐ **đã gồm VAT** |
+| `price` | số nguyên ≥ 0 | bắt buộc khi tạo; VNĐ (giá bán, không tách VAT) |
 | `slug` | chuỗi | bỏ trống = theo tên (trùng thì thêm -2…) |
 | `sku` | `A-Z 0-9 . _ -`, ≤ 50 | tự IN HOA; không trùng |
-| `vat_rate` | số 0–100 | bỏ trống = VAT mặc định của website |
 | `stock` | số nguyên / `null` | `null` = không theo dõi tồn kho |
 | `brand`, `origin` | chuỗi ≤ 100 | |
 | `short_description` | chuỗi ≤ 500 | văn bản thường |

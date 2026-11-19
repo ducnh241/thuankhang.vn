@@ -19,7 +19,7 @@ use Illuminate\View\View;
 
 /**
  * Sản phẩm (A6): danh sách (tab đang bán / đang ẩn, tìm theo tên / mã, lọc danh mục gồm cả danh mục con), trang thêm /
- * sửa (giá đã gồm VAT, VAT %, ảnh nhiều tấm, mô tả soạn bằng trình soạn thảo). Xóa = xóa mềm (đơn hàng còn tham chiếu).
+ * sửa (giá bán, ảnh nhiều tấm, mô tả soạn bằng trình soạn thảo). Xóa = xóa mềm (đơn hàng còn tham chiếu).
  */
 class ProductController extends Controller
 {
@@ -62,7 +62,7 @@ class ProductController extends Controller
 
     public function create(): View
     {
-        return $this->form(new Product(['vat_rate' => AffiliateSettings::get('default_vat_percent')]));
+        return $this->form(new Product);
     }
 
     public function store(ProductRequest $request): RedirectResponse

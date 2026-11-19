@@ -28,7 +28,7 @@ class ProductVariant extends Model
         return $this->belongsTo(ProductImage::class, 'image_id');
     }
 
-    /** Giá bán (đã gồm VAT): giá riêng hoặc giá sản phẩm. */
+    /** Giá bán: giá riêng hoặc giá sản phẩm. */
     public function effectivePrice(?Product $product = null): int
     {
         return $this->price ?? ($product ?? $this->product)->price;

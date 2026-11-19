@@ -6,14 +6,13 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Support\Money;
-use App\Support\Percent;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * Thêm / sửa sản phẩm. Giá nhập "1.100.000" (đã gồm VAT) → số nguyên; VAT "10" / "8,5". Đường dẫn để trống thì theo
+ * Thêm / sửa sản phẩm. Giá nhập "1.100.000" (giá bán) → số nguyên. Đường dẫn để trống thì theo
  * tên. Ảnh: keep_images[] = id ảnh đang có giữ lại, theo thứ tự (đầu tiên = ảnh đại diện); images[] = ảnh mới thêm
  * vào cuối. Tổng tối đa Product::MAX_IMAGES ảnh.
  */
@@ -29,7 +28,6 @@ class ProductRequest extends FormRequest
             'sku' => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('products', 'sku')->ignore($product)],
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('type', Category::TYPE_PRODUCT)],
             'price' => ['required', 'integer', 'min:0', 'max:100000000000'],
-            'vat_rate' => ['required', 'string'],
             'brand' => ['nullable', 'string', 'max:100'],
             'origin' => ['nullable', 'string', 'max:100'],
             'stock' => ['nullable', 'integer', 'min:0', 'max:10000000'],
@@ -62,7 +60,7 @@ class ProductRequest extends FormRequest
     {
         return [
             'name' => 'tên sản phẩm', 'slug' => 'đường dẫn', 'sku' => 'mã sản phẩm', 'category_id' => 'danh mục', 'price' => 'giá bán',
-            'vat_rate' => 'VAT', 'brand' => 'thương hiệu', 'origin' => 'xuất xứ', 'stock' => 'tồn kho', 'short_description' => 'mô tả ngắn', 'description' => 'mô tả', 'meta_title' => 'tiêu đề SEO', 'meta_description' => 'mô tả SEO', 'sort_order' => 'thứ tự', 'images' => 'ảnh', 'images.*' => 'ảnh',
+            'brand' => 'thương hiệu', 'origin' => 'xuất xứ', 'stock' => 'tồn kho', 'short_description' => 'mô tả ngắn', 'description' => 'mô tả', 'meta_title' => 'tiêu đề SEO', 'meta_description' => 'mô tả SEO', 'sort_order' => 'thứ tự', 'images' => 'ảnh', 'images.*' => 'ảnh',
         ];
     }
 
@@ -137,9 +135,6 @@ class ProductRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator) {
-            if (! $validator->errors()->has('vat_rate') && Percent::parse($this->input('vat_rate')) === null) {
-                $validator->errors()->add('vat_rate', 'Nhập VAT từ 0 đến 100, tối đa 2 chữ số lẻ.');
-            }
             $this->after_variants($validator);
             $total = count($this->keptImageIds()) + count($this->file('images') ?? []);
             if ($total > Product::MAX_IMAGES) {
@@ -225,7 +220,6 @@ class ProductRequest extends FormRequest
             'sku' => $this->validated('sku'),
             'category_id' => (int) $this->validated('category_id'),
             'price' => (int) $this->validated('price'),
-            'vat_rate' => Percent::parse($this->validated('vat_rate')),
             'brand' => $trim($this->validated('brand')),
             'origin' => $trim($this->validated('origin')),
             'stock' => $this->validated('stock') === null ? null : (int) $this->validated('stock'),

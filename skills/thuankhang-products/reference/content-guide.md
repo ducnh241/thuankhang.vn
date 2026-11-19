@@ -1,6 +1,6 @@
 # Quy tắc soạn nội dung sản phẩm
 
-Đúc kết từ các sản phẩm đã đăng trên Thuankhang.vn. Giá trên web **đã gồm VAT**.
+Đúc kết từ các sản phẩm đã đăng trên Thuankhang.vn. Giá trên web là giá bán cuối cùng (không tách VAT).
 
 ## Trường dữ liệu
 
@@ -10,8 +10,7 @@
 | `slug` | Bỏ trống → tự tạo theo tên (trùng thì thêm -2, -3). |
 | `sku` | IN HOA, chữ / số / `-`: THƯƠNGHIỆU-LOẠI-QUYCÁCH. VD `ROW-NGX-36`, `MT-MEDEN-HATCHIA`, `IDRSHIN-CS-120`. Biến thể: SKU sản phẩm + hậu tố (`ROW-NGX-36-COMFORTS`). |
 | `category_id` | Danh mục phù hợp nhất (xem `categories`). |
-| `price` | Số nguyên VNĐ, đã gồm VAT. |
-| `vat_rate` | Bỏ trống = mặc định của website (10%). |
+| `price` | Số nguyên VNĐ (giá bán). |
 | `brand` / `origin` | Chỉ điền khi đọc được chắc chắn trên ảnh / nguồn. Không chắc → bỏ trống, nói với người dùng. |
 | `stock` | Bỏ trống (không theo dõi tồn) trừ khi người dùng nói số lượng. |
 | `is_featured` | `true` (hiện ở "Sản phẩm nổi bật") trừ khi người dùng nói khác. |

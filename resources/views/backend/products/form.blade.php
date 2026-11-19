@@ -1,7 +1,7 @@
 @extends('layouts.backend')
 
 {{-- Thêm / sửa sản phẩm (A6), dựng như trang sửa Trang: cột chính (Tên, Mô tả ngắn, Mô tả — Tiptap; Ảnh; Giá & tồn kho;
-     Biến thể; Hiển thị trên Google — tiêu đề / mô tả SEO, đường dẫn) + cột phụ (Trạng thái, Danh mục, Mã / thứ tự). Giá nhập ĐÃ GỒM VAT; dưới ô hiện giá trước VAT và cơ sở hoa hồng.
+     Biến thể; Hiển thị trên Google — tiêu đề / mô tả SEO, đường dẫn) + cột phụ (Trạng thái, Danh mục, Mã / thứ tự). Giá nhập là giá bán (không tách VAT); dưới ô hiện cơ sở hoa hồng.
      JS: product-form.js (đường dẫn theo tên, trình soạn thảo, tính giá, ảnh), edit-form.js (thay đổi chưa lưu). --}}
 @php
     use App\Models\Product;
@@ -16,7 +16,6 @@
     $onSale = $switchOn('status', $product->status !== false);
     $featured = $switchOn('is_featured', (bool) $product->is_featured);
     $price = $old('price', $product->price === null ? '' : Money::format($product->price));
-    $vat = $old('vat_rate', Percent::format($product->vat_rate));
     $categoryId = $old('category_id', (string) $product->category_id);
     $images = $editing ? $product->images : collect();
     $imageError = $errors->first('images') ?: collect($errors->keys())->filter(fn ($k) => str_starts_with($k, 'images.'))->map(fn ($k) => $errors->first($k))->first();
@@ -190,21 +189,12 @@
         <div class="ant-card-body">
           <div class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             <div class="ant-row ant-form-item{{ $hasError('price') }}" data-required="Nhập giá bán.">
-              <div class="ant-col ant-form-item-label"><label for="product_price" class="ant-form-item-required" title="Giá bán (đã gồm VAT)">Giá bán (đã gồm VAT)</label></div>
+              <div class="ant-col ant-form-item-label"><label for="product_price" class="ant-form-item-required" title="Giá bán">Giá bán</label></div>
               <div class="ant-col ant-form-item-control">
                 <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
                   <span class="ant-input-group-wrapper"><span class="ant-input-wrapper ant-input-group"><input type="text" id="product_price" name="price" value="{{ $price }}" class="ant-input tabular-nums" inputmode="numeric" data-money placeholder="0" /><span class="ant-input-group-addon">đ</span></span></span>
                 </div></div>
                 {{ ant_form_error($errors->first('price')) }}
-              </div>
-            </div>
-            <div class="ant-row ant-form-item{{ $hasError('vat_rate') }}" data-required="Nhập VAT.">
-              <div class="ant-col ant-form-item-label"><label for="product_vat" class="ant-form-item-required" title="VAT">VAT</label></div>
-              <div class="ant-col ant-form-item-control">
-                <div class="ant-form-item-control-input"><div class="ant-form-item-control-input-content">
-                  <span class="ant-input-affix-wrapper"><input type="text" id="product_vat" name="vat_rate" value="{{ $vat }}" class="ant-input tabular-nums" inputmode="decimal" /><span class="ant-input-suffix">%</span></span>
-                </div></div>
-                {{ ant_form_error($errors->first('vat_rate')) }}
               </div>
             </div>
           </div>
@@ -222,8 +212,7 @@
           <div class="ant-alert ant-alert-info" role="status" id="price-breakdown" data-fee="{{ (float) $businessFee }}">
             {{ ant_icon('info-circle', 'ant-alert-icon') }}
             <div class="ant-alert-content"><div class="ant-alert-message">
-              Giá trước VAT: <strong class="tabular-nums" data-price-before-vat>{{ $product->price !== null && $product->vat_rate !== null ? Money::format($product->priceBeforeVat()) : '—' }}</strong> đ
-              · Cơ sở tính hoa hồng (trừ phí doanh nghiệp {{ Percent::format($businessFee) }}%): <strong class="tabular-nums" data-commission-base>—</strong> đ
+              Cơ sở tính hoa hồng (trừ phí doanh nghiệp {{ Percent::format($businessFee) }}%): <strong class="tabular-nums" data-commission-base>—</strong> đ
             </div></div>
           </div>
         </div>
@@ -257,7 +246,7 @@
                 <tr>
                   <th class="ant-table-cell" style="min-width: 180px">Tên</th>
                   <th class="ant-table-cell" style="min-width: 110px">SKU</th>
-                  <th class="ant-table-cell" style="min-width: 120px; text-align: right">Giá (gồm VAT)</th>
+                  <th class="ant-table-cell" style="min-width: 120px; text-align: right">Giá</th>
                   <th class="ant-table-cell" style="min-width: 110px">Ảnh</th>
                   <th class="ant-table-cell" style="min-width: 80px; text-align: right">Tồn kho</th>
                   <th class="ant-table-cell text-center">Đang bán</th>

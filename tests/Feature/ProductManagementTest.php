@@ -7,14 +7,13 @@ use App\Models\Category;
 use App\Models\Group;
 use App\Models\Product;
 use App\Models\User;
-use App\Support\AffiliateSettings;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-/** Step 2 – CRUD sản phẩm (A6): giá đã gồm VAT, VAT %, ảnh, mô tả, trạng thái; quyền product/* (vai trò Vận hành). */
+/** Step 2 – CRUD sản phẩm (A6): giá bán (không có VAT — đã bỏ 19/11/2026), ảnh, mô tả, trạng thái; quyền product/* (vai trò Vận hành). */
 class ProductManagementTest extends TestCase
 {
     use RefreshDatabase;
@@ -38,7 +37,7 @@ class ProductManagementTest extends TestCase
     {
         return [
             'name' => 'Viên uống Vitamin C', 'slug' => '', 'sku' => '', 'category_id' => (string) $this->category->id,
-            'price' => '1.100.000', 'vat_rate' => '10', 'short_description' => '', 'description' => '<p></p>',
+            'price' => '1.100.000', 'short_description' => '', 'description' => '<p></p>',
             'status' => '1', 'is_featured' => '0', 'sort_order' => '0', ...$data,
         ];
     }
@@ -119,7 +118,7 @@ class ProductManagementTest extends TestCase
     {
         $ops = $this->ops();
         $this->actingAs($ops)->get('/backend/product/create')->assertOk()
-            ->assertSee('value="10"', false) // VAT mặc định từ tham số chung
+            ->assertDontSee('name="vat_rate"', false)->assertDontSee('VAT')
             ->assertSee('Thực phẩm chức năng');
 
         $res = $this->actingAs($ops)->post('/backend/product', $this->form([
@@ -129,19 +128,18 @@ class ProductManagementTest extends TestCase
 
         $product = Product::sole();
         $res->assertRedirect(route('backend.products.edit', $product))->assertSessionHas('success', 'Đã tạo sản phẩm Viên uống Vitamin C.');
-        $this->assertSame(['vien-uong-vitamin-c', 'VITC-1000', 1_100_000, '10.00', true, true],
-            [$product->slug, $product->sku, $product->price, $product->vat_rate, $product->status, $product->is_featured]);
+        $this->assertSame(['vien-uong-vitamin-c', 'VITC-1000', 1_100_000, 0.0, true, true],
+            [$product->slug, $product->sku, $product->price, (float) $product->getRawOriginal('vat_rate'), $product->status, $product->is_featured]);
         $this->assertNull($product->description);
-        $this->assertSame(1_000_000, $product->priceBeforeVat());
         $this->assertCount(2, $product->images);
         $this->assertSame([0, 1], $product->images->pluck('sort_order')->all());
         $product->images->each(fn ($image) => Storage::disk('public')->assertExists($image->path));
         $this->assertTrue(AuditLog::where('auditable_type', Product::class)->where('action', 'created')->where('user_id', $ops->id)->exists());
 
-        // Trang sửa: ảnh, giá định dạng VNĐ, giá trước VAT
+        // Trang sửa: ảnh, giá định dạng VNĐ, không có VAT
         $this->actingAs($ops)->get(route('backend.products.edit', $product))->assertOk()
             ->assertSee('value="1.100.000"', false)->assertSee('name="keep_images[]" value="'.$product->images[0]->id.'"', false)
-            ->assertSee('1.000.000');
+            ->assertSee('Cơ sở tính hoa hồng')->assertDontSee('VAT');
     }
 
     public function test_update_reorders_removes_and_adds_images(): void
@@ -153,7 +151,7 @@ class ProductManagementTest extends TestCase
 
         // Giữ c rồi a (c thành ảnh đại diện), bỏ b, thêm 1 ảnh mới; đổi giá, ẩn sản phẩm
         $this->actingAs($ops)->put(route('backend.products.update', $product), $this->form([
-            'slug' => $product->slug, 'price' => '2.160.000', 'vat_rate' => '8', 'status' => '0',
+            'slug' => $product->slug, 'price' => '2.160.000', 'vat_rate' => '8', 'status' => '0', // vat_rate gửi lên bị bỏ qua
             'keep_images' => [$c->id, $a->id], 'images' => [$this->image('4.jpg')],
         ]))->assertRedirect(route('backend.products.edit', $product))->assertSessionHas('success', 'Đã lưu sản phẩm.');
 
@@ -164,7 +162,7 @@ class ProductManagementTest extends TestCase
         $this->assertSame($c->id, $product->cover->id);
         $this->assertModelMissing($b);
         Storage::disk('public')->assertMissing($b->path);
-        $this->assertSame([2_160_000, '8.00', false, 2_000_000], [$product->price, $product->vat_rate, $product->status, $product->priceBeforeVat()]);
+        $this->assertSame([2_160_000, 0.0, false], [$product->price, (float) $product->getRawOriginal('vat_rate'), $product->status]);
 
         // Id ảnh của sản phẩm khác bị bỏ qua
         $other = Product::factory()->create(['category_id' => $this->category->id]);
@@ -181,7 +179,7 @@ class ProductManagementTest extends TestCase
         Product::factory()->create(['category_id' => $this->category->id, 'slug' => 'da-co', 'sku' => 'MA-1'])->delete();
 
         foreach ([
-            'name' => ['name' => ''], 'price' => ['price' => 'abc'], 'vat_rate' => ['vat_rate' => '101'],
+            'name' => ['name' => ''], 'price' => ['price' => 'abc'],
             'category_id' => ['category_id' => (string) $news->id], 'sku' => ['sku' => 'mã có dấu'],
         ] as $field => $data) {
             $this->actingAs($ops)->post('/backend/product', $this->form($data))->assertSessionHasErrors($field);
@@ -197,8 +195,8 @@ class ProductManagementTest extends TestCase
 
         $this->assertSame(0, Product::count());
         // Lưu lỗi: form hiện lại dữ liệu vừa nhập
-        $this->actingAs($ops)->from('/backend/product/create')->followingRedirects()->post('/backend/product', $this->form(['vat_rate' => '200', 'price' => '2.500.000']))
-            ->assertOk()->assertSee('value="2.500.000"', false)->assertSee('Nhập VAT từ 0 đến 100');
+        $this->actingAs($ops)->from('/backend/product/create')->followingRedirects()->post('/backend/product', $this->form(['name' => '', 'price' => '2.500.000']))
+            ->assertOk()->assertSee('value="2.500.000"', false);
     }
 
     public function test_list_tabs_search_and_category_filter(): void
@@ -321,13 +319,10 @@ class ProductManagementTest extends TestCase
         $this->actingAs($ops)->get('/san-pham/serum-xem-truoc')->assertNotFound();
     }
 
-    public function test_price_before_vat_rounds_down(): void
+    public function test_product_list_has_no_vat_column(): void
     {
-        $this->assertSame(5_000_000, (new Product(['price' => 5_500_000, 'vat_rate' => '10']))->priceBeforeVat());
-        $this->assertSame(1_000_000, (new Product(['price' => 1_080_000, 'vat_rate' => '8']))->priceBeforeVat());
-        $this->assertSame(90_909, (new Product(['price' => 100_000, 'vat_rate' => '10']))->priceBeforeVat()); // 90.909,09 → xuống
-        $this->assertSame(100_000, (new Product(['price' => 100_000, 'vat_rate' => '0']))->priceBeforeVat());
-        AffiliateSettings::save(['default_vat_percent' => '8.00']);
-        $this->actingAs(User::factory()->superAdmin()->create())->get('/backend/product/create')->assertSee('id="product_vat" name="vat_rate" value="8"', false);
+        Product::factory()->create(['category_id' => $this->category->id, 'price' => 1_080_000]);
+        $this->actingAs($this->ops())->get('/backend/product')->assertOk()
+            ->assertSee('1.080.000 đ')->assertDontSee('VAT');
     }
 }

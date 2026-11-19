@@ -120,7 +120,7 @@ class OrderNotificationTest extends TestCase
         $this->get($product->url())->assertDontSee('data-cart-added', false); // chỉ hiện một lần
         $this->post('/gio-hang', ['product_id' => $product->id, 'qty' => 1, 'buy_now' => 1])->assertRedirect(route('shop.checkout'));
 
-        // Trang thanh toán: không còn dòng VAT (giá đã gồm VAT), nút "Thanh toán"
+        // Trang thanh toán: không có dòng VAT, nút "Thanh toán"
         $this->get('/thanh-toan')->assertOk()
             ->assertSee('Tiền hàng')->assertDontSee('VAT')->assertSee('2.160.000đ')->assertSee('Phí giao hàng')->assertSee('2.190.000đ')
             ->assertSee('data-checkout-submit>Thanh toán</button>', false)->assertDontSee('Đặt hàng');
@@ -129,7 +129,7 @@ class OrderNotificationTest extends TestCase
         $response = $this->post('/thanh-toan', $this->form());
         $order = Order::sole();
         $response->assertRedirect(route('member.orders.show', $order))->assertSessionHas('success');
-        $this->assertSame(160000, $order->vat_amount); // VAT vẫn được lưu để tính hoa hồng, chỉ không hiện cho khách
+        $this->assertSame(0, (int) $order->vat_amount); // VAT đã bỏ (19/11/2026): cột cũ luôn ghi 0
         $this->get(route('member.orders.show', $order))->assertOk()
             ->assertSee('data-payment', false)->assertSee('data-qr', false)->assertSee('img.vietqr.io/image/VCB-0011001234567', false)
             ->assertSee('Vietcombank')->assertSee('0011001234567')->assertSee('CONG TY THUAN KHANG')->assertSee('2.190.000đ')->assertSee($order->code)

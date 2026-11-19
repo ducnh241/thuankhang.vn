@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Sản phẩm của cửa hàng (A6). price = giá bán ĐÃ GỒM VAT (đồng); vat_rate = VAT % riêng từng sản phẩm. Ảnh: bảng
+ * Sản phẩm của cửa hàng (A6). price = giá bán (đồng, đã gồm thuế). Cột vat_rate còn trong DB nhưng KHÔNG dùng nữa (chủ dự án
+ * bỏ VAT 19/11/2026 — luôn ghi 0, sẽ cập nhật dữ liệu cũ về 0). Ảnh: bảng
  * product_images, ảnh sort_order nhỏ nhất là ảnh đại diện.
  */
 class Product extends Model
@@ -29,19 +30,19 @@ class Product extends Model
 
     public const MAX_VARIANTS = 50;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'vat_rate', 'stock', 'variant_label', 'short_description', 'description', 'meta_title', 'meta_description', 'status', 'is_featured', 'sort_order'];
+    protected $fillable = ['category_id', 'name', 'slug', 'sku', 'brand', 'origin', 'price', 'stock', 'variant_label', 'short_description', 'description', 'meta_title', 'meta_description', 'status', 'is_featured', 'sort_order'];
 
     protected $attributes = [
         'status' => true,
         'is_featured' => false,
         'sort_order' => 0,
+        'vat_rate' => 0, // cột cũ, không dùng
     ];
 
     protected function casts(): array
     {
         return [
             'price' => 'integer',
-            'vat_rate' => 'decimal:2',
             'stock' => 'integer',
             'status' => 'boolean',
             'is_featured' => 'boolean',
@@ -141,12 +142,6 @@ class Product extends Model
     public function scopeOnSale(Builder $query): void
     {
         $query->where('status', true);
-    }
-
-    /** Giá trước VAT (đồng, làm tròn xuống): giá đã gồm VAT / (1 + VAT%). Chỉ để hiển thị — hoa hồng tính trên giá bán, không tách VAT. */
-    public function priceBeforeVat(): int
-    {
-        return intdiv($this->price * 10000, 10000 + (int) round((float) $this->vat_rate * 100));
     }
 
     public function url(): string

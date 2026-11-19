@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * 20 sản phẩm demo (4 sản phẩm × 5 danh mục demo) cho dev / staging, đủ thông tin: mã, giá đã gồm VAT, VAT, mô tả ngắn,
+ * 20 sản phẩm demo (4 sản phẩm × 5 danh mục demo) cho dev / staging, đủ thông tin: mã, giá bán, mô tả ngắn,
  * mô tả chi tiết, 2 ảnh. Không gọi từ DatabaseSeeder:
  *   php artisan db:seed --class=DemoProductSeeder
  * Ảnh: tải ảnh stock miễn phí từ Unsplash (giấy phép Unsplash — dùng thương mại miễn phí, không bắt buộc ghi nguồn; chỉ
@@ -102,7 +102,6 @@ class DemoProductSeeder extends Seeder
                         'name' => $name,
                         'sku' => $sku,
                         'price' => $price,
-                        'vat_rate' => $vat,
                         'short_description' => $short,
                         'description' => '<h2>Công dụng</h2><p>'.e($benefit).'</p><h2>Cách dùng</h2><p>'.e($usage).'</p>'
                             .'<h2>Lưu ý</h2><ul><li>Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp.</li><li>Để xa tầm tay trẻ em.</li></ul>',

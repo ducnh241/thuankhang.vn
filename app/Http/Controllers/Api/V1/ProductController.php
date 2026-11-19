@@ -9,7 +9,6 @@ use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Services\ProductImageImporter;
 use App\Services\ProductVariantSync;
-use App\Support\AffiliateSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +74,6 @@ class ProductController extends Controller
         $this->normalize($request);
         $data = $request->validate($this->rules(null), $this->messages());
         $data['slug'] ??= $this->uniqueSlug(Str::slug($data['name']));
-        $data['vat_rate'] ??= AffiliateSettings::get('default_vat_percent');
 
         $product = $this->save(new Product, $data, $request);
 
@@ -270,7 +268,6 @@ class ProductController extends Controller
             'sku' => ['sometimes', 'nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('products', 'sku')->ignore($product)],
             'category_id' => [$req, 'integer', Rule::exists('categories', 'id')->where('type', Category::TYPE_PRODUCT)],
             'price' => [$req, 'integer', 'min:0', 'max:100000000000'],
-            'vat_rate' => ['sometimes', 'numeric', 'min:0', 'max:100'],
             'stock' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10000000'],
             'brand' => ['sometimes', 'nullable', 'string', 'max:100'],
             'origin' => ['sometimes', 'nullable', 'string', 'max:100'],
@@ -294,7 +291,7 @@ class ProductController extends Controller
             'slug.unique' => 'Đường dẫn này đã có sản phẩm khác dùng (kể cả sản phẩm đã xóa).',
             'sku.unique' => 'Mã SKU đã có sản phẩm khác dùng.',
             'category_id.exists' => 'Danh mục sản phẩm không tồn tại.',
-            'price.integer' => 'Giá là số nguyên (đồng), đã gồm VAT.',
+            'price.integer' => 'Giá là số nguyên (đồng).',
         ];
     }
 
@@ -333,7 +330,6 @@ class ProductController extends Controller
         return [
             ...collect($p->only(['id', 'name', 'slug', 'sku', 'price', 'stock', 'brand', 'origin', 'short_description', 'description',
                 'meta_title', 'meta_description', 'status', 'is_featured', 'sort_order', 'variant_label']))->all(),
-            'vat_rate' => (float) $p->vat_rate,
             'url' => url($p->url()),
             'category' => $p->category ? $p->category->only(['id', 'name', 'slug']) : null,
             'images' => $p->images->map(fn ($img, $i) => ['id' => $img->id, 'index' => $i, 'url' => $img->url()])->values(),

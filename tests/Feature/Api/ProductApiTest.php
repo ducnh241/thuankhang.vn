@@ -98,7 +98,10 @@ class ProductApiTest extends TestCase
             'variants' => [['name' => 'Sữa gạo', 'image' => 0], ['name' => 'Quế', 'sku' => 'row-nrc-que', 'price' => 50000, 'image' => 1]],
         ])->assertCreated();
         $data = $res->json('data');
-        $this->assertSame(['nuoc-rua-chen-row', 'ROW-NRC', 45000, 10.0, true], [$data['slug'], $data['sku'], $data['price'], (float) $data['vat_rate'], $data['is_featured']]);
+        $this->assertSame(['nuoc-rua-chen-row', 'ROW-NRC', 45000, true], [$data['slug'], $data['sku'], $data['price'], $data['is_featured']]);
+        // VAT đã bỏ (19/11/2026): API không trả về / không nhận vat_rate; cột trong DB luôn 0
+        $this->assertArrayNotHasKey('vat_rate', $data);
+        $this->assertSame(0.0, (float) \App\Models\Product::find($data['id'])->getRawOriginal('vat_rate'));
         $this->assertCount(2, $data['images']);
         $this->assertSame([0, 1], array_column($data['variants'], 'image'));
         $this->assertSame([45000, 50000], array_column($data['variants'], 'effective_price'));

@@ -99,12 +99,12 @@ class CheckoutTest extends TestCase
         AffiliateSettings::save(['order_code_prefix' => 'THK']);
         $this->assertMatchesRegularExpression('/^THK[2-9A-HJKMNP-Z]{8}$/', Order::generateCode());
         $this->assertSame([Order::STATUS_NEW, $member->id, 2270000, 30000, 2300000], [$order->status, $order->member_id, $order->goods_amount, $order->shipping_fee, $order->total_amount]);
-        $this->assertSame(160000 + 10000, $order->vat_amount); // 2.160.000 gồm 8% → 160.000; 110.000 gồm 10% → 10.000
+        $this->assertSame(0, (int) $order->vat_amount); // VAT đã bỏ (19/11/2026): cột cũ luôn ghi 0
         $this->assertSame(['0912345678', 'ha-noi', '12 Láng Hạ, Hà Nội', null], [$order->recipient_phone, $order->province, $order->shippingAddress(), $order->pickup_point_id]);
         $this->assertTrue($order->expires_at->between(now()->addHours(24)->subMinute(), now()->addHours(24)->addMinute()));
 
         $item = $order->items()->where('product_id', $a->id)->sole();
-        $this->assertSame(['Sâm', 'SAM-1', 2, 1080000, 2160000, 160000], [$item->product_name, $item->sku, $item->qty, $item->unit_price, $item->line_amount, $item->vat_amount]);
+        $this->assertSame(['Sâm', 'SAM-1', 2, 1080000, 2160000, 0], [$item->product_name, $item->sku, $item->qty, $item->unit_price, $item->line_amount, (int) $item->vat_amount]);
         $this->assertSame([], session(Cart::SESSION_KEY, []));
 
         // Snapshot: đổi giá / tên sau khi đặt không ảnh hưởng đơn

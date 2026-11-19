@@ -8,32 +8,24 @@ import { toSlug } from './tree-page';
  * Trang thêm / sửa sản phẩm (backend/products/form.blade.php):
  *   - đường dẫn tự theo tên cho tới khi sửa tay (như page-form.js);
  *   - mô tả chi tiết: trình soạn thảo Tiptap (editor.js) ghi HTML vào ô ẩn description;
- *   - giá trước VAT và cơ sở hoa hồng tính lại khi gõ giá / VAT (công thức như Product::priceBeforeVat, đặc tả 8.3);
+ *   - cơ sở hoa hồng tính lại khi gõ giá: floor(giá × (1 − phí doanh nghiệp)) — như CommissionEngine (không tách VAT);
  *   - ảnh: thêm nhiều ảnh (gom vào ô images[] bằng DataTransfer), bỏ ảnh, kéo thả sắp xếp (cả ảnh mới xen ảnh cũ —
  *     ô ẩn image_order), ★ đưa ảnh đang có lên đầu (ảnh đại diện).
  *     Đổi ảnh thì form coi như đã đổi (data-dirty): "Hủy thay đổi" tải lại trang.
  */
 
 const parseMoney = v => Number(String(v).replace(/\D/g, '')) || 0;
-const parsePercent = v => {
-  const n = Number(String(v).trim().replace(',', '.'));
-  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
-};
 
 function initPrice($form) {
   const $box = $form.find('#price-breakdown');
   const fee = Number($box.attr('data-fee')) || 0;
   const refresh = () => {
     const price = parseMoney($('#product_price').val());
-    const vat = parsePercent($('#product_vat').val());
-    const ok = $('#product_price').val().trim() !== '' && vat !== null;
-    // Số nguyên như server: floor(giá × 10000 / (10000 + VAT×100)), rồi × (1 − phí)
-    const before = ok ? Math.floor((price * 10000) / (10000 + Math.round(vat * 100))) : null;
-    const base = before === null ? null : Math.floor((before * (10000 - Math.round(fee * 100))) / 10000);
-    $box.find('[data-price-before-vat]').text(before === null ? '—' : formatMoneyInput(String(before)));
+    // Số nguyên như server: floor(giá × (10000 − phí×100) / 10000)
+    const base = $('#product_price').val().trim() === '' ? null : Math.floor((price * (10000 - Math.round(fee * 100))) / 10000);
     $box.find('[data-commission-base]').text(base === null ? '—' : formatMoneyInput(String(base)));
   };
-  $form.on('input change', '#product_price, #product_vat', refresh);
+  $form.on('input change', '#product_price', refresh);
   $form.on('reset', () => setTimeout(refresh));
   refresh();
 }

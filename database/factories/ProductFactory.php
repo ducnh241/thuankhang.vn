@@ -19,7 +19,6 @@ class ProductFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'price' => 1_100_000,
-            'vat_rate' => '10.00',
         ];
     }
 }
