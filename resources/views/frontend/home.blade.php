@@ -6,6 +6,8 @@
 
 @section('content')
   <div class="mx-auto max-w-7xl px-4 pt-5 md:pt-8">
+    {{-- Gợi ý cài ứng dụng (chỉ hiện trên điện thoại, khi chưa mở ở chế độ ứng dụng) --}}
+    @include('frontend.partials.install-app', ['class' => 'mb-4'])
     {{-- Thẻ thành viên (đã đăng nhập) / lời mời tham gia --}}
     @if ($member)
       <section class="rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-emerald-500 p-5 text-white shadow-sm md:p-6" data-member-card>

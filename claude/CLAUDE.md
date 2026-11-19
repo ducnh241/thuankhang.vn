@@ -246,6 +246,19 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   `setting` chỉ xem. Máy chủ SMTP chỉ nhận tên miền + cổng 25 / 465 / 587 / 2525. Tin chỉ gồm mã đơn, tên người nhận, số
   tiền, hình thức nhận, link đơn trong quản trị. Test: `tests/Feature/OrderNotificationTest.php`.
 
+## Thêm vào màn hình chính — mở website như ứng dụng (19/11/2026)
+
+- Website là PWA tối giản (KHÔNG có service worker, không chạy offline): `/manifest.webmanifest`
+  (`Frontend\ManifestController`, `display: standalone`, tên lấy từ Cài đặt website, nền / theme trắng, 3 lối tắt) + các thẻ
+  `<link rel="manifest">`, `apple-mobile-web-app-*`, `apple-touch-icon` ở `frontend/layouts/app.blade.php`.
+- Biểu tượng ứng dụng tạo từ **favicon trong Cài đặt** (chủ dự án yêu cầu): `App\Support\AppIcon` đặt favicon lên nền trắng
+  vuông bằng GD (192 / 512 / maskable 512 / apple 180), lưu `storage/app/public/pwa/{khóa}-{tên}.png`, đổi favicon thì tự tạo
+  lại. Không có favicon / favicon .ico / thiếu GD → bộ icon tĩnh `public/assets/frontend/pwa/` (tạo sẵn từ favicon 19/11/2026).
+- Gợi ý cài: partial `frontend/partials/install-app.blade.php` ở trang chủ + trang tài khoản, JS `[data-install-app]` trong
+  `frontend/js/app.js` — chỉ hiện trên điện thoại khi chưa mở ở chế độ ứng dụng, đóng thì nhớ 30 ngày (localStorage). Android
+  có nút "Cài ứng dụng" khi trình duyệt phát `beforeinstallprompt`, không thì hiện các bước làm tay; iOS chỉ có hướng dẫn
+  (Safari → Chia sẻ → Thêm vào Màn hình chính). Cần HTTPS mới cài được. Test: `tests/Feature/PwaTest.php`.
+
 ## Ảnh bill chuyển khoản (18/11/2026)
 
 - Chủ dự án yêu cầu: ở trang đơn hàng của thành viên, **bắt buộc tải ảnh bill chuyển khoản** rồi mới bấm được "Tôi đã chuyển

@@ -10,6 +10,7 @@ use App\Http\Controllers\Frontend\CategoryController;
 use App\Http\Controllers\Frontend\CheckoutController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\KycController;
+use App\Http\Controllers\Frontend\ManifestController;
 use App\Http\Controllers\Frontend\OrderController;
 use App\Http\Controllers\Frontend\ProductController;
 use App\Http\Controllers\Frontend\ProductReviewController;
@@ -22,6 +23,9 @@ use App\Http\Middleware\EnsureMemberActive;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
+
+// Web App Manifest: cho phép thêm website vào màn hình chính và mở như ứng dụng riêng (iOS / Android)
+Route::get('manifest.webmanifest', ManifestController::class)->name('pwa.manifest');
 
 Route::middleware(CaptureReferralCode::class)->group(function () {
     Route::get('/', HomeController::class)->name('home');

@@ -30,6 +30,15 @@
   @if ($description)<meta property="og:description" content="{{ \Illuminate\Support\Str::limit($description, 200) }}" />@endif
   @if ($image)<meta property="og:image" content="{{ $image }}" />@endif
   @if ($favicon)<link rel="icon" href="{{ $favicon }}" />@endif
+  {{-- Thêm vào màn hình chính (iOS / Android) và mở như ứng dụng riêng: manifest + biểu tượng tạo từ favicon (AppIcon).
+       iOS không đọc icon trong manifest nên cần apple-touch-icon và các thẻ apple-* --}}
+  <link rel="manifest" href="{{ route('pwa.manifest') }}" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="{{ \App\Http\Controllers\Frontend\ManifestController::shortName($siteName) }}" />
+  <link rel="apple-touch-icon" href="{{ \App\Support\AppIcon::url('apple-touch-icon', ($site['site_favicon'] ?? null) ?: null) }}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />

@@ -21,6 +21,8 @@
       </div>
     </div>
 
+    @include('frontend.partials.install-app', ['class' => 'mt-6'])
+
     {{-- Ví hoa hồng: số dư + hoa hồng tháng này; chi tiết từng dòng ở trang Ví --}}
     <a href="{{ route('member.wallet') }}" class="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl border border-brand-100 bg-brand-50 p-5 hover:border-brand-300" data-wallet-card>
       <div>

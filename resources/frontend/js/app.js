@@ -498,3 +498,65 @@ document.addEventListener('keydown', e => {
 });
 // Màn hình rộng ra (xoay ngang / đổi cỡ): đóng ngăn kéo
 window.matchMedia('(min-width: 768px)').addEventListener('change', e => e.matches && closeMobileNav());
+
+/*
+ * Gợi ý "Cài ứng dụng" [data-install-app] (thêm website vào màn hình chính, mở như ứng dụng riêng). Chỉ hiện trên điện thoại
+ * / máy tính bảng, khi trang CHƯA chạy ở chế độ ứng dụng và khách chưa bấm đóng (nhớ 30 ngày).
+ *   - Android: trình duyệt phát sự kiện beforeinstallprompt → hiện nút "Cài ứng dụng" (bấm là ra hộp thoại cài của trình
+ *     duyệt); trình duyệt không phát sự kiện (Zalo, Facebook, Firefox…) → hiện các bước làm tay.
+ *   - iPhone / iPad: iOS không có cài bằng nút → chỉ hiện các bước (Safari → Chia sẻ → Thêm vào Màn hình chính).
+ */
+const installBoxes = document.querySelectorAll('[data-install-app]');
+if (installBoxes.length) {
+  const DISMISS_KEY = 'tk_install_dismissed';
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const ua = navigator.userAgent;
+  const android = /android/i.test(ua);
+  // iPad đời mới tự nhận là máy Mac có cảm ứng
+  const ios = !android && (/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  let dismissed = false;
+  try {
+    dismissed = Number(localStorage.getItem(DISMISS_KEY) || 0) > Date.now() - 30 * 864e5;
+  } catch {
+    // Không dùng được localStorage (chế độ riêng tư): coi như chưa đóng
+  }
+  let installEvent = null;
+  const render = () => {
+    installBoxes.forEach(box => {
+      box.hidden = standalone || dismissed || !(ios || android || installEvent);
+      box.querySelector('[data-install-button]').hidden = !installEvent;
+      box.querySelector('[data-install-ios]').hidden = !ios;
+      box.querySelector('[data-install-android]').hidden = !android || !!installEvent;
+    });
+  };
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault(); // giữ lại để tự hiện khi khách bấm nút
+    installEvent = event;
+    render();
+  });
+  window.addEventListener('appinstalled', () => {
+    installEvent = null;
+    dismissed = true;
+    render();
+  });
+  installBoxes.forEach(box => {
+    box.querySelector('[data-install-button]').addEventListener('click', async () => {
+      if (!installEvent) return;
+      installEvent.prompt();
+      const choice = await installEvent.userChoice;
+      installEvent = null; // mỗi sự kiện chỉ hỏi được một lần
+      if (choice && choice.outcome === 'accepted') dismissed = true;
+      render();
+    });
+    box.querySelector('[data-install-close]').addEventListener('click', () => {
+      dismissed = true;
+      try {
+        localStorage.setItem(DISMISS_KEY, String(Date.now()));
+      } catch {
+        // bỏ qua
+      }
+      render();
+    });
+  });
+  render();
+}
