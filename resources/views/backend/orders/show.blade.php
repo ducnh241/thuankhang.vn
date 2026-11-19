@@ -76,7 +76,9 @@
       <div class="ant-card-body">
         <dl class="ml-auto grid max-w-xs grid-cols-[1fr_auto] gap-x-6 gap-y-1 m-0 tabular-nums">
           <dt class="{{ $muted }}">Tiền hàng</dt><dd class="m-0 text-right">{{ Money::format($order->goods_amount) }} đ</dd>
-          <dt class="{{ $muted }}">Phí giao hàng</dt><dd class="m-0 text-right">{{ Money::format($order->shipping_fee) }} đ</dd>
+          @if ($order->shipping_fee > 0){{-- chỉ đơn cũ (trước 19/11/2026) có thu phí ship; đơn mới giao tận nơi trả ship COD --}}
+            <dt class="{{ $muted }}">Phí giao hàng</dt><dd class="m-0 text-right">{{ Money::format($order->shipping_fee) }} đ</dd>
+          @endif
           <dt class="font-medium">Tổng thanh toán</dt><dd class="m-0 text-right text-base font-semibold">{{ Money::format($order->total_amount) }} đ</dd>
         </dl>
       </div>

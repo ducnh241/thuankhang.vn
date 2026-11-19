@@ -57,13 +57,13 @@ class OrderToCommissionFlowTest extends TestCase
             'province' => 'ha-noi', 'address' => '1 Láng Hạ', 'pickup_point_id' => '', 'note' => '']);
         $order = Order::sole()->load('items');
 
-        // 380.000 × 2 + 4.200.000 × 3 = 13.360.000; ship 30.000
-        $this->assertSame([13_360_000, 30_000, 13_390_000, 0], [$order->goods_amount, $order->shipping_fee, $order->total_amount, (int) $order->getRawOriginal('vat_amount')]);
+        // 380.000 × 2 + 4.200.000 × 3 = 13.360.000; giao tận nơi trả ship COD → đơn không có phí ship
+        $this->assertSame([13_360_000, 0, 13_360_000, 0], [$order->goods_amount, $order->shipping_fee, $order->total_amount, (int) $order->getRawOriginal('vat_amount')]);
         $this->assertSame([[$red->id, 2, 380_000, 760_000, 0.0, 0], [null, 3, 4_200_000, 12_600_000, 0.0, 0]],
             $order->items->sortBy('id')->map(fn ($i) => [$i->variant_id, $i->qty, $i->unit_price, $i->line_amount, (float) $i->getRawOriginal('vat_rate'), (int) $i->getRawOriginal('vat_amount')])->values()->all());
 
         $accountant = User::factory()->create(['group_id' => Group::where('name', 'Kế toán')->value('id')]);
-        $this->actingAs($accountant, 'web')->post(route('backend.orders.confirm-payment', $order), ['payment_reference' => 'FT1', 'paid_amount' => '13390000'])
+        $this->actingAs($accountant, 'web')->post(route('backend.orders.confirm-payment', $order), ['payment_reference' => 'FT1', 'paid_amount' => '13360000'])
             ->assertSessionHas('success');
 
         // Cơ sở 13.360.000 × 95% = 12.692.000 → F1 (Đại lý 20%) 2.538.400; F2 (CTV 7%) 888.440

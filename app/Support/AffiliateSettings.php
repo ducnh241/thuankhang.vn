@@ -32,7 +32,6 @@ class AffiliateSettings
         'min_withdraw' => ['commission', 'Số tiền rút tối thiểu', 'money', 500000, ['required', 'max:1000000000'], null],
         'pit_percent' => ['commission', 'Thuế TNCN khấu trừ từ hoa hồng', 'percent', '10.00', ['required'], 'Trích ngay từ mỗi khoản hoa hồng lúc cộng ví (không vào ví nào). Đổi chỉ áp dụng cho hoa hồng tính sau đó.'],
         'reconsume_percent' => ['commission', 'Phần hoa hồng vào ví tái tiêu dùng', 'percent', '20.00', ['required'], 'Phần còn lại = 100% − tái tiêu dùng − thuế TNCN (mặc định 70%) vào ví có thể rút. Đổi chỉ áp dụng cho hoa hồng tính sau đó.'],
-        'shipping_fee' => ['order', 'Phí giao hàng tận nơi', 'money', 30000, ['required', 'max:10000000'], 'Một mức cho mọi đơn giao tận nơi (khách trả). Nhận tại VP tỉnh: miễn phí.'],
         'order_code_prefix' => ['order', 'Tiền tố mã đơn hàng', 'code', 'TK', ['required', 'max:4', 'regex:/^[A-Z]+$/'], 'Mã đơn = tiền tố + 8 ký tự (VD: TK7H2KQ9MX). 1–4 chữ cái in hoa, không dấu. Đổi chỉ áp dụng cho đơn mới.'],
         'payment_expiry_hours' => ['order', 'Hạn thanh toán đơn', 'int', 24, ['required', 'min:1', 'max:720'], 'Quá hạn chưa chuyển khoản thì đơn tự hết hạn.'],
         'ref_cookie_days' => ['order', 'Thời gian lưu mã giới thiệu', 'int', 30, ['required', 'min:1', 'max:365'], 'Cookie ghi nhớ mã ?ref= khi khách mở link giới thiệu.'],

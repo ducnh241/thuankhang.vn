@@ -1,6 +1,6 @@
 @extends('frontend.layouts.app')
 
-{{-- Thanh toán (S5): người nhận, hình thức nhận (giao tận nơi: tỉnh + địa chỉ, có phí ship; nhận tại VP: tỉnh → điểm,
+{{-- Thanh toán (S5): người nhận, hình thức nhận (giao tận nơi: tỉnh + địa chỉ, phí ship COD — không hiện giá; nhận tại VP: tỉnh → điểm,
      hiện địa chỉ / giờ mở cửa, miễn phí), ghi chú, tóm tắt đơn, nút "Thanh toán"
      tạo đơn rồi sang trang đơn có thông tin chuyển khoản + mã QR. JS: [data-checkout] trong frontend/js/app.js. --}}
 @php
@@ -23,7 +23,7 @@
     <h1 class="text-2xl font-bold text-slate-900">Thanh toán</h1>
 
     <form method="POST" action="{{ route('shop.checkout.store') }}" class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]" novalidate
-      data-checkout data-subtotal="{{ $subtotal }}" data-shipping-fee="{{ $shippingFee }}" data-points="{{ $points->toJson() }}">
+      data-checkout data-points="{{ $points->toJson() }}">
       @csrf
       <div class="space-y-6">
         <section class="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
@@ -47,7 +47,7 @@
           <div class="mt-4 grid gap-3 sm:grid-cols-2" role="radiogroup">
             <label class="flex cursor-pointer gap-3 rounded-xl border border-slate-300 p-4 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
               <input type="radio" name="delivery_type" value="{{ Order::DELIVERY_SHIP }}" class="mt-1 accent-brand-600" @checked($delivery === Order::DELIVERY_SHIP) data-delivery />
-              <span><span class="block font-medium text-slate-900">Giao tận nơi</span><span class="block text-sm text-slate-500">Phí giao hàng {{ Money::format($shippingFee) }}đ</span></span>
+              <span><span class="block font-medium text-slate-900">Giao tận nơi</span><span class="block text-sm text-slate-500">Phí ship COD, thanh toán khi nhận hàng</span></span>
             </label>
             <label @class(['flex gap-3 rounded-xl border border-slate-300 p-4 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50', 'cursor-pointer' => $points->isNotEmpty(), 'opacity-50' => $points->isEmpty()])>
               <input type="radio" name="delivery_type" value="{{ Order::DELIVERY_PICKUP }}" class="mt-1 accent-brand-600" @checked($delivery === Order::DELIVERY_PICKUP) @disabled($points->isEmpty()) data-delivery />
@@ -115,9 +115,7 @@
           @endforeach
         </ul>
         <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
-          <div class="flex justify-between"><dt class="text-slate-500">Tiền hàng</dt><dd class="font-medium">{{ Money::format($subtotal) }}đ</dd></div>
-          <div class="flex justify-between"><dt class="text-slate-500">Phí giao hàng</dt><dd class="font-medium" data-summary-shipping>{{ Money::format($delivery === Order::DELIVERY_PICKUP ? 0 : $shippingFee) }}đ</dd></div>
-          <div class="flex justify-between border-t border-slate-100 pt-3 text-base"><dt class="font-semibold text-slate-900">Tổng thanh toán</dt><dd class="font-bold text-brand-700" data-summary-total>{{ Money::format($subtotal + ($delivery === Order::DELIVERY_PICKUP ? 0 : $shippingFee)) }}đ</dd></div>
+          <div class="flex justify-between text-base"><dt class="font-semibold text-slate-900">Tổng thanh toán</dt><dd class="font-bold text-brand-700" data-summary-total>{{ Money::format($subtotal) }}đ</dd></div>
         </dl>
         <button type="submit" class="mt-5 w-full rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700" data-checkout-submit>Thanh toán</button>
         <p class="mt-3 text-xs text-slate-500">Bấm Thanh toán để nhận thông tin chuyển khoản và mã QR. Chuyển khoản xong, bấm “Tôi đã chuyển khoản” để hoàn tất đơn.</p>

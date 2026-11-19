@@ -22,8 +22,8 @@ use Illuminate\View\View;
  * hiện thông tin chuyển khoản đã cấu hình + mã QR → khách chuyển khoản rồi bấm "Tôi đã chuyển khoản" (hoặc hủy đơn).
  * Có đơn mới thì báo kế toán qua Telegram / email (StaffNotifier, nếu đã cấu hình).
  *
- * Checkout (S5, Step 5): bắt buộc đăng nhập thành viên. Chọn giao tận nơi (khách trả phí ship — Tham số chung) hoặc nhận
- * tại VP tỉnh (ship = 0). Tạo đơn "Chờ thanh toán", mã = tiền tố (Tham số chung) + 8 ký tự, hạn thanh toán theo Tham số chung; giá lấy giá hiện
+ * Checkout (S5, Step 5): bắt buộc đăng nhập thành viên. Chọn giao tận nơi (phí ship COD: khách trả đơn vị vận chuyển
+ * khi nhận, tùy lúc lên đơn — không hiện giá, không cộng vào đơn) hoặc nhận tại VP tỉnh (miễn phí). Đơn luôn shipping_fee = 0. Tạo đơn "Chờ thanh toán", mã = tiền tố (Tham số chung) + 8 ký tự, hạn thanh toán theo Tham số chung; giá lấy giá hiện
  * tại của sản phẩm và lưu snapshot vào order_items. Mỗi thành viên tối đa Order::MAX_OPEN_UNPAID đơn chưa thanh toán.
  */
 class CheckoutController extends Controller
@@ -46,7 +46,6 @@ class CheckoutController extends Controller
             'member' => $request->user('member'),
             'lines' => $lines,
             'subtotal' => Cart::subtotal($lines),
-            'shippingFee' => (int) AffiliateSettings::get('shipping_fee'),
             'points' => $points,
             'pointProvinces' => collect(PickupPoint::provinces())->only($points->pluck('province')->unique()->all()),
         ]);
@@ -63,9 +62,8 @@ class CheckoutController extends Controller
 
         $ship = $request->validated('delivery_type') === Order::DELIVERY_SHIP;
         $goods = Cart::subtotal($lines);
-        $shipping = $ship ? (int) AffiliateSettings::get('shipping_fee') : 0;
 
-        $order = DB::transaction(function () use ($request, $lines, $ship, $goods, $shipping) {
+        $order = DB::transaction(function () use ($request, $lines, $ship, $goods) {
             // Khóa dòng thành viên rồi mới đếm: gửi nhiều yêu cầu cùng lúc cũng không vượt giới hạn đơn chưa thanh toán
             Member::whereKey($request->user('member')->id)->lockForUpdate()->first();
             if (Order::openLimitReached($request->user('member')->id)) {
@@ -87,8 +85,9 @@ class CheckoutController extends Controller
                 'code' => Order::generateCode(),
                 'member_id' => $request->user('member')->id,
                 'goods_amount' => $goods,
-                'shipping_fee' => $shipping,
-                'total_amount' => $goods + $shipping,
+                // Giao tận nơi: phí ship COD — khách trả đơn vị vận chuyển khi nhận, tùy lúc lên đơn; không thu qua chuyển khoản
+                'shipping_fee' => 0,
+                'total_amount' => $goods,
                 'delivery_type' => $request->validated('delivery_type'),
                 'pickup_point_id' => $ship ? null : (int) $request->validated('pickup_point_id'),
                 'recipient_name' => $request->validated('recipient_name'),

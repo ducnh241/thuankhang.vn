@@ -153,7 +153,7 @@ class StorefrontTest extends TestCase
         $this->get('/san-pham/serum-vitamin-c')->assertOk()
             ->assertSee('<title>Serum Vitamin C - Thuận Khang</title>', false)
             ->assertSee('<meta name="description" content="Dưỡng sáng da" />', false)
-            ->assertSee('550.000đ')->assertSee('Giá chưa gồm phí giao hàng')->assertDontSee('VAT')->assertSee('MP-SRVC')
+            ->assertSee('550.000đ')->assertDontSee('phí giao hàng')->assertDontSee('VAT')->assertSee('MP-SRVC')
             ->assertSee('data-gallery-thumb', false)->assertSee('/storage/products/b.jpg', false)
             ->assertSee('<h2>Công dụng</h2>', false)->assertSee('Làm sáng da')
             ->assertDontSee('onclick', false)->assertDontSee('<script>alert(2)', false)->assertDontSee('javascript:alert', false)

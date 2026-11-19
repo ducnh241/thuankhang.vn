@@ -28,7 +28,7 @@ class CheckoutTest extends TestCase
     {
         parent::setUp();
         $this->seed(AffiliateConfigSeeder::class);
-        AffiliateSettings::save(['shipping_fee' => 30000, 'payment_expiry_hours' => 24]);
+        AffiliateSettings::save(['payment_expiry_hours' => 24]);
         $this->category = Category::factory()->create(['type' => Category::TYPE_PRODUCT, 'status' => true]);
     }
 
@@ -89,7 +89,9 @@ class CheckoutTest extends TestCase
 
         $this->post('/gio-hang', ['product_id' => $a->id, 'qty' => 2]);
         $this->post('/gio-hang', ['product_id' => $b->id, 'qty' => 1]);
-        $this->get('/thanh-toan')->assertOk()->assertSee('Trần Thị B')->assertSee('0987654321')->assertSee('2.270.000đ')->assertSee('2.300.000đ');
+        $this->get('/thanh-toan')->assertOk()->assertSee('Trần Thị B')->assertSee('0987654321')->assertSee('2.270.000đ')
+            // Giao tận nơi: phí ship COD, không hiện giá ship, không cộng vào tổng
+            ->assertSee('Phí ship COD, thanh toán khi nhận hàng')->assertDontSee('Phí giao hàng')->assertDontSee('30.000đ');
 
         $response = $this->post('/thanh-toan', $this->form(['note' => 'Giao giờ hành chính']));
         $order = Order::sole();
@@ -98,7 +100,7 @@ class CheckoutTest extends TestCase
         $this->assertMatchesRegularExpression('/^TK[2-9A-HJKMNP-Z]{8}$/', $order->code);
         AffiliateSettings::save(['order_code_prefix' => 'THK']);
         $this->assertMatchesRegularExpression('/^THK[2-9A-HJKMNP-Z]{8}$/', Order::generateCode());
-        $this->assertSame([Order::STATUS_NEW, $member->id, 2270000, 30000, 2300000], [$order->status, $order->member_id, $order->goods_amount, $order->shipping_fee, $order->total_amount]);
+        $this->assertSame([Order::STATUS_NEW, $member->id, 2270000, 0, 2270000], [$order->status, $order->member_id, $order->goods_amount, $order->shipping_fee, $order->total_amount]);
         $this->assertSame(0, (int) $order->vat_amount); // VAT đã bỏ (19/11/2026): cột cũ luôn ghi 0
         $this->assertSame(['0912345678', 'ha-noi', '12 Láng Hạ, Hà Nội', null], [$order->recipient_phone, $order->province, $order->shippingAddress(), $order->pickup_point_id]);
         $this->assertTrue($order->expires_at->between(now()->addHours(24)->subMinute(), now()->addHours(24)->addMinute()));
@@ -110,8 +112,8 @@ class CheckoutTest extends TestCase
         // Snapshot: đổi giá / tên sau khi đặt không ảnh hưởng đơn
         $a->update(['name' => 'Sâm mới', 'price' => 999000]);
         $this->get(route('member.orders.show', $order))->assertOk()->assertSee($order->code)
-            ->assertSee('Đơn mới')->assertSee('Sâm')->assertDontSee('Sâm mới')->assertSee('2.300.000đ')->assertSee('12 Láng Hạ, Hà Nội');
-        $this->get('/don-hang')->assertOk()->assertSee($order->code)->assertSee('2.300.000đ');
+            ->assertSee('Đơn mới')->assertSee('Sâm')->assertDontSee('Sâm mới')->assertSee('2.270.000đ')->assertDontSee('Phí giao hàng')->assertSee('12 Láng Hạ, Hà Nội');
+        $this->get('/don-hang')->assertOk()->assertSee($order->code)->assertSee('2.270.000đ');
     }
 
     public function test_place_order_with_pickup_point(): void

@@ -353,8 +353,8 @@ class AffiliateConfigTest extends TestCase
         ];
         $this->actingAs($root)->put('/backend/affiliate/settings', $valid)
             ->assertRedirect(route('backend.affiliate.settings.edit'))->assertSessionHas('success');
-        // VAT mặc định cho sản phẩm mới đã bỏ (19/11/2026)
-        $this->actingAs($root)->get('/backend/affiliate/settings')->assertDontSee('name="default_vat_percent"', false);
+        // VAT mặc định cho sản phẩm mới và phí giao hàng (giờ trả COD) đã bỏ (19/11/2026)
+        $this->actingAs($root)->get('/backend/affiliate/settings')->assertDontSee('name="default_vat_percent"', false)->assertDontSee('name="shipping_fee"', false);
 
         $this->assertSame(['5.50', 1_000_000, '10.00', 12, null], [
             AffiliateSettings::get('business_fee_percent'), AffiliateSettings::get('min_withdraw'), AffiliateSettings::get('pit_percent'),

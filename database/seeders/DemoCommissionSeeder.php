@@ -124,11 +124,10 @@ class DemoCommissionSeeder extends Seeder
             return ['product' => $product, 'qty' => $qty, 'line_amount' => $product->price * $qty];
         });
         $goods = (int) $lines->sum('line_amount');
-        $shipping = (int) AffiliateSettings::get('shipping_fee');
 
         $order = Order::create([
             'code' => Order::generateCode(), 'member_id' => $buyer->id, 'goods_amount' => $goods,
-            'shipping_fee' => $shipping, 'total_amount' => $goods + $shipping, 'delivery_type' => Order::DELIVERY_SHIP,
+            'shipping_fee' => 0, 'total_amount' => $goods, 'delivery_type' => Order::DELIVERY_SHIP,
             'recipient_name' => $buyer->full_name, 'recipient_phone' => $buyer->phone, 'province' => 'ha-noi',
             'address' => 'Số 1 Đường Mẫu (dữ liệu thử hoa hồng)', 'note' => 'Đơn mẫu để đối chiếu hoa hồng',
             'expires_at' => now()->addHours((int) AffiliateSettings::get('payment_expiry_hours')),

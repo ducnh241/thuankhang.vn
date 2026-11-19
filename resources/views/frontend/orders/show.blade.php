@@ -118,7 +118,9 @@
         </ul>
         <dl class="space-y-2 border-t border-slate-100 px-5 py-4 text-sm">
           <div class="flex justify-between"><dt class="text-slate-500">Tiền hàng</dt><dd>{{ Money::format($order->goods_amount) }}đ</dd></div>
-          <div class="flex justify-between"><dt class="text-slate-500">Phí giao hàng</dt><dd>{{ Money::format($order->shipping_fee) }}đ</dd></div>
+          @if ($order->shipping_fee > 0){{-- chỉ đơn cũ (trước 19/11/2026) có thu phí ship --}}
+            <div class="flex justify-between"><dt class="text-slate-500">Phí giao hàng</dt><dd>{{ Money::format($order->shipping_fee) }}đ</dd></div>
+          @endif
           <div class="flex justify-between text-base"><dt class="font-semibold">Tổng thanh toán</dt><dd class="font-bold text-brand-700">{{ Money::format($order->total_amount) }}đ</dd></div>
         </dl>
       </section>

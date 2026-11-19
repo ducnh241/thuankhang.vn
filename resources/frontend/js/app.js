@@ -281,15 +281,12 @@ document.querySelector('[data-kyc-form]')?.addEventListener('submit', e => {
 });
 
 /*
- * Thanh toán (S5): đổi hình thức nhận hàng → hiện ô tương ứng + phí ship trong tóm tắt; nhận tại VP: chọn tỉnh lọc danh
+ * Thanh toán (S5): đổi hình thức nhận hàng → hiện ô tương ứng (không có phí ship — giao tận nơi trả COD); nhận tại VP: chọn tỉnh lọc danh
  * sách điểm, chọn điểm thì hiện địa chỉ / giờ mở cửa / điện thoại. Dữ liệu điểm lấy từ data-points.
  */
 const checkout = document.querySelector('[data-checkout]');
 if (checkout) {
-  const money = n => new Intl.NumberFormat('vi-VN').format(n).replace(/,/g, '.') + 'đ';
   const points = JSON.parse(checkout.dataset.points || '[]');
-  const subtotal = Number(checkout.dataset.subtotal);
-  const fee = Number(checkout.dataset.shippingFee);
   const province = checkout.querySelector('[data-pickup-province]');
   const pointSelect = checkout.querySelector('[data-pickup-point]');
   const info = checkout.querySelector('[data-pickup-info]');
@@ -297,9 +294,6 @@ if (checkout) {
   const syncDelivery = () => {
     const type = checkout.querySelector('[data-delivery]:checked')?.value;
     checkout.querySelectorAll('[data-delivery-panel]').forEach(panel => (panel.hidden = panel.dataset.deliveryPanel !== type));
-    const ship = type === 'pickup' ? 0 : fee;
-    checkout.querySelector('[data-summary-shipping]').textContent = money(ship);
-    checkout.querySelector('[data-summary-total]').textContent = money(subtotal + ship);
   };
 
   const syncInfo = () => {

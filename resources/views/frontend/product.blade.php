@@ -98,7 +98,6 @@
 
         <div class="mt-5 rounded-2xl bg-brand-50 p-5">
           <div class="text-3xl font-bold text-brand-700" data-variant-price>{{ Money::format($displayPrice) }}đ</div>
-          <div class="mt-1 text-xs text-slate-500">Giá chưa gồm phí giao hàng</div>
         </div>
 
         @if ($product->short_description)

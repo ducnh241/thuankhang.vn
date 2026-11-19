@@ -64,7 +64,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   34 tỉnh/thành ở `config/provinces.php`, admin /backend/pickup-point (quyền `pickup_point/*`), chủ phải là thành viên
   cấp VP, giới hạn điểm đang bật mỗi tỉnh theo `max_vp_per_province`. Checkout dùng `PickupPoint::available()`.
 - Step 5 (Giỏ hàng & checkout): xong — giỏ trong session (`App\Support\Cart`, /gio-hang, khách chưa đăng nhập vẫn thêm
-  được), /thanh-toan bắt đăng nhập thành viên: giao tận nơi (phí ship = tham số `shipping_fee`) hoặc nhận tại VP tỉnh
+  được), /thanh-toan bắt đăng nhập thành viên: giao tận nơi (phí ship COD, không thu trong đơn — xem mục "Phí ship") hoặc nhận tại VP tỉnh
   (ship 0, chỉ `PickupPoint::available()`). Bảng `orders` + `order_items` (snapshot tên / giá / VAT), mã = tiền tố
   `order_code_prefix` (mặc định `TK`) + 8 ký tự. Thành viên: /don-hang (đơn của tôi, QR VietQR — `App\Support\VietQr`).
   Admin /backend/order (A8): lọc trạng thái / điểm / hình thức / thời gian / mã giao dịch. Luồng trạng thái: mục dưới.
@@ -148,6 +148,15 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Dữ liệu mẫu (chỉ máy phát triển): `php artisan db:seed --class=DemoCommissionSeeder` — F0 = thành viên id 1, 4 thành viên
   F2 "(mẫu)" (SĐT 09000001xx), 22 đơn đã thanh toán có mã giao dịch `DEMO-HH-01..22` (đã chạy ở local 17/11/2026, chủ dự án
   giữ lại để đối chiếu — đừng xóa). Test: `tests/Feature/CommissionEngineTest.php`.
+
+## Phí ship giao tận nơi = COD (19/11/2026)
+
+- Chủ dự án: giao tận nơi thì phí ship là **COD** (khách trả đơn vị vận chuyển khi nhận, tùy lúc lên đơn) → **không hiện giá
+  ship ở đâu, không cộng vào đơn**. Nhận tại VP tỉnh giữ chữ "Miễn phí giao hàng".
+- Đơn mới luôn `shipping_fee = 0`, `total_amount = goods_amount` (số tiền khách chuyển khoản = tiền hàng). Trang thanh toán:
+  ô "Giao tận nơi" ghi "Phí ship COD, thanh toán khi nhận hàng"; tóm tắt chỉ còn "Tổng thanh toán". Đã bỏ tham số chung
+  `shipping_fee` (khóa cũ trong bảng settings không còn đọc), chữ về phí giao hàng ở giỏ hàng / trang sản phẩm, JS tính ship ở
+  checkout. Trang đơn (khách + admin) chỉ hiện dòng "Phí giao hàng" khi đơn cũ có `shipping_fee > 0`.
 
 ## Bỏ VAT (19/11/2026)
 

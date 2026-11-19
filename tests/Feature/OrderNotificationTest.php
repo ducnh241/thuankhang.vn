@@ -42,7 +42,7 @@ class OrderNotificationTest extends TestCase
     {
         parent::setUp();
         $this->seed(AffiliateConfigSeeder::class);
-        AffiliateSettings::save(['shipping_fee' => 30000, 'payment_expiry_hours' => 24]);
+        AffiliateSettings::save(['payment_expiry_hours' => 24]);
         // Thông tin chuyển khoản: Cài đặt → tab Thanh toán
         foreach (['pay_bank_name' => 'Vietcombank', 'pay_bank_code' => 'VCB', 'pay_bank_account' => '0011001234567', 'pay_account_name' => 'CONG TY THUAN KHANG'] as $key => $value) {
             Setting::withoutEvents(fn () => Setting::put($key, $value));
@@ -122,7 +122,7 @@ class OrderNotificationTest extends TestCase
 
         // Trang thanh toán: không có dòng VAT, nút "Thanh toán"
         $this->get('/thanh-toan')->assertOk()
-            ->assertSee('Tiền hàng')->assertDontSee('VAT')->assertSee('2.160.000đ')->assertSee('Phí giao hàng')->assertSee('2.190.000đ')
+            ->assertSee('Tổng thanh toán')->assertDontSee('VAT')->assertSee('2.160.000đ')->assertDontSee('Phí giao hàng')
             ->assertSee('data-checkout-submit>Thanh toán</button>', false)->assertDontSee('Đặt hàng');
 
         // Bấm Thanh toán → trang đơn: thông tin chuyển khoản đã cấu hình + mã QR, nút "Tôi đã chuyển khoản" / "Hủy đơn"
@@ -132,7 +132,7 @@ class OrderNotificationTest extends TestCase
         $this->assertSame(0, (int) $order->vat_amount); // VAT đã bỏ (19/11/2026): cột cũ luôn ghi 0
         $this->get(route('member.orders.show', $order))->assertOk()
             ->assertSee('data-payment', false)->assertSee('data-qr', false)->assertSee('img.vietqr.io/image/VCB-0011001234567', false)
-            ->assertSee('Vietcombank')->assertSee('0011001234567')->assertSee('CONG TY THUAN KHANG')->assertSee('2.190.000đ')->assertSee($order->code)
+            ->assertSee('Vietcombank')->assertSee('0011001234567')->assertSee('CONG TY THUAN KHANG')->assertSee('2.160.000đ')->assertSee($order->code)
             ->assertSee('data-qr="vietqr"', false)
             ->assertSee('Tôi đã chuyển khoản')->assertSee('Hủy đơn')->assertDontSee('VAT');
 
@@ -344,12 +344,12 @@ class OrderNotificationTest extends TestCase
         $link = route('backend.orders.show', $order);
         Http::assertSentCount(1);
         Http::assertSent(fn (HttpRequest $request) => $request->url() === 'https://api.telegram.org/bot'.self::TOKEN.'/sendMessage' && $request['chat_id'] === self::CHAT
-            && str_contains($request['text'], '<b>🛒 Đơn hàng mới '.$order->code.' — 2.190.000 đ</b>')
+            && str_contains($request['text'], '<b>🛒 Đơn hàng mới '.$order->code.' — 2.160.000 đ</b>')
             && str_contains($request['text'], 'Khách: Trần &lt;b&gt;Thị&lt;/b&gt; B') // chữ khách nhập được escape
-            && str_contains($request['text'], 'Tổng thanh toán: 2.190.000 đ') && str_contains($request['text'], 'Nhận hàng: Giao tận nơi')
+            && str_contains($request['text'], 'Tổng thanh toán: 2.160.000 đ') && str_contains($request['text'], 'Nhận hàng: Giao tận nơi')
             && str_contains($request['text'], 'Hạn thanh toán: ') && str_contains($request['text'], 'Xem đơn: '.$link));
         $email = $messages->sole()->getOriginalMessage();
-        $this->assertSame('['.config('app.name').'] Đơn hàng mới '.$order->code.' — 2.190.000 đ', $email->getSubject());
+        $this->assertSame('['.config('app.name').'] Đơn hàng mới '.$order->code.' — 2.160.000 đ', $email->getSubject());
         $this->assertSame(['ketoan@congty.vn', 'ketoan2@congty.vn'], array_map(fn ($a) => $a->getAddress(), $email->getTo()));
         $this->assertStringContainsString('Khách: Trần <b>Thị</b> B', $email->getTextBody()); // thư chữ thường, không dựng HTML
         $this->assertStringContainsString('Xem đơn: '.$link, $email->getTextBody());
@@ -359,7 +359,7 @@ class OrderNotificationTest extends TestCase
         $this->post(route('member.orders.transferred', $order), $this->billUpload())->assertSessionHas('success');
         Http::assertSentCount(2);
         Http::assertSent(fn (HttpRequest $request) => str_contains($request['text'], '💸 Khách báo đã chuyển khoản — đơn '.$order->code)
-            && str_contains($request['text'], 'Số tiền: 2.190.000 đ · Nội dung chuyển khoản: '.$order->code) && str_contains($request['text'], 'Xác nhận thanh toán: '.$link)
+            && str_contains($request['text'], 'Số tiền: 2.160.000 đ · Nội dung chuyển khoản: '.$order->code) && str_contains($request['text'], 'Xác nhận thanh toán: '.$link)
             && str_contains($request['text'], 'Khách đã gửi ảnh bill chuyển khoản (xem trong trang đơn).'));
         $this->assertSame(2, $messages->count());
         $this->assertSame('['.config('app.name').'] Khách báo đã chuyển khoản — đơn '.$order->code, $messages->last()->getOriginalMessage()->getSubject());
