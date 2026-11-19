@@ -199,6 +199,18 @@
       </div>
     </div>
 
+    {{-- Ảnh bill chuyển khoản khách tải lên khi bấm "Tôi đã chuyển khoản" — đối chiếu với sao kê trước khi xác nhận --}}
+    @if ($order->hasBill())
+      @php $billSrc = route('backend.orders.bill', $order).'?v='.$order->confirm_requested_at?->timestamp; @endphp
+      <div class="ant-card ant-card-bordered" data-card="bill">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Ảnh bill chuyển khoản</div></div></div>
+        <div class="ant-card-body">
+          <a href="{{ $billSrc }}" target="_blank" rel="noopener" class="kyc-photo" style="aspect-ratio: 3 / 4; max-width: 280px" title="Mở ảnh cỡ đầy đủ ở tab mới"><img src="{{ $billSrc }}" alt="Ảnh bill chuyển khoản đơn {{ $order->code }}" loading="lazy" /></a>
+          <div class="mt-2 text-xs {{ $muted }}">Khách gửi lúc {{ $order->confirm_requested_at?->format('H:i d/m/Y') }}. Ảnh do khách tự tải lên — vẫn phải đối chiếu với sao kê ngân hàng.</div>
+        </div>
+      </div>
+    @endif
+
     {{-- Xác nhận thanh toán (Kế toán): đối chiếu sao kê rồi nhập mã giao dịch + số tiền thực nhận --}}
     @if ($order->canConfirmPayment() && $me->can('order/confirm_payment'))
       <div class="ant-card ant-card-bordered" data-card="confirm-payment">

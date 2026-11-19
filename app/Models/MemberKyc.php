@@ -147,10 +147,13 @@ class MemberKyc extends Model
         return min(self::MAX_KILOBYTES, FileUpload::maxKilobytes());
     }
 
-    /** Lưu một ảnh (CCCD, mã QR nhận tiền) đã mã hóa vào disk riêng tư, trả về đường dẫn. */
-    public static function storeImage(UploadedFile $file, int $memberId): string
+    /**
+     * Lưu một ảnh đã mã hóa vào disk riêng tư, trả về đường dẫn "{thư mục}/{id chủ}/{ngẫu nhiên}.enc". Thư mục mặc định
+     * "kyc" (ảnh CCCD, mã QR nhận tiền — id thành viên); ảnh bill chuyển khoản dùng thư mục "bills" (id đơn hàng).
+     */
+    public static function storeImage(UploadedFile $file, int $ownerId, string $directory = self::DIRECTORY): string
     {
-        $path = self::DIRECTORY.'/'.$memberId.'/'.Str::random(40).'.enc';
+        $path = $directory.'/'.$ownerId.'/'.Str::random(40).'.enc';
         Storage::disk(self::DISK)->put($path, Crypt::encryptString((string) file_get_contents($file->getRealPath())));
 
         return $path;
@@ -182,7 +185,7 @@ class MemberKyc extends Model
     public static function deleteImages(?string ...$paths): void
     {
         foreach (array_filter($paths) as $path) {
-            if (str_starts_with($path, self::DIRECTORY.'/')) {
+            if (str_starts_with($path, self::DIRECTORY.'/') || str_starts_with($path, Order::BILL_DIRECTORY.'/')) {
                 Storage::disk(self::DISK)->delete($path);
             }
         }

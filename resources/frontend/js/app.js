@@ -151,7 +151,7 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
     note.classList.toggle('text-rose-600', bad);
     note.classList.toggle('text-slate-500', !bad);
   };
-  input.addEventListener('change', async () => {
+  const process = async () => {
     let file = input.files[0];
     if (preview.src) URL.revokeObjectURL(preview.src);
     preview.removeAttribute('src');
@@ -182,7 +182,36 @@ document.querySelectorAll('[data-kyc-image]').forEach(box => {
     preview.hidden = false;
     if (current) current.hidden = true;
     say('Đã chọn ảnh. Bấm vào ảnh để đổi.'); // không hiện tên tệp: tên ảnh từ điện thoại / Zalo rất dài, tràn sang ô bên cạnh
+  };
+  input.addEventListener('change', async () => {
+    box.dispatchEvent(new CustomEvent('kyc-image:busy', { bubbles: true }));
+    try {
+      await process();
+    } finally {
+      // Báo cho form bao ngoài biết ô ảnh đã xử lý xong (còn ảnh hợp lệ hay đã bị bỏ)
+      box.dispatchEvent(new CustomEvent('kyc-image:done', { bubbles: true }));
+    }
   });
+});
+/*
+ * Form "Tôi đã chuyển khoản" [data-bill-form] ở trang đơn hàng: bắt buộc có ảnh bill — nút gửi chỉ bật khi đã chọn ảnh hợp
+ * lệ (đang thu nhỏ ảnh thì tạm tắt). Không có JS thì nút vẫn bấm được và máy chủ báo lỗi thiếu ảnh.
+ */
+document.querySelectorAll('[data-bill-form]').forEach(form => {
+  const input = form.querySelector('input[type="file"]');
+  const button = form.querySelector('[data-bill-submit]');
+  const hint = form.querySelector('[data-bill-hint]');
+  const sync = (busy = false) => {
+    const ready = !busy && input.files.length > 0;
+    button.disabled = !ready;
+    if (hint) hint.hidden = ready || busy;
+  };
+  form.addEventListener('kyc-image:busy', () => sync(true));
+  form.addEventListener('kyc-image:done', () => sync());
+  form.addEventListener('submit', event => {
+    if (!input.files.length) event.preventDefault();
+  });
+  sync();
 });
 /*
  * Ô ngày dạng chữ [data-date-input] (ngày sinh ở form KYC): gõ số, tự chèn dấu "/" thành dd/mm/yyyy. Gõ "5" cho ngày hoặc

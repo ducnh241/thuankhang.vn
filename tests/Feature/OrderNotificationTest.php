@@ -137,7 +137,7 @@ class OrderNotificationTest extends TestCase
             ->assertSee('Tôi đã chuyển khoản')->assertSee('Hủy đơn')->assertDontSee('VAT');
 
         // Chuyển khoản xong bấm "Tôi đã chuyển khoản" → chờ kế toán xác nhận
-        $this->post(route('member.orders.transferred', $order))->assertSessionHas('success');
+        $this->post(route('member.orders.transferred', $order), $this->billUpload())->assertSessionHas('success');
         $this->assertSame(Order::STATUS_AWAITING, $order->fresh()->status);
         $this->get(route('member.orders.show', $order))->assertSee('data-awaiting', false)->assertDontSee('data-payment', false);
         Http::assertNothingSent(); // chưa cấu hình thông báo: không gọi ra ngoài
@@ -356,15 +356,16 @@ class OrderNotificationTest extends TestCase
         $this->assertNull($email->getHtmlBody());
 
         // Khách báo đã chuyển khoản → tin thứ hai, để kế toán vào xác nhận thanh toán
-        $this->post(route('member.orders.transferred', $order))->assertSessionHas('success');
+        $this->post(route('member.orders.transferred', $order), $this->billUpload())->assertSessionHas('success');
         Http::assertSentCount(2);
         Http::assertSent(fn (HttpRequest $request) => str_contains($request['text'], '💸 Khách báo đã chuyển khoản — đơn '.$order->code)
-            && str_contains($request['text'], 'Số tiền: 2.190.000 đ · Nội dung chuyển khoản: '.$order->code) && str_contains($request['text'], 'Xác nhận thanh toán: '.$link));
+            && str_contains($request['text'], 'Số tiền: 2.190.000 đ · Nội dung chuyển khoản: '.$order->code) && str_contains($request['text'], 'Xác nhận thanh toán: '.$link)
+            && str_contains($request['text'], 'Khách đã gửi ảnh bill chuyển khoản (xem trong trang đơn).'));
         $this->assertSame(2, $messages->count());
         $this->assertSame('['.config('app.name').'] Khách báo đã chuyển khoản — đơn '.$order->code, $messages->last()->getOriginalMessage()->getSubject());
 
         // Bấm lại (đơn không còn chờ thanh toán): không gửi thêm
-        $this->post(route('member.orders.transferred', $order))->assertSessionHas('error');
+        $this->post(route('member.orders.transferred', $order), $this->billUpload())->assertSessionHas('error');
         Http::assertSentCount(2);
     }
 
@@ -384,13 +385,13 @@ class OrderNotificationTest extends TestCase
         $this->fakeTelegram();
         $order = $place();
         Http::assertNothingSent();
-        $this->post(route('member.orders.transferred', $order));
+        $this->post(route('member.orders.transferred', $order), $this->billUpload());
         Http::assertSentCount(1);
 
         // Tắt kênh Telegram: không gửi thêm; email chưa bật cũng không gửi
         $messages = $this->captureMail();
         NotificationSettings::save([...$this->mailOn(['mail_enabled' => false]), 'telegram_enabled' => false, 'telegram_chat_id' => self::CHAT, 'events' => ['order_created' => true, 'order_transferred' => true]]);
-        $this->post(route('member.orders.transferred', $place()));
+        $this->post(route('member.orders.transferred', $place()), $this->billUpload());
         Http::assertSentCount(1);
         $this->assertCount(0, $messages);
 

@@ -92,6 +92,7 @@ Route::prefix('backend')->group(function () {
         // Đơn hàng (A8; quyền: order, order/confirm_payment, order/status, order/cancel). URL theo mã đơn.
         Route::get('order', [OrderController::class, 'index'])->name('orders.index')->can('order');
         Route::get('order/{order}', [OrderController::class, 'show'])->name('orders.show')->can('order');
+        Route::get('order/{order}/bill', [OrderController::class, 'bill'])->name('orders.bill')->can('order');
         Route::post('order/{order}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('orders.confirm-payment')->can('order/confirm_payment');
         Route::post('order/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.reject-payment')->can('order/confirm_payment');
         Route::post('order/{order}/status', [OrderController::class, 'status'])->name('orders.status')->can('order/status');

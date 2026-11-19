@@ -14,6 +14,7 @@ use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -89,6 +90,19 @@ class OrderController extends Controller
         return view('backend.orders.show', [
             'order' => $order,
             'history' => AuditLog::where('auditable_type', Order::class)->where('auditable_id', $order->id)->latest('id')->limit(30)->get(),
+        ]);
+    }
+
+    /** Ảnh bill chuyển khoản khách tải lên khi bấm "Tôi đã chuyển khoản" (đã giải mã) — để đối chiếu trước khi xác nhận. */
+    public function bill(Order $order): Response
+    {
+        $image = $order->billImage();
+        abort_if($image === null, 404);
+
+        return response($image['contents'], 200, [
+            'Content-Type' => $image['mime'],
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

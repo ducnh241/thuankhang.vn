@@ -209,7 +209,7 @@ class SecurityHardeningTest extends TestCase
 
         // Đơn đã báo chuyển khoản vẫn tính là chưa thanh toán
         $orders = Order::orderBy('id')->get();
-        $this->post("/don-hang/{$orders[0]->code}/da-chuyen-khoan");
+        $this->post("/don-hang/{$orders[0]->code}/da-chuyen-khoan", $this->billUpload());
         $this->assertSame(Order::STATUS_AWAITING, $orders[0]->fresh()->status);
         $this->post('/thanh-toan', $form)->assertRedirect(route('member.orders.index'));
 

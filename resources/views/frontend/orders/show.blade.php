@@ -49,14 +49,36 @@
         @else
           <p class="mt-3 text-sm text-amber-900">Vui lòng liên hệ hotline @if ($site['site_hotline'])<a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['site_hotline']) }}" class="font-semibold underline">{{ $site['site_hotline'] }}</a>@endif để được hướng dẫn thanh toán đơn <strong>{{ $order->code }}</strong>.</p>
         @endif
-        <div class="mt-5 flex flex-wrap items-center gap-3 border-t border-amber-200 pt-4">
-          <form method="POST" action="{{ route('member.orders.transferred', $order) }}">
+        {{-- Bắt buộc tải ảnh bill chuyển khoản rồi mới bấm được "Tôi đã chuyển khoản" (JS bật nút khi đã chọn ảnh; máy chủ
+             kiểm tra lại). Ô ảnh dùng chung JS [data-kyc-image]: xem trước + thu nhỏ ảnh trước khi gửi. --}}
+        <div class="mt-5 border-t border-amber-200 pt-4">
+          <form method="POST" action="{{ route('member.orders.transferred', $order) }}" enctype="multipart/form-data" novalidate data-bill-form>
             @csrf
-            <button type="submit" class="rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-700">Tôi đã chuyển khoản</button>
+            <div class="grid gap-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-center" data-kyc-image data-max-bytes="{{ \App\Models\MemberKyc::maxKilobytes() * 1024 }}" data-target-bytes="{{ 450 * 1024 }}">
+              <div class="w-full max-w-[200px]">
+                <label for="f_bill" @class(['relative flex aspect-[3/4] cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-xl border-2 border-dashed bg-white px-3 text-center transition hover:border-brand-500',
+                  'border-rose-300' => $errors->has('bill'), 'border-amber-300' => ! $errors->has('bill')])>
+                  <svg class="size-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3.5h12v17l-2.5-1.5L13 20.5 10.5 19 8 20.5 6 19z" /><path stroke-linecap="round" d="M9 8h6M9 11.5h6M9 15h3" /></svg>
+                  <span class="text-sm font-medium text-slate-700">Chọn ảnh bill</span>
+                  <img alt="" class="absolute inset-0 size-full bg-white object-contain" hidden data-kyc-preview />
+                </label>
+                <input id="f_bill" name="bill" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" aria-labelledby="l_bill" required />
+              </div>
+              <div class="min-w-0 text-sm">
+                <div class="font-semibold text-amber-900" id="l_bill">Ảnh bill chuyển khoản <span class="text-rose-500">*</span></div>
+                <p class="mt-1 text-xs text-amber-800">Sau khi chuyển khoản, chụp màn hình giao dịch thành công trong ứng dụng ngân hàng rồi tải lên đây. Bắt buộc có ảnh bill mới bấm được “Tôi đã chuyển khoản”.</p>
+                <p class="mt-1 text-xs break-words text-slate-500" hidden data-kyc-note></p>
+                @error('bill')<p class="mt-1 text-sm text-rose-600" role="alert">{{ $message }}</p>@enderror
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+              <button type="submit" class="rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" data-bill-submit>Tôi đã chuyển khoản</button>
+              <button type="submit" form="cancel-order-form" class="rounded-full px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-rose-600">Hủy đơn</button>
+              <span class="text-xs text-amber-800" hidden data-bill-hint>Chọn ảnh bill để bấm được nút.</span>
+            </div>
           </form>
-          <form method="POST" action="{{ route('member.orders.cancel', $order) }}" onsubmit="return confirm('Hủy đơn {{ $order->code }}?')">
+          <form id="cancel-order-form" method="POST" action="{{ route('member.orders.cancel', $order) }}" onsubmit="return confirm('Hủy đơn {{ $order->code }}?')">
             @csrf
-            <button type="submit" class="rounded-full px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-rose-600">Hủy đơn</button>
           </form>
         </div>
       </section>
@@ -64,6 +86,12 @@
       <div class="mt-6 rounded-2xl border border-yellow-200 bg-yellow-50 p-5 text-sm text-yellow-900" data-awaiting>
         <p class="font-semibold">Đang chờ xác nhận thanh toán</p>
         <p class="mt-1">Bạn đã báo chuyển khoản lúc {{ $order->confirm_requested_at?->format('H:i d/m/Y') }}. Chúng tôi sẽ đối chiếu với ngân hàng và xác nhận sớm nhất. Số tiền: <strong>{{ Money::format($order->total_amount) }}đ</strong>, nội dung: <strong class="font-mono">{{ $order->code }}</strong>.</p>
+        @if ($order->hasBill())
+          <a href="{{ route('member.orders.bill', $order) }}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-3 rounded-xl border border-yellow-300 bg-white p-2 pr-4 text-yellow-900 hover:border-yellow-500" data-bill-sent>
+            <img src="{{ route('member.orders.bill', $order) }}?v={{ $order->confirm_requested_at?->timestamp }}" alt="Ảnh bill đã gửi" loading="lazy" class="size-16 rounded-lg border border-yellow-200 bg-white object-cover" />
+            <span class="font-medium">Ảnh bill bạn đã gửi</span>
+          </a>
+        @endif
       </div>
     @elseif ($status === Order::STATUS_CANCELLED)
       <div class="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">

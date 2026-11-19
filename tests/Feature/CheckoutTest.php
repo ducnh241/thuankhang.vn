@@ -186,7 +186,7 @@ class CheckoutTest extends TestCase
         $overdue = Order::factory()->create(['member_id' => $member->id, 'expires_at' => now()->subMinute()]);
 
         // Báo đã chuyển khoản → Chờ xác nhận, không còn bị quá hạn, không tự hủy được nữa
-        $this->actingAs($member, 'member')->post(route('member.orders.transferred', $order))->assertSessionHas('success');
+        $this->actingAs($member, 'member')->post(route('member.orders.transferred', $order), $this->billUpload())->assertSessionHas('success');
         $order->refresh();
         $this->assertSame(Order::STATUS_AWAITING, $order->status);
         $this->assertNotNull($order->confirm_requested_at);
@@ -202,7 +202,7 @@ class CheckoutTest extends TestCase
         $this->assertSame([Order::STATUS_CANCELLED, Order::CANCEL_CUSTOMER, 'Khách tự hủy: Đặt nhầm'], [$toCancel->status, $toCancel->cancel_source, $toCancel->cancel_reason]);
 
         // Đơn quá hạn: không báo chuyển khoản / hủy được nữa
-        $this->post(route('member.orders.transferred', $overdue))->assertSessionHas('error');
+        $this->post(route('member.orders.transferred', $overdue), $this->billUpload())->assertSessionHas('error');
         $this->assertSame(Order::STATUS_NEW, $overdue->refresh()->status);
     }
 

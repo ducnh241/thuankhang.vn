@@ -246,6 +246,18 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   `setting` chỉ xem. Máy chủ SMTP chỉ nhận tên miền + cổng 25 / 465 / 587 / 2525. Tin chỉ gồm mã đơn, tên người nhận, số
   tiền, hình thức nhận, link đơn trong quản trị. Test: `tests/Feature/OrderNotificationTest.php`.
 
+## Ảnh bill chuyển khoản (18/11/2026)
+
+- Chủ dự án yêu cầu: ở trang đơn hàng của thành viên, **bắt buộc tải ảnh bill chuyển khoản** rồi mới bấm được "Tôi đã chuyển
+  khoản". Form `[data-bill-form]` (`frontend/orders/show.blade.php`): ô ảnh `bill` dùng chung JS `[data-kyc-image]` (xem
+  trước, thu nhỏ ≤ 450 KB); nút gửi bị khóa tới khi có ảnh hợp lệ (JS), máy chủ kiểm tra lại bằng `Order::billRules()`.
+- Lưu: `orders.payment_bill` (migration `2026_11_27_000001`), file mã hóa ở `bills/{id đơn}/….enc` trên disk riêng tư
+  (`MemberKyc::storeImage($file, $orderId, Order::BILL_DIRECTORY)`, đọc bằng `Order::billImage()`). Đơn bị kế toán trả về
+  "Đơn mới" rồi khách báo lại thì ảnh mới thay ảnh cũ. Chủ đơn xem lại: `don-hang/{order}/bill`.
+- Quản trị: trang đơn có thẻ "Ảnh bill chuyển khoản" phía trên form xác nhận thanh toán (`backend/order/{order}/bill`,
+  quyền `order`); ảnh do khách tự tải nên vẫn phải đối chiếu sao kê. Tin báo "khách báo đã chuyển khoản" có thêm dòng đã gửi
+  bill. Test: `tests/Feature/OrderBillTest.php`; helper `TestCase::billUpload()` cho các test khác.
+
 ## Mã QR nhận tiền + sửa thông tin tài khoản (18/11/2026)
 
 - Mã QR nhận tiền = ảnh QR tài khoản ngân hàng của thành viên, để kế toán quét khi chi hoa hồng. Lưu THEO THÀNH VIÊN

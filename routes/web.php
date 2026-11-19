@@ -63,6 +63,7 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
         Route::get('don-hang', [OrderController::class, 'index'])->name('member.orders.index');
         Route::get('don-hang/{order}', [OrderController::class, 'show'])->name('member.orders.show');
         Route::post('don-hang/{order}/da-chuyen-khoan', [OrderController::class, 'confirmTransfer'])->name('member.orders.transferred')->middleware('throttle:10,1');
+        Route::get('don-hang/{order}/bill', [OrderController::class, 'bill'])->name('member.orders.bill');
         Route::post('don-hang/{order}/huy', [OrderController::class, 'cancel'])->name('member.orders.cancel')->middleware('throttle:10,1');
         Route::post('dang-xuat', [LoginController::class, 'destroy'])->name('member.logout');
     });

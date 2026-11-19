@@ -109,6 +109,43 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    /** Thư mục (disk riêng tư) lưu ảnh bill chuyển khoản: bills/{id đơn}/… */
+    public const BILL_DIRECTORY = 'bills';
+
+    /**
+     * Luật kiểm tra ảnh bill chuyển khoản (BẮT BUỘC khi bấm "Tôi đã chuyển khoản") + thông báo lỗi.
+     *
+     * @return array{0: array<int, mixed>, 1: array<string, string>}
+     */
+    public static function billRules(string $field = 'bill'): array
+    {
+        $max = MemberKyc::maxKilobytes();
+        $size = $max >= 1024 ? round($max / 1024, 1).' MB' : $max.' KB';
+
+        return [
+            ['required', 'file', 'mimes:'.implode(',', MemberKyc::IMAGE_TYPES), 'max:'.$max, 'dimensions:min_width=200,min_height=200'],
+            [
+                "$field.required" => 'Tải ảnh bill chuyển khoản lên trước khi bấm “Tôi đã chuyển khoản”.',
+                "$field.file" => 'Ảnh bill tải lên không thành công. Hãy chọn lại ảnh.',
+                "$field.uploaded" => "Ảnh bill tải lên không thành công (ảnh quá lớn?). Ảnh tối đa $size.",
+                "$field.mimes" => 'Ảnh bill phải là ảnh JPG, PNG hoặc WEBP.',
+                "$field.max" => "Ảnh bill quá lớn. Ảnh tối đa $size.",
+                "$field.dimensions" => 'Ảnh bill quá nhỏ, không đọc được. Hãy chụp màn hình giao dịch rõ hơn.',
+            ],
+        ];
+    }
+
+    public function hasBill(): bool
+    {
+        return $this->payment_bill !== null;
+    }
+
+    /** Ảnh bill chuyển khoản: nội dung đã giải mã + kiểu MIME; null nếu chưa có / file hỏng. */
+    public function billImage(): ?array
+    {
+        return MemberKyc::readImage($this->payment_bill);
+    }
+
     /** Các dòng hoa hồng F1 / F2 của đơn (ghi lúc xác nhận thanh toán). */
     public function commissions(): HasMany
     {

@@ -51,6 +51,7 @@ class StaffNotifier
             'lines' => [
                 'Số tiền: '.Money::format($order->total_amount).' đ · Nội dung chuyển khoản: '.$order->code,
                 'Khách: '.$order->recipient_name,
+                ...($order->hasBill() ? ['Khách đã gửi ảnh bill chuyển khoản (xem trong trang đơn).'] : []),
                 'Xác nhận thanh toán: '.route('backend.orders.show', $order),
             ],
         ]);
