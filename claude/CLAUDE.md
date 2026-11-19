@@ -228,6 +228,14 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   đó, "Cả nhánh" (số người + doanh số tháng gồm cả mình), nhãn "Yếu hơn", ô "Còn trống"; hết số tầng thì có "Xem tiếp N
   người bên dưới"; nút "Lên một tầng" về cây của người đứng trên. View `backend/members/tree.blade.php` +
   `_tree-node.blade.php` (đệ quy), CSS `.btree*` trong `resources/backend/css/app.css`.
+- **Doanh số nhóm A / B** (19/11/2026, trang `/tai-khoan`, khung `[data-group-sales]`): nhóm A / B = toàn bộ người ở Nhánh A
+  (L) / Nhánh B (R) bên dưới thành viên, cộng dồn tới lá, KHÔNG gồm đơn của chính họ. Doanh số = tiền hàng `goods_amount`
+  (giá bán đã gồm thuế — **bỏ qua mọi thông tin VAT**, chủ dự án nhắc lại 19/11/2026: VAT là thông tin cũ, sẽ xóa), không
+  ship, không trừ 5% phí, đơn đã thanh toán **trong tháng này** (theo `paid_at`) — `BinaryTree::legs($member)`, cùng số với
+  cây nhị phân trong admin.
+  Hiển thị PV: 1 PV = 1.000.000 đ, làm tròn xuống, tối đa 2 số lẻ (`App\Support\Pv::format`: 14.155.000 → "14,15").
+  Nhóm PV thấp hơn gắn "Yếu hơn" (bằng nhau thì không); nhánh trống ghi "Chưa có thành viên". Không hiện số người từng nhánh
+  (chủ dự án bỏ 17/11/2026). Test: `tests/Feature/GroupSalesTest.php`.
 - Còn phải hỏi khi làm thưởng nhóm: mốc / kỳ tính / cách trả (bảng KPI tháng hiện có?), cách tính doanh số nhánh yếu.
   Test: `tests/Feature/BinaryTreeTest.php`.
 

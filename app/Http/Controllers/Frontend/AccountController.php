@@ -16,6 +16,8 @@ class AccountController extends Controller
     {
         $member = $request->user('member')->load(['referrer', 'level', 'kyc']);
 
+        // Hai nhánh dưới mình: số người + doanh số tháng này (tiền hàng = giá bán đã gồm thuế, không ship) — dùng cho ô
+        // "Thành viên" và Doanh số nhóm A / B
         $legs = BinaryTree::legs($member);
 
         return view('frontend.account', [
@@ -25,6 +27,10 @@ class AccountController extends Controller
             'wallet' => $member->walletSummary(),
             // Thành viên chi nhánh: mọi người nằm dưới vị trí của mình trong cây nhị phân (nhánh trái + nhánh phải)
             'teamCount' => $legs[BinaryTree::LEFT]['count'] + $legs[BinaryTree::RIGHT]['count'],
+            'groupSales' => [
+                'A' => ['sales' => $legs[BinaryTree::LEFT]['sales'], 'count' => $legs[BinaryTree::LEFT]['count']],
+                'B' => ['sales' => $legs[BinaryTree::RIGHT]['sales'], 'count' => $legs[BinaryTree::RIGHT]['count']],
+            ],
             // Cấp kế tiếp + các cấp đang bật (trừ cấp gốc) để hiện tiến độ lên cấp
             'nextLevel' => LevelEngine::nextLevel($member),
             'levels' => Level::where('active', true)->where('threshold_amount', '>', 0)->orderBy('threshold_amount')->get(['id', 'name', 'threshold_amount']),
