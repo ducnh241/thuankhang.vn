@@ -88,7 +88,6 @@
     @endphp
     <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6" data-level-progress>
       <h2 class="text-lg font-bold text-slate-900">Cấp bậc của bạn</h2>
-      <p class="mt-1 text-sm text-slate-600">Cấp được xét theo tổng tiền hàng bạn tự mua, cộng dồn qua mọi đơn đã thanh toán (không tính phí giao hàng). Đã lên cấp thì không bị hạ.</p>
       <div class="mt-4">
         <div class="flex flex-wrap items-baseline justify-between gap-2 text-sm">
           <span class="font-semibold text-brand-700">{{ $member->level?->name }}</span>
