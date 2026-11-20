@@ -2,7 +2,7 @@
 
 {{-- Sổ hoa hồng của một thành viên (mở từ nút "Xem sổ hoa hồng" ở trang chi tiết) — để quản trị đối chiếu với ví thành viên
      thấy trên website. Mỗi dòng = hoa hồng F1 hoặc F2 của một đơn đã thanh toán: đơn, người mua, cấp + tỉ lệ của người hưởng
-     lúc tính, tiền hàng → cơ sở (trừ phí doanh nghiệp) → hoa hồng → chia ví có thể rút / tái tiêu dùng / thuế TNCN. Dòng không được
+     lúc tính, tiền hàng → cơ sở (trừ phí doanh nghiệp) → hoa hồng → chia ví rút tiền / tái tiêu dùng / thuế TNCN. Dòng không được
      nhận (chưa kích hoạt / bị khóa / tỉ lệ 0%) vẫn hiện kèm lý do. Lọc ?tier, ?status. --}}
 @php
     use App\Models\Commission;
@@ -36,7 +36,7 @@
     {{-- Lưới nằm trong một div riêng: .ant-card-body có ::before / ::after (clearfix) sẽ chiếm ô nếu đặt grid thẳng lên nó --}}
     <div class="ant-card-body"><div class="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4 xl:grid-cols-7">
       <div>
-        <div class="text-xs {{ $muted }}">Ví có thể rút</div>
+        <div class="text-xs {{ $muted }}">Ví rút tiền</div>
         <div class="text-xl font-semibold tabular-nums" data-wallet-balance>{{ Money::format($wallet['balance']) }} đ</div>
       </div>
       <div>
@@ -67,7 +67,7 @@
     <div class="border-t border-[#f0f0f0] px-6 py-3 text-xs {{ $muted }}">
       Cấp hiện tại: <strong class="text-[rgba(0,0,0,0.85)]">{{ $member->level?->name ?? '—' }}</strong> ·
       Hoa hồng = floor(cơ sở × tỉ lệ theo cấp của người hưởng lúc đơn được thanh toán). Cơ sở = tiền hàng của đơn (giá bán đã gồm thuế) × (1 − phí doanh nghiệp, hiện {{ Commission::percentLabel($feePercent) }}), không tính phí giao hàng.
-      Mỗi khoản hoa hồng chia: ví có thể rút = hoa hồng − tái tiêu dùng − thuế TNCN; ví tái tiêu dùng = floor(hoa hồng × tỉ lệ); thuế TNCN = floor(hoa hồng × thuế) — tỉ lệ ở Tham số chung, lưu theo từng dòng.
+      Mỗi khoản hoa hồng chia: ví rút tiền = hoa hồng − tái tiêu dùng − thuế TNCN; ví tái tiêu dùng = floor(hoa hồng × tỉ lệ); thuế TNCN = floor(hoa hồng × thuế) — tỉ lệ ở Tham số chung, lưu theo từng dòng.
       F1: đơn của người do thành viên này trực tiếp giới thiệu; F2: đơn của người do F1 giới thiệu.
     </div>
   </div>
@@ -108,7 +108,7 @@
               <th class="ant-table-cell" style="text-align: right">Cơ sở</th>
               <th class="ant-table-cell" style="text-align: right">Tỉ lệ</th>
               <th class="ant-table-cell" style="text-align: right">Hoa hồng</th>
-              <th class="ant-table-cell" style="text-align: right">Ví có thể rút</th>
+              <th class="ant-table-cell" style="text-align: right">Ví rút tiền</th>
               <th class="ant-table-cell" style="text-align: right">Ví tái tiêu dùng</th>
               <th class="ant-table-cell" style="text-align: right">Thuế TNCN</th>
             </tr>

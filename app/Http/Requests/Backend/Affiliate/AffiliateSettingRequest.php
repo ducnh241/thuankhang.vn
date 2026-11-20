@@ -52,7 +52,7 @@ class AffiliateSettingRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator) {
-            // Thuế TNCN + ví tái tiêu dùng không vượt 100% hoa hồng (phần còn lại vào ví có thể rút)
+            // Thuế TNCN + ví tái tiêu dùng không vượt 100% hoa hồng (phần còn lại vào ví rút tiền)
             $split = array_map(fn ($key) => Percent::parse($this->input($key)), ['pit_percent', 'reconsume_percent']);
             if (! in_array(null, $split, true) && (float) $split[0] + (float) $split[1] > 100) {
                 $validator->errors()->add('reconsume_percent', 'Thuế TNCN + ví tái tiêu dùng không được vượt quá 100%.');

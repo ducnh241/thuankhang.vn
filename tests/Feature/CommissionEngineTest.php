@@ -37,7 +37,7 @@ class CommissionEngineTest extends TestCase
         parent::setUp();
         $this->seed(AffiliateConfigSeeder::class);
         $this->seed(RoleSeeder::class);
-        // Chia ví 70 / 20 / 10 có test riêng (WalletSplitTest); ở đây để 100% hoa hồng vào ví có thể rút cho dễ đối chiếu
+        // Chia ví 70 / 20 / 10 có test riêng (WalletSplitTest); ở đây để 100% hoa hồng vào ví rút tiền cho dễ đối chiếu
         \App\Models\Setting::put('aff_pit_percent', '0.00');
         \App\Models\Setting::put('aff_reconsume_percent', '0.00');
         $this->accountant = User::factory()->create(['group_id' => Group::where('name', 'Kế toán')->value('id')]);
@@ -279,7 +279,7 @@ class CommissionEngineTest extends TestCase
 
         // A: 418.000 (F1) + 73.150 + 219.450 (F2) = 710.600; dòng lúc bị khóa không hiện
         $this->actingAs($a->fresh(), 'member')->get('/tai-khoan')->assertOk()
-            ->assertSeeInOrder(['Ví có thể rút', 'data-wallet-balance>710.600đ<', 'Tháng này', '+710.600đ', 'Ví tái tiêu dùng', 'Xem chi tiết'], false)
+            ->assertSeeInOrder(['Ví rút tiền', 'data-wallet-balance>710.600đ<', 'Tháng này', '+710.600đ', 'Ví tái tiêu dùng', 'Xem chi tiết'], false)
             ->assertSee('href="'.route('member.wallet').'"', false);
         $this->get('/tai-khoan/vi')->assertOk()
             ->assertSee('data-wallet-balance>710.600đ<', false)->assertDontSee('data-wallet-f1', false)

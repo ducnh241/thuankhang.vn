@@ -11,9 +11,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 /**
- * Ví hoa hồng của tôi (/tai-khoan/vi, mở từ ô "Ví hoa hồng" ở trang tài khoản): số dư ví có thể rút + ví tái tiêu dùng;
+ * Ví hoa hồng của tôi (/tai-khoan/vi, mở từ ô "Ví hoa hồng" ở trang tài khoản): số dư ví rút tiền + ví tái tiêu dùng;
  * lịch sử hoa hồng theo kỳ (?ky = tuan | thang | thang-truoc | nam, mặc định tháng này) kèm tổng của kỳ so với kỳ trước và
- * biểu đồ lũy kế hai kỳ. Mỗi dòng lịch sử gọn (tầng, người mua, ngày, mã đơn, số vào ví có thể rút); bấm mở popup chi tiết
+ * biểu đồ lũy kế hai kỳ. Mỗi dòng lịch sử gọn (tầng, người mua, ngày, mã đơn, số vào ví rút tiền); bấm mở popup chi tiết
  * cách tính: tiền hàng (từng sản phẩm) − phí doanh nghiệp = cơ sở × tỉ lệ = hoa hồng → ví rút / tái tiêu dùng / thuế TNCN.
  * Chỉ hiện dòng đã được cộng; không hiện số điện thoại / email của người mua.
  */

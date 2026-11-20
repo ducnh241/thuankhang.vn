@@ -19,7 +19,7 @@ Nếu đặc tả và file Excel mâu thuẫn, hỏi lại người dùng, khôn
 - Người giới thiệu gắn cố định khi đăng ký (link `?ref=CODE`, cookie 30 ngày).
 - Thanh toán: VietQR động (số tiền + mã đơn), tiền về TK công ty, xác nhận qua webhook ngân hàng (SePay/PayOS/Casso), idempotent theo mã giao dịch. Không khớp → hàng chờ xử lý tay.
 - Nhận hàng: giao tận nơi (khách trả ship) hoặc nhận tại VP tỉnh (hàng của VP). Tồn kho theo dõi tùy chọn từng sản phẩm (để trống = không theo dõi) — tồn chung của công ty, trừ cho mọi đơn kể cả nhận tại VP (giả định, chờ xác nhận).
-- Hoa hồng vào ví ngay, chia 70% ví có thể rút / 20% ví tái tiêu dùng / 10% thuế TNCN khấu trừ ngay (19/11/2026). Rút tối thiểu 500k, cần KYC (CCCD + STK chính chủ, 1 CCCD = 1 tài khoản = 1 STK).
+- Hoa hồng vào ví ngay, chia 70% ví rút tiền / 20% ví tái tiêu dùng / 10% thuế TNCN khấu trừ ngay (19/11/2026). Rút tối thiểu 500k, cần KYC (CCCD + STK chính chủ, 1 CCCD = 1 tài khoản = 1 STK).
 - Mọi tỉ lệ, mốc, tham số đều cấu hình trong Admin; đơn lưu snapshot tỉ lệ/cấp.
 
 ## Ngoài phạm vi Phase 1 (không code)
@@ -171,8 +171,10 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 
 ## Chia hoa hồng vào hai ví + thuế TNCN (19/11/2026)
 
+- Tên hiển thị (20/11/2026): **"Ví rút tiền"** (trước là "Ví có thể rút") và "Ví tái tiêu dùng".
+
 - Chủ dự án yêu cầu: mỗi khoản hoa hồng X (cách tính X không đổi — vẫn KHÔNG tách VAT, đã hỏi lại 19/11/2026) chia
-  **70% ví có thể rút** / **20% ví tái tiêu dùng** / **10% thuế TNCN** khấu trừ ngay (không vào ví nào). Tỉ lệ ở Tham số
+  **70% ví rút tiền** / **20% ví tái tiêu dùng** / **10% thuế TNCN** khấu trừ ngay (không vào ví nào). Tỉ lệ ở Tham số
   chung: `pit_percent` (mặc định 10, trước đây là "thuế khi rút" chưa cấu hình) + `reconsume_percent` (20); ví rút = phần còn
   lại; tổng hai tỉ lệ ≤ 100%. `CommissionEngine::split()`: thuế = floor(X × thuế), tái tiêu dùng = floor(X × tỉ lệ), rút
   được = X − hai phần trên (nhận phần lẻ). VD 2.280.000 → 1.596.000 / 456.000 / 228.000.
@@ -183,7 +185,7 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
 - Dữ liệu cũ (đã cộng 100%): migration `2026_11_28_000001_split_commission_wallets` chia lại giống đơn mới, CHỈ GHI THÊM
   (mỗi dòng: bút toán `split` trừ ví rút phần tái tiêu dùng + thuế, bút toán cộng ví tái tiêu dùng), chạy lại không chia đôi,
   ghi một dòng nhật ký. Đã chạy ở local 19/11/2026, số dư khớp.
-- Hiển thị: `/tai-khoan/vi` chỉ có 2 thẻ Ví có thể rút / Ví tái tiêu dùng (đã bỏ thẻ F1 / F2 / Tổng / Thuế theo yêu cầu
+- Hiển thị: `/tai-khoan/vi` chỉ có 2 thẻ Ví rút tiền / Ví tái tiêu dùng (đã bỏ thẻ F1 / F2 / Tổng / Thuế theo yêu cầu
   19/11/2026). Lịch sử lọc theo kỳ `?ky=tuan|thang|thang-truoc|nam` (mặc định tháng này, `WalletController::PERIODS`, tuần
   bắt đầu thứ Hai), 20 dòng / trang; khung tổng kỳ (hoa hồng, rút được / tái tiêu dùng / thuế) so với kỳ trước (% tăng
   giảm) + biểu đồ lũy kế hai kỳ (SVG vẽ ở server, theo ngày; năm thì theo tháng; kỳ này dừng ở hôm nay; rê / chạm hiện
@@ -254,8 +256,8 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   ship, không trừ 5% phí, đơn đã thanh toán **trong tháng này** (theo `paid_at`) — `BinaryTree::legs($member)`, cùng số với
   cây nhị phân trong admin.
   Hiển thị PV: 1 PV = 1.000.000 đ, làm tròn xuống, tối đa 2 số lẻ (`App\Support\Pv::format`: 14.155.000 → "14,15").
-  Nhóm PV thấp hơn gắn "Yếu hơn" (bằng nhau thì không); nhánh trống ghi "Chưa có thành viên". Không hiện số người từng nhánh
-  (chủ dự án bỏ 17/11/2026). Test: `tests/Feature/GroupSalesTest.php`.
+  Chỉ ghi "Nhóm A" / "Nhóm B" + PV (20/11/2026 chủ dự án bỏ nhãn "Yếu hơn", dòng giải thích và dòng "1 PV = 1.000.000đ"); nhánh trống ghi "Chưa có
+  thành viên". Không hiện số người từng nhánh (chủ dự án bỏ 17/11/2026). Test: `tests/Feature/GroupSalesTest.php`.
 - Còn phải hỏi khi làm thưởng nhóm: mốc / kỳ tính / cách trả (bảng KPI tháng hiện có?), cách tính doanh số nhánh yếu.
   Test: `tests/Feature/BinaryTreeTest.php`.
 

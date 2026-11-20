@@ -219,11 +219,11 @@
 
   {{-- Cột phụ --}}
   <div class="flex min-w-0 flex-col gap-4">
-    {{-- Ví hoa hồng (Step 8): ví có thể rút (70%) + ví tái tiêu dùng (20%), thuế TNCN (10%) đã trừ; chi tiết ở trang Sổ hoa hồng --}}
+    {{-- Ví hoa hồng (Step 8): ví rút tiền (70%) + ví tái tiêu dùng (20%), thuế TNCN (10%) đã trừ; chi tiết ở trang Sổ hoa hồng --}}
     <div class="ant-card ant-card-bordered" data-card="wallet">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Ví hoa hồng</div></div></div>
       <div class="ant-card-body">
-        <div class="text-xs {{ $muted }}">Ví có thể rút</div>
+        <div class="text-xs {{ $muted }}">Ví rút tiền</div>
         <div class="text-2xl font-semibold tabular-nums" data-wallet-balance>{{ Money::format($wallet['balance']) }} đ</div>
         <dl class="profile-facts m-0 mt-3">
           <dt>Ví tái tiêu dùng</dt><dd class="tabular-nums" data-wallet-reconsume>{{ Money::format($wallet['reconsume']) }} đ</dd>

@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Chia hoa hồng (19/11/2026): mỗi khoản hoa hồng X → 70% ví có thể rút, 20% ví tái tiêu dùng, 10% thuế TNCN khấu trừ.
+ * Chia hoa hồng (19/11/2026): mỗi khoản hoa hồng X → 70% ví rút tiền, 20% ví tái tiêu dùng, 10% thuế TNCN khấu trừ.
  * Ví dụ của chủ dự án: khách vào 12.000.000 − 5% phí DN = 11.400.000 × 20% = 2.280.000 → rút được 1.596.000.
  */
 class WalletSplitTest extends TestCase
@@ -80,7 +80,7 @@ class WalletSplitTest extends TestCase
             ['payment_reference' => 'FT'.(++$this->reference), 'paid_amount' => (string) $order->total_amount]);
     }
 
-    /** [hoa hồng, ví có thể rút, ví tái tiêu dùng, thuế, % tái tiêu dùng, % thuế] */
+    /** [hoa hồng, ví rút tiền, ví tái tiêu dùng, thuế, % tái tiêu dùng, % thuế] */
     private function split(Order $order, string $tier): array
     {
         $line = Commission::where('order_id', $order->id)->where('tier', $tier)->sole();
@@ -146,19 +146,19 @@ class WalletSplitTest extends TestCase
         $this->pay($order);
 
         $this->actingAs($f1->fresh(), 'member')->get('/tai-khoan')->assertOk()
-            ->assertSeeInOrder(['Ví có thể rút', 'data-wallet-balance>1.596.000đ<', 'Ví tái tiêu dùng', 'data-wallet-reconsume>456.000đ<'], false);
+            ->assertSeeInOrder(['Ví rút tiền', 'data-wallet-balance>1.596.000đ<', 'Ví tái tiêu dùng', 'data-wallet-reconsume>456.000đ<'], false);
 
         $this->get('/tai-khoan/vi')->assertOk()
             ->assertSee('data-wallet-balance>1.596.000đ<', false)->assertSee('data-wallet-reconsume>456.000đ<', false)
             ->assertDontSee('data-wallet-total', false)->assertDontSee('data-wallet-tax', false)
             // Dòng gọn (bấm mở popup) rồi popup chi tiết cách tính
-            ->assertSeeInOrder(['data-wallet-rows', 'data-dialog-open="commission-', 'F1', 'Đinh Thu Hà', $order->code, '+1.596.000đ', 'vào ví có thể rút',
+            ->assertSeeInOrder(['data-wallet-rows', 'data-dialog-open="commission-', 'F1', 'Đinh Thu Hà', $order->code, '+1.596.000đ', 'vào ví rút tiền',
                 '<dialog id="commission-', 'Đinh Thu Hà', 'Tiền hàng', 'không tính phí giao hàng', '12.000.000đ',
                 'Sản phẩm A × 2', '10.000.000đ', 'Sản phẩm B × 1', '2.000.000đ',
                 '− 5% phí doanh nghiệp', '−600.000đ',
                 'Cơ sở tính hoa hồng', '11.400.000đ',
                 'Hoa hồng = 11.400.000đ × 20%', '(cấp Đại lý)', '2.280.000đ',
-                'Ví có thể rút (70%)', '+1.596.000đ',
+                'Ví rút tiền (70%)', '+1.596.000đ',
                 'Ví tái tiêu dùng (20%)', '+456.000đ',
                 'Thuế thu nhập cá nhân (10%)', '−228.000đ'], false)
             ->assertDontSee($buyer->phone);
@@ -223,7 +223,7 @@ class WalletSplitTest extends TestCase
             ->assertSee('data-wallet-balance>1.596.000 đ<', false)->assertSee('data-wallet-reconsume>456.000 đ<', false)->assertSee('data-wallet-tax>228.000 đ<', false)
             ->assertSeeInOrder([$order->code, '2.280.000 đ', '+1.596.000 đ', '70%', '+456.000 đ', '20%', '−228.000 đ', '10%'], false);
         $this->get(route('backend.orders.show', $order))->assertOk()
-            ->assertSee('Ví có thể rút +1.596.000 đ · tái tiêu dùng +456.000 đ · thuế TNCN −228.000 đ');
+            ->assertSee('Ví rút tiền +1.596.000 đ · tái tiêu dùng +456.000 đ · thuế TNCN −228.000 đ');
     }
 
     public function test_migration_splits_old_commissions_like_new_ones_append_only_and_once(): void

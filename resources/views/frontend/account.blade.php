@@ -23,10 +23,10 @@
 
     @include('frontend.partials.install-app', ['class' => 'mt-6'])
 
-    {{-- Ví hoa hồng: số dư ví có thể rút (+ tháng này) và ví tái tiêu dùng; chi tiết từng dòng ở trang Ví --}}
+    {{-- Ví hoa hồng: số dư ví rút tiền (+ tháng này) và ví tái tiêu dùng; chi tiết từng dòng ở trang Ví --}}
     <a href="{{ route('member.wallet') }}" class="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl border border-brand-100 bg-brand-50 p-5 hover:border-brand-300" data-wallet-card>
       <div>
-        <div class="text-xs font-medium tracking-wide text-brand-800 uppercase">Ví có thể rút</div>
+        <div class="text-xs font-medium tracking-wide text-brand-800 uppercase">Ví rút tiền</div>
         <div class="mt-2 text-2xl font-bold text-brand-800 tabular-nums" data-wallet-balance>{{ \App\Support\Money::format($wallet['balance']) }}đ</div>
         <p class="mt-1 text-xs text-brand-800/80">Tháng này: <strong>+{{ \App\Support\Money::format($wallet['month_cash']) }}đ</strong></p>
       </div>
@@ -63,24 +63,13 @@
 
     {{-- Doanh số nhóm A / B tháng này (PV = triệu đồng): tổng tiền hàng (giá bán đã gồm thuế), không ship các đơn đã thanh toán trong
          tháng của mọi người trong Nhánh A / Nhánh B bên dưới mình (cộng dồn tới tận lá), không gồm đơn của chính mình.
-         Nhóm có PV thấp hơn gắn nhãn "Yếu hơn"; bằng nhau thì không. --}}
-    @php
-        $weakerGroup = $groupSales['A']['sales'] === $groupSales['B']['sales'] ? null : ($groupSales['A']['sales'] < $groupSales['B']['sales'] ? 'A' : 'B');
-    @endphp
+         Chỉ ghi Nhóm A / Nhóm B (chủ dự án bỏ nhãn "Yếu hơn" và dòng giải thích 20/11/2026). --}}
     <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-5" data-group-sales>
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 class="text-base font-bold text-slate-900">Doanh số nhóm tháng {{ now()->format('m/Y') }}</h2>
-        <span class="text-xs text-slate-500">1 PV = 1.000.000đ</span>
-      </div>
+      <h2 class="text-base font-bold text-slate-900">Doanh số nhóm tháng {{ now()->format('m/Y') }}</h2>
       <div class="mt-3 grid grid-cols-2 gap-3">
         @foreach ($groupSales as $group => $data)
           <div class="rounded-xl bg-slate-50 p-4" data-group="{{ $group }}">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-medium tracking-wide text-slate-500 uppercase">Nhóm {{ $group }}</span>
-              @if ($weakerGroup === $group)
-                <span class="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700" data-group-weaker>Yếu hơn</span>
-              @endif
-            </div>
+            <div class="text-xs font-medium tracking-wide text-slate-500 uppercase">Nhóm {{ $group }}</div>
             <div class="mt-1 text-2xl font-bold text-slate-900 tabular-nums" data-group-pv>{{ \App\Support\Pv::format($data['sales']) }} PV</div>
             @if ($data['count'] === 0)
               <p class="mt-0.5 text-xs text-slate-500">Chưa có thành viên</p>
@@ -88,7 +77,6 @@
           </div>
         @endforeach
       </div>
-      <p class="mt-3 text-xs text-slate-500">Tổng tiền hàng (giá bán, không tính phí giao hàng) các đơn đã thanh toán trong tháng của mọi thành viên trong nhóm A / nhóm B bên dưới bạn, tính tới tận cuối nhóm. Không tính đơn của chính bạn.</p>
     </section>
 
     {{-- Tiến độ lên cấp: cấp xét theo tổng tiền hàng tự mua cộng dồn của mọi đơn đã thanh toán; không bao giờ hạ cấp --}}

@@ -1,6 +1,6 @@
 @extends('frontend.layouts.app')
 
-{{-- Ví hoa hồng của tôi (S9): số dư ví có thể rút + ví tái tiêu dùng; lịch sử hoa hồng theo kỳ (tuần này / tháng này / tháng
+{{-- Ví hoa hồng của tôi (S9): số dư ví rút tiền + ví tái tiêu dùng; lịch sử hoa hồng theo kỳ (tuần này / tháng này / tháng
      trước / năm nay) với tổng kỳ so với kỳ trước + biểu đồ lũy kế hai kỳ; mỗi dòng gọn, bấm mở popup chi tiết cách tính.
      Không hiện số điện thoại / email của người mua. --}}
 @php
@@ -55,13 +55,13 @@
     </div>
     <p class="mt-1 text-sm text-slate-600">
       Hoa hồng được cộng ngay khi đơn của người bạn giới thiệu được xác nhận thanh toán, chia
-      {{ $pct($split['cash_percent']) }} vào ví có thể rút, {{ $pct($split['reconsume_percent']) }} vào ví tái tiêu dùng và
+      {{ $pct($split['cash_percent']) }} vào ví rút tiền, {{ $pct($split['reconsume_percent']) }} vào ví tái tiêu dùng và
       khấu trừ {{ $pct($split['tax_percent']) }} thuế thu nhập cá nhân.
     </p>
 
     <div class="mt-5 grid gap-4 sm:grid-cols-2">
       <div class="rounded-2xl border border-brand-100 bg-brand-50 p-5">
-        <div class="text-xs font-medium tracking-wide text-brand-800 uppercase">Ví có thể rút</div>
+        <div class="text-xs font-medium tracking-wide text-brand-800 uppercase">Ví rút tiền</div>
         <div class="mt-2 text-2xl font-bold text-brand-800 tabular-nums" data-wallet-balance>{{ $money($wallet['balance']) }}đ</div>
         <p class="mt-1 text-xs text-brand-800/80">Tháng này: <strong data-wallet-month>+{{ $money($wallet['month_cash']) }}đ</strong></p>
       </div>
@@ -161,7 +161,7 @@
               </div>
               <div class="text-right">
                 <div class="font-semibold whitespace-nowrap text-brand-700 tabular-nums" data-line-cash>+{{ $money($isSplit ? $line->cash_amount : $line->amount) }}đ</div>
-                <div class="text-xs text-slate-500">vào ví có thể rút</div>
+                <div class="text-xs text-slate-500">vào ví rút tiền</div>
               </div>
             </button>
           @endforeach
@@ -207,7 +207,7 @@
               <dd class="text-right font-semibold text-slate-900" data-line-amount>{{ $money($line->amount) }}đ</dd>
 
               @if ($isSplit)
-                <dt class="mt-2 border-t border-slate-100 pt-2.5 text-brand-800">→ Ví có thể rút ({{ $pct($line->cashPercent()) }})</dt>
+                <dt class="mt-2 border-t border-slate-100 pt-2.5 text-brand-800">→ Ví rút tiền ({{ $pct($line->cashPercent()) }})</dt>
                 <dd class="mt-2 border-t border-slate-100 pt-2.5 text-right font-semibold text-brand-800" data-line-cash-amount>+{{ $money($line->cash_amount) }}đ</dd>
 
                 <dt class="text-amber-800">→ Ví tái tiêu dùng ({{ $pct($line->reconsume_percent) }})</dt>
@@ -225,7 +225,7 @@
       <p class="mt-4 text-xs text-slate-500">
         Cách tính: cơ sở = tiền hàng của đơn (giá bán đã gồm thuế, không tính phí giao hàng) trừ {{ $pct($feePercent) }} phí doanh nghiệp;
         hoa hồng = cơ sở × tỉ lệ theo cấp của bạn lúc đơn được thanh toán (làm tròn xuống). Hoa hồng được chia:
-        {{ $pct($split['cash_percent']) }} vào ví có thể rút, {{ $pct($split['reconsume_percent']) }} vào ví tái tiêu dùng,
+        {{ $pct($split['cash_percent']) }} vào ví rút tiền, {{ $pct($split['reconsume_percent']) }} vào ví tái tiêu dùng,
         {{ $pct($split['tax_percent']) }} khấu trừ thuế thu nhập cá nhân.
         F1: đơn của người bạn trực tiếp giới thiệu. F2: đơn của người do F1 của bạn giới thiệu.
       </p>

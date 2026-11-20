@@ -63,7 +63,7 @@ class Commission extends Model
         return $this->belongsTo(Member::class, 'beneficiary_id');
     }
 
-    /** Bút toán cộng ví có thể rút của dòng này (chỉ dòng đã cộng ví mới có). */
+    /** Bút toán cộng ví rút tiền của dòng này (chỉ dòng đã cộng ví mới có). */
     public function walletTransaction(): HasOne
     {
         return $this->hasOne(WalletTransaction::class)->where('wallet', WalletTransaction::WALLET_CASH)
@@ -76,7 +76,7 @@ class Commission extends Model
         return $this->hasMany(WalletTransaction::class);
     }
 
-    /** "70%" — tỉ lệ vào ví có thể rút = 100% − tái tiêu dùng − thuế TNCN. */
+    /** "70%" — tỉ lệ vào ví rút tiền = 100% − tái tiêu dùng − thuế TNCN. */
     public function cashPercent(): string
     {
         return number_format(100 - (float) $this->reconsume_percent - (float) $this->tax_percent, 2, '.', '');

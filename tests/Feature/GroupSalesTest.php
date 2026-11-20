@@ -12,7 +12,7 @@ use Tests\TestCase;
 /**
  * Doanh số nhóm A / B ở trang Tài khoản (19/11/2026): tổng tiền hàng (giá bán đã gồm thuế, bỏ qua VAT), không ship các đơn đã thanh toán trong
  * tháng này của mọi người ở Nhánh A / Nhánh B bên dưới thành viên (cộng dồn tới lá), không gồm đơn của chính họ;
- * hiển thị PV (1 PV = 1.000.000 đ, tối đa 2 số lẻ, làm tròn xuống); nhóm thấp hơn gắn "Yếu hơn".
+ * hiển thị PV (1 PV = 1.000.000 đ, tối đa 2 số lẻ, làm tròn xuống); chỉ ghi Nhóm A / Nhóm B (không nhãn "Yếu hơn", không dòng giải thích).
  */
 class GroupSalesTest extends TestCase
 {
@@ -75,12 +75,13 @@ class GroupSalesTest extends TestCase
 
         $this->actingAs($id, 'member')->get('/tai-khoan')->assertOk()
             ->assertSee('Doanh số nhóm tháng 11/2026')
-            ->assertSeeInOrder(['data-group="A"', 'Nhóm A', 'data-group-pv>50 PV<', 'data-group="B"', 'Nhóm B', 'data-group-weaker', 'Yếu hơn', 'data-group-pv>30 PV<'], false)
+            ->assertSeeInOrder(['data-group="A"', 'Nhóm A', 'data-group-pv>50 PV<', 'data-group="B"', 'Nhóm B', 'data-group-pv>30 PV<'], false)
+            ->assertDontSee('Yếu hơn')->assertDontSee('Tổng tiền hàng (giá bán')->assertDontSee('1 PV = 1.000.000đ')
             ->assertDontSee('Chưa có thành viên');
 
         // Xem từ A: nhóm A = A1 + A1 phải (+ A1 trái chỉ có đơn tháng trước) = 20 PV, nhóm B = A2 + A2 phải = 20 PV → không ai yếu hơn
         $this->actingAs($a, 'member')->get('/tai-khoan')->assertOk()
-            ->assertSee('data-group-pv>20 PV<', false)->assertDontSee('data-group-weaker', false);
+            ->assertSee('data-group-pv>20 PV<', false);
 
         // Lá: hai nhóm trống
         $this->actingAs($a2r, 'member')->get('/tai-khoan')->assertOk()
@@ -95,6 +96,6 @@ class GroupSalesTest extends TestCase
         $this->paid($a, 155_999, status: Order::STATUS_COMPLETED);
 
         $this->actingAs($id, 'member')->get('/tai-khoan')->assertOk()
-            ->assertSeeInOrder(['Nhóm A', 'data-group-pv>15,15 PV<', 'Nhóm B', 'Yếu hơn', 'data-group-pv>0 PV<', 'Chưa có thành viên'], false);
+            ->assertSeeInOrder(['Nhóm A', 'data-group-pv>15,15 PV<', 'Nhóm B', 'data-group-pv>0 PV<', 'Chưa có thành viên'], false);
     }
 }

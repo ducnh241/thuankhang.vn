@@ -8,7 +8,7 @@ use LogicException;
 
 /**
  * Bút toán ví của thành viên: amount có dấu (+ cộng, − trừ), balance_after = số dư CỦA VÍ ĐÓ ngay sau bút toán. Chỉ ghi
- * thêm; số dư mỗi ví = tổng amount của ví (Member::walletBalance($wallet)). Hai ví: cash (có thể rút — 70% hoa hồng) và
+ * thêm; số dư mỗi ví = tổng amount của ví (Member::walletBalance($wallet)). Hai ví: cash (rút tiền — 70% hoa hồng) và
  * reconsume (tái tiêu dùng — 20%); 10% thuế TNCN khấu trừ không vào ví (ghi ở commission_ledger.tax_amount).
  * Loại: commission (hoa hồng F1 / F2), split (chia lại hoa hồng cũ đã cộng 100% trước 19/11/2026); rút tiền làm ở Step 9.
  */
@@ -26,7 +26,7 @@ class WalletTransaction extends Model
 
     public const WALLET_RECONSUME = 'reconsume';
 
-    public const WALLETS = [self::WALLET_CASH => 'Ví có thể rút', self::WALLET_RECONSUME => 'Ví tái tiêu dùng'];
+    public const WALLETS = [self::WALLET_CASH => 'Ví rút tiền', self::WALLET_RECONSUME => 'Ví tái tiêu dùng'];
 
     protected $fillable = ['member_id', 'wallet', 'type', 'amount', 'balance_after', 'commission_id', 'note', 'created_at'];
 

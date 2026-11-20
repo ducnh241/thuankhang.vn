@@ -122,14 +122,14 @@ class Member extends Authenticatable
         return $this->hasMany(WalletTransaction::class)->latest('id');
     }
 
-    /** Số dư một ví (mặc định ví có thể rút) = tổng bút toán của ví đó (ví chỉ ghi thêm). */
+    /** Số dư một ví (mặc định ví rút tiền) = tổng bút toán của ví đó (ví chỉ ghi thêm). */
     public function walletBalance(string $wallet = WalletTransaction::WALLET_CASH): int
     {
         return (int) WalletTransaction::where('member_id', $this->id)->where('wallet', $wallet)->sum('amount');
     }
 
     /**
-     * Tóm tắt ví hoa hồng: balance (số dư ví có thể rút), reconsume (số dư ví tái tiêu dùng), total (tổng hoa hồng đã nhận,
+     * Tóm tắt ví hoa hồng: balance (số dư ví rút tiền), reconsume (số dư ví tái tiêu dùng), total (tổng hoa hồng đã nhận,
      * trước khi chia), tax (tổng thuế TNCN đã khấu trừ), month / month_cash (hoa hồng tháng này: tổng / phần vào ví có thể
      * rút), f1 / f2 (tổng hoa hồng theo tầng), lines (số dòng đã cộng ví), skipped (số dòng không được nhận).
      *

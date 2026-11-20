@@ -25,7 +25,7 @@ use Illuminate\Support\Collection;
  * Chia hoa hồng X (chủ dự án yêu cầu 19/11/2026, tỉ lệ ở Tham số chung — split()):
  *   thuế TNCN        = floor(X × pit_percent)        (10%) — khấu trừ ngay, không vào ví
  *   ví tái tiêu dùng = floor(X × reconsume_percent)  (20%)
- *   ví có thể rút    = X − tái tiêu dùng − thuế      (70%, nhận phần lẻ làm tròn)
+ *   ví rút tiền    = X − tái tiêu dùng − thuế      (70%, nhận phần lẻ làm tròn)
  * VD 12.000.000 × 95% × 20% = 2.280.000 → rút được 1.596.000 · tái tiêu dùng 456.000 · thuế 228.000.
  *
  * Tỉ lệ lấy ở phiên bản ma trận hoa hồng có hiệu lực lúc đơn được thanh toán; cấp của người hưởng đọc tại lúc tính. Người
