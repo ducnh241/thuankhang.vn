@@ -90,6 +90,7 @@
         <div class="ant-card-body">
           <dl class="profile-facts m-0">
             @if ($order->paid_at)
+              <dt>Hình thức</dt><dd data-payment-method>{{ Order::PAYMENT_METHODS[$order->payment_method] ?? $order->payment_method }}@if ($order->isPaidByWallet()) <span class="text-xs {{ $muted }}">— đã trừ ví tái tiêu dùng của thành viên, không cần đối chiếu sao kê</span>@endif</dd>
               <dt>Mã giao dịch</dt><dd class="font-mono">{{ $order->payment_reference ?? '—' }}</dd>
               <dt>Số tiền thực nhận</dt>
               <dd class="tabular-nums">{{ $order->paid_amount !== null ? Money::format($order->paid_amount).' đ' : '—' }}

@@ -2,13 +2,17 @@
 
 {{-- Thanh toán (S5): người nhận, hình thức nhận (giao tận nơi: tỉnh + địa chỉ, phí ship COD — không hiện giá; nhận tại VP: tỉnh → điểm,
      hiện địa chỉ / giờ mở cửa, miễn phí), ghi chú, tóm tắt đơn, nút "Thanh toán"
-     tạo đơn rồi sang trang đơn có thông tin chuyển khoản + mã QR. JS: [data-checkout] trong frontend/js/app.js. --}}
+     tạo đơn rồi sang trang đơn có thông tin chuyển khoản + mã QR. JS: [data-checkout] trong frontend/js/app.js.
+     Hình thức thanh toán: chuyển khoản, hoặc ví tái tiêu dùng (chỉ chọn được khi số dư ≥ tổng đơn — trừ ví, đơn thanh toán
+     ngay). Đủ đơn chưa thanh toán thì chỉ còn trả bằng ví. --}}
 @php
     use App\Models\Order;
     use App\Models\PickupPoint;
     use App\Support\Money;
 
     $delivery = old('delivery_type', Order::DELIVERY_SHIP);
+    $walletEnough = $reconsume >= $subtotal;
+    $payment = old('payment_method', $transferBlocked ? Order::PAYMENT_WALLET : Order::PAYMENT_TRANSFER);
     $pointId = (string) old('pickup_point_id', '');
     $pickupProvince = (string) old('pickup_province', $points->firstWhere('id', (int) $pointId)?->province ?? '');
     $error = fn (string $field) => $errors->has($field) ? '<p class="mt-1 text-sm text-rose-600">'.e($errors->first($field)).'</p>' : '';
@@ -100,6 +104,33 @@
           </div>
         </section>
 
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 md:p-6" data-payment-methods>
+          <h2 class="font-semibold text-slate-900">Hình thức thanh toán</h2>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2" role="radiogroup">
+            <label @class(['flex gap-3 rounded-xl border border-slate-300 p-4 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50', 'cursor-pointer' => ! $transferBlocked, 'opacity-50' => $transferBlocked])>
+              <input type="radio" name="payment_method" value="{{ Order::PAYMENT_TRANSFER }}" class="mt-1 accent-brand-600" @checked($payment === Order::PAYMENT_TRANSFER) @disabled($transferBlocked) />
+              <span>
+                <span class="block font-medium text-slate-900">Chuyển khoản</span>
+                <span class="block text-sm text-slate-500">{{ $transferBlocked ? 'Bạn đang có '.Order::MAX_OPEN_UNPAID.' đơn chưa thanh toán' : 'Quét mã QR, tải ảnh bill — kế toán xác nhận' }}</span>
+              </span>
+            </label>
+            <label @class(['flex gap-3 rounded-xl border border-slate-300 p-4 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50', 'cursor-pointer' => $walletEnough, 'opacity-60' => ! $walletEnough]) data-pay-wallet>
+              <input type="radio" name="payment_method" value="{{ Order::PAYMENT_WALLET }}" class="mt-1 accent-brand-600" @checked($payment === Order::PAYMENT_WALLET && $walletEnough) @disabled(! $walletEnough) />
+              <span>
+                <span class="block font-medium text-slate-900">Ví tái tiêu dùng</span>
+                <span class="block text-sm text-slate-500">Số dư: <strong class="tabular-nums text-slate-700" data-wallet-reconsume>{{ Money::format($reconsume) }}đ</strong></span>
+                @if ($walletEnough)
+                  <span class="block text-xs text-slate-500">Trừ ví ngay, đơn được thanh toán luôn.</span>
+                @else
+                  <span class="block text-xs text-rose-600" data-wallet-short>Còn thiếu {{ Money::format($subtotal - $reconsume) }}đ.
+                    <a href="{{ route('member.topups.index') }}" class="font-medium text-brand-700 underline">Nạp tiền vào ví</a></span>
+                @endif
+              </span>
+            </label>
+          </div>
+          {!! $error('payment_method') !!}
+        </section>
+
         <section class="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
           <label for="note" class="block font-semibold text-slate-900">Ghi chú</label>
           <textarea id="note" name="note" rows="2" maxlength="500" placeholder="VD: Giao giờ hành chính" class="mt-3 {{ $input }} {{ $inputState('note') }}">{{ old('note') }}</textarea>
@@ -118,7 +149,7 @@
           <div class="flex justify-between text-base"><dt class="font-semibold text-slate-900">Tổng thanh toán</dt><dd class="font-bold text-brand-700" data-summary-total>{{ Money::format($subtotal) }}đ</dd></div>
         </dl>
         <button type="submit" class="mt-5 w-full rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700" data-checkout-submit>Thanh toán</button>
-        <p class="mt-3 text-xs text-slate-500">Bấm Thanh toán để nhận thông tin chuyển khoản và mã QR. Chuyển khoản xong, bấm “Tôi đã chuyển khoản” để hoàn tất đơn.</p>
+        <p class="mt-3 text-xs text-slate-500">Chuyển khoản: bấm Thanh toán để nhận thông tin chuyển khoản và mã QR, chuyển xong bấm “Tôi đã chuyển khoản”. Ví tái tiêu dùng: bấm Thanh toán là trừ ví và hoàn tất đơn.</p>
         <a href="{{ route('shop.cart') }}" class="mt-3 block text-center text-sm text-brand-700 hover:underline">Quay lại giỏ hàng</a>
       </aside>
     </form>

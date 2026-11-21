@@ -48,10 +48,11 @@ class AuditLog extends Model
         ProductImage::class => 'Ảnh sản phẩm',
         FileUpload::class => 'File tải lên',
         MemberKyc::class => 'Hồ sơ KYC',
+        WalletTopup::class => 'Lệnh nạp ví',
     ];
 
     /** Loại trong SUBJECTS nhưng không gắn observer: controller tự ghi một dòng tóm tắt (vd cả phiên bản tỉ lệ). */
-    public const MANUAL_SUBJECTS = [CommissionRate::class, Order::class, ProductReview::class, ApiToken::class, MemberKyc::class];
+    public const MANUAL_SUBJECTS = [CommissionRate::class, Order::class, ProductReview::class, ApiToken::class, MemberKyc::class, WalletTopup::class];
 
     protected $fillable = [
         'user_id', 'user_name', 'action', 'auditable_type', 'auditable_id', 'description', 'changes',

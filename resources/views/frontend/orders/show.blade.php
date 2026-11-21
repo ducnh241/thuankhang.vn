@@ -122,6 +122,9 @@
             <div class="flex justify-between"><dt class="text-slate-500">Phí giao hàng</dt><dd>{{ Money::format($order->shipping_fee) }}đ</dd></div>
           @endif
           <div class="flex justify-between text-base"><dt class="font-semibold">Tổng thanh toán</dt><dd class="font-bold text-brand-700">{{ Money::format($order->total_amount) }}đ</dd></div>
+          @if ($order->isPaidByWallet())
+            <div class="flex justify-between" data-paid-by-wallet><dt class="text-slate-500">Thanh toán</dt><dd>Ví tái tiêu dùng · {{ $order->paid_at?->format('d/m/Y H:i') }}</dd></div>
+          @endif
         </dl>
       </section>
 

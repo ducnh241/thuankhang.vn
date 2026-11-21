@@ -98,6 +98,13 @@ return [
                     'icon' => 'safety-certificate',
                 ],
                 [
+                    'label' => 'Wallet top-ups',
+                    'route' => 'backend.wallet-topups.index',
+                    'active' => 'backend.wallet-topups.*',
+                    'can' => 'wallet_topup',
+                    'icon' => 'wallet',
+                ],
+                [
                     'label' => 'Configuration',
                     'icon' => 'fund',
                     'children' => [

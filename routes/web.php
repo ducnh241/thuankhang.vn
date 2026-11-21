@@ -17,7 +17,9 @@ use App\Http\Controllers\Frontend\ProductReviewController;
 use App\Http\Controllers\Frontend\ProfileController;
 use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\TeamController;
+use App\Http\Controllers\Frontend\WalletActionController;
 use App\Http\Controllers\Frontend\WalletController;
+use App\Http\Controllers\Frontend\WalletTopupController;
 use App\Http\Middleware\CaptureReferralCode;
 use App\Http\Middleware\EnsureMemberActive;
 use App\Models\Category;
@@ -53,6 +55,20 @@ Route::middleware(CaptureReferralCode::class)->group(function () {
         // Thành viên trực tiếp (F1) của tôi: họ tên + cấp hiện tại
         Route::get('tai-khoan/thanh-vien', TeamController::class)->name('member.team');
         Route::get('tai-khoan/vi', WalletController::class)->name('member.wallet');
+        // Ví tái tiêu dùng: lịch sử giao dịch, chuyển tiền cho thành viên khác (mã giới thiệu + mật khẩu, cần KYC), chuyển
+        // từ ví rút tiền sang (một chiều), nạp tiền (QR công ty + bill → kế toán xác nhận)
+        Route::get('tai-khoan/vi/giao-dich', [WalletActionController::class, 'history'])->name('member.wallet.history');
+        Route::get('tai-khoan/vi/chuyen-tien', [WalletActionController::class, 'transferForm'])->name('member.wallet.transfer');
+        Route::post('tai-khoan/vi/chuyen-tien/xac-nhan', [WalletActionController::class, 'transferPreview'])->name('member.wallet.transfer.preview')->middleware('throttle:20,1');
+        Route::post('tai-khoan/vi/chuyen-tien', [WalletActionController::class, 'transfer'])->name('member.wallet.transfer.store')->middleware('throttle:10,1');
+        Route::get('tai-khoan/vi/chuyen-vi', [WalletActionController::class, 'convertForm'])->name('member.wallet.convert');
+        Route::post('tai-khoan/vi/chuyen-vi', [WalletActionController::class, 'convert'])->name('member.wallet.convert.store')->middleware('throttle:10,1');
+        Route::get('tai-khoan/vi/nap-tien', [WalletTopupController::class, 'index'])->name('member.topups.index');
+        Route::post('tai-khoan/vi/nap-tien', [WalletTopupController::class, 'store'])->name('member.topups.store')->middleware('throttle:10,1');
+        Route::get('tai-khoan/vi/nap-tien/{topup}', [WalletTopupController::class, 'show'])->name('member.topups.show');
+        Route::post('tai-khoan/vi/nap-tien/{topup}/da-chuyen-khoan', [WalletTopupController::class, 'transferred'])->name('member.topups.transferred')->middleware('throttle:10,1');
+        Route::get('tai-khoan/vi/nap-tien/{topup}/bill', [WalletTopupController::class, 'bill'])->name('member.topups.bill');
+        Route::post('tai-khoan/vi/nap-tien/{topup}/huy', [WalletTopupController::class, 'cancel'])->name('member.topups.cancel')->middleware('throttle:10,1');
         // Sửa thông tin tài khoản (họ tên, ảnh mã QR nhận tiền)
         Route::get('tai-khoan/thong-tin', [ProfileController::class, 'edit'])->name('member.profile.edit');
         Route::put('tai-khoan/thong-tin', [ProfileController::class, 'update'])->name('member.profile.update')->middleware('throttle:10,1');

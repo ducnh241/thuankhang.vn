@@ -193,8 +193,41 @@ Laravel 13 (PHP 8.3) + MySQL 8, admin Blade + Ant Design/Tailwind/jQuery (Vite),
   chi tiết cách tính (tiền hàng + từng sản phẩm → −5% phí DN → cơ sở × tỉ lệ = hoa hồng → 3 phần) — JS chung
   `[data-dialog-open]` / `[data-dialog-close]`, bấm nền tối để đóng. `/tai-khoan` hiện cả hai
   ví. Admin: sổ hoa hồng có cột ví rút / tái tiêu dùng / thuế; chi tiết thành viên + chi tiết đơn có phần chia.
-  Ví tái tiêu dùng CHƯA dùng được để thanh toán đơn (chờ chốt luồng). Test: `tests/Feature/WalletSplitTest.php` (các test
+  Ví tái tiêu dùng dùng được từ 21/11/2026 — xem mục bên dưới. Test: `tests/Feature/WalletSplitTest.php` (các test
   hoa hồng cũ đặt tỉ lệ chia 0% để giữ số đối chiếu).
+
+## Ví tái tiêu dùng: mua hàng, chuyển ví, nạp tiền, chuyển từ ví rút (21/11/2026)
+
+Chủ dự án chốt 21/11/2026 (giữ tên **"Ví tái tiêu dùng"**). Mọi thay đổi số dư ngoài hoa hồng đi qua `App\Services\Wallet`
+(`post()` ghi bút toán, ném lỗi nếu số dư âm; khóa thành viên theo thứ tự id). Loại bút toán mới (`WalletTransaction`):
+`purchase` (order_id), `transfer_out` / `transfer_in` (counterpart_id), `topup` (topup_id), `convert` (2 bút toán: trừ ví rút,
+cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topups`, 3 cột liên kết ở `wallet_transactions`,
+`orders.payment_method`).
+- **Mua hàng bằng ví**: trang thanh toán có ô "Hình thức thanh toán" — Chuyển khoản | Ví tái tiêu dùng; ví chỉ chọn được khi
+  số dư ≥ tổng đơn (không trả nửa ví nửa chuyển khoản; thiếu thì hiện "Còn thiếu … đ" + link nạp). Cùng transaction tạo đơn:
+  trừ ví (`Wallet::payOrder`) rồi `OrderPayment::confirm()` với mã giao dịch tự sinh `VI-<mã đơn>`, `confirmed_by` NULL →
+  đơn **sang thẳng "Đã thanh toán"**, không cần kế toán, `expires_at` NULL. **Tính như đơn thường**: kích hoạt, doanh số /
+  lên cấp, hoa hồng F1 / F2. `orders.payment_method` = `transfer` | `wallet` (`Order::PAYMENT_METHODS`). Đơn trả bằng ví
+  không bị giới hạn `MAX_OPEN_UNPAID` (đủ 3 đơn chưa thanh toán vẫn vào được checkout nếu ví đủ, ô chuyển khoản bị khóa).
+  Kế toán không nhập tay được mã giao dịch bắt đầu bằng `VI-`. Thông báo "đơn mới" ghi rõ đã thanh toán bằng ví.
+- **Chuyển ví cho thành viên khác** (`/tai-khoan/vi/chuyen-tien`, `Frontend\WalletActionController`): theo **mã giới thiệu**
+  của người nhận (bất kỳ thành viên nào chưa bị khóa), từ ví tái tiêu dùng sang **ví tái tiêu dùng** người nhận, tối thiểu
+  `Wallet::MIN_TRANSFER` = 10.000 đ, không phí, không hạn mức, **người chuyển bắt buộc đã duyệt KYC**. Hai bước: mã + số tiền
+  → trang xác nhận (tên rút gọn người nhận) + **mật khẩu đăng nhập** → chuyển ngay, không cần duyệt. Ghi `AuditLog` trên
+  thành viên chuyển.
+- **Chuyển từ ví rút tiền sang ví tái tiêu dùng** (`/tai-khoan/vi/chuyen-vi`): **một chiều**, tối thiểu 10.000 đ.
+- **Nạp tiền** (`/tai-khoan/vi/nap-tien`, `Frontend\WalletTopupController`, model `WalletTopup`): luồng giống đơn chuyển
+  khoản — nhập số tiền (tối thiểu 100.000 đ) → lệnh `NAP` + 8 ký tự, hạn `payment_expiry_hours`, tối đa 3 lệnh chưa xong →
+  QR công ty (số tiền + nội dung = mã lệnh, `VietQr::imageUrlFor`) → **bắt buộc ảnh bill** (`topup-bills/{id}/…enc`) → "Tôi đã
+  chuyển khoản" (thông báo `topup_transferred`) → kế toán xác nhận ở **quản trị → Wallet top-ups**
+  (`/backend/wallet-topup`, `Backend\WalletTopupController`, quyền mới `wallet_topup` + `wallet_topup/confirm`, migration tự
+  tick cho nhóm đang có `order/confirm_payment`): mã giao dịch (unique **chung với đơn hàng**) + số tiền thực nhận ≥ số trên
+  lệnh → `TopupPayment::confirm` **cộng đúng số thực nhận**. Chuyển thiếu → "Chưa nhận được tiền" trả lệnh về "Chờ chuyển
+  khoản" để khách chuyển bù; hủy có lý do; lệnh đã hủy tiền về muộn vẫn xác nhận được (bắt buộc ghi chú). Lệnh mới quá hạn:
+  lệnh `topups:expire` (scheduler mỗi phút). **Tiền nạp không tính doanh số / hoa hồng** (chỉ tính khi dùng ví mua hàng).
+- Hiển thị: `/tai-khoan/vi` có nút Nạp tiền / Chuyển tiền (ví tái tiêu dùng) và Chuyển sang ví tái tiêu dùng (ví rút tiền),
+  link "Lịch sử giao dịch ví" → `/tai-khoan/vi/giao-dich?vi=cash|reconsume` (mọi bút toán). Admin: chi tiết thành viên có thẻ
+  "Giao dịch ví gần đây" (10 bút toán khác hoa hồng); chi tiết đơn ghi "Hình thức". Test: `tests/Feature/ReconsumeWalletTest.php`.
 
 ## Live có đơn thật — KHÔNG xóa đơn; tính bù hoa hồng cho đơn cũ (17/11/2026)
 

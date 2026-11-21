@@ -21,6 +21,7 @@ class NotificationSettings
     public const EVENTS = [
         'order_created' => ['Có đơn hàng mới', 'Ngay khi khách bấm Thanh toán (đơn ở trạng thái Đơn mới, chờ khách chuyển khoản).'],
         'order_transferred' => ['Khách báo đã chuyển khoản', 'Khi khách bấm "Tôi đã chuyển khoản" — lúc kế toán cần vào đối chiếu và xác nhận thanh toán.'],
+        'topup_transferred' => ['Thành viên báo đã chuyển khoản nạp ví', 'Khi thành viên tải ảnh bill và bấm "Tôi đã chuyển khoản" ở lệnh nạp ví tái tiêu dùng — kế toán vào xác nhận để cộng ví.'],
         'kyc_submitted' => ['Có hồ sơ KYC mới', 'Khi thành viên gửi (hoặc gửi lại) hồ sơ KYC — để vào duyệt hồ sơ.'],
     ];
 

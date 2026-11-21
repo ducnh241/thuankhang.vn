@@ -64,13 +64,21 @@
         <div class="text-xs font-medium tracking-wide text-brand-800 uppercase">Ví rút tiền</div>
         <div class="mt-2 text-2xl font-bold text-brand-800 tabular-nums" data-wallet-balance>{{ $money($wallet['balance']) }}đ</div>
         <p class="mt-1 text-xs text-brand-800/80">Tháng này: <strong data-wallet-month>+{{ $money($wallet['month_cash']) }}đ</strong></p>
+        <div class="mt-3 flex flex-wrap gap-2" data-wallet-actions="cash">
+          <a href="{{ route('member.wallet.convert') }}" class="rounded-full border border-brand-600 bg-white px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100">Chuyển sang ví tái tiêu dùng</a>
+        </div>
       </div>
       <div class="rounded-2xl border border-amber-100 bg-amber-50 p-5">
         <div class="text-xs font-medium tracking-wide text-amber-800 uppercase">Ví tái tiêu dùng</div>
         <div class="mt-2 text-2xl font-bold text-amber-800 tabular-nums" data-wallet-reconsume>{{ $money($wallet['reconsume']) }}đ</div>
         <p class="mt-1 text-xs text-amber-800/80">Dùng để mua hàng, không rút ra tiền mặt.</p>
+        <div class="mt-3 flex flex-wrap gap-2" data-wallet-actions="reconsume">
+          <a href="{{ route('member.topups.index') }}" class="rounded-full bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700">Nạp tiền</a>
+          <a href="{{ route('member.wallet.transfer') }}" class="rounded-full border border-amber-600 bg-white px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100">Chuyển tiền</a>
+        </div>
       </div>
     </div>
+    <p class="mt-3 text-right text-sm"><a href="{{ route('member.wallet.history') }}" class="text-brand-700 hover:underline" data-wallet-history-link>Lịch sử giao dịch ví ›</a></p>
 
     <section class="mt-8">
       <div class="flex flex-wrap items-center justify-between gap-3">

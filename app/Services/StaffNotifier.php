@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MemberKyc;
 use App\Models\Order;
+use App\Models\WalletTopup;
 use App\Support\Money;
 use App\Support\NotificationSettings;
 use App\Support\SiteSettings;
@@ -21,6 +22,7 @@ use function Illuminate\Support\defer;
  * Thông báo):
  *   - có đơn hàng mới (khách bấm Thanh toán);
  *   - khách báo đã chuyển khoản → kế toán vào xác nhận thanh toán;
+ *   - thành viên báo đã chuyển khoản lệnh nạp ví → kế toán xác nhận cộng ví;
  *   - thành viên gửi hồ sơ KYC → vào duyệt.
  * Tin gửi SAU khi đã trả trang cho khách (defer) nên Telegram / máy chủ thư chậm hay lỗi không làm hỏng thao tác của khách;
  * lỗi chỉ ghi log (đã che bot token / mật khẩu). Nội dung chỉ gồm thông tin tối thiểu (mã đơn, tên, số tiền, hình thức
@@ -31,13 +33,14 @@ class StaffNotifier
     public static function orderCreated(Order $order): void
     {
         self::notify('order_created', fn () => [
-            'subject' => 'Đơn hàng mới '.$order->code.' — '.Money::format($order->total_amount).' đ',
+            'subject' => 'Đơn hàng mới '.$order->code.' — '.Money::format($order->total_amount).' đ'.($order->isPaidByWallet() ? ' (đã thanh toán bằng ví)' : ''),
             'icon' => '🛒',
             'lines' => array_values(array_filter([
                 'Khách: '.$order->recipient_name,
                 'Tổng thanh toán: '.Money::format($order->total_amount).' đ',
+                $order->isPaidByWallet() ? 'Thanh toán: ví tái tiêu dùng — đã trừ ví, đơn đã thanh toán, chuẩn bị giao hàng' : null,
                 'Nhận hàng: '.self::delivery($order),
-                $order->expires_at ? 'Hạn thanh toán: '.$order->expires_at->format('H:i d/m/Y') : null,
+                ! $order->isPaidByWallet() && $order->expires_at ? 'Hạn thanh toán: '.$order->expires_at->format('H:i d/m/Y') : null,
                 'Xem đơn: '.route('backend.orders.show', $order),
             ])),
         ]);
@@ -53,6 +56,20 @@ class StaffNotifier
                 'Khách: '.$order->recipient_name,
                 ...($order->hasBill() ? ['Khách đã gửi ảnh bill chuyển khoản (xem trong trang đơn).'] : []),
                 'Xác nhận thanh toán: '.route('backend.orders.show', $order),
+            ],
+        ]);
+    }
+
+    /** Thành viên báo đã chuyển khoản lệnh nạp ví tái tiêu dùng → kế toán vào xác nhận. */
+    public static function topupTransferred(WalletTopup $topup): void
+    {
+        self::notify('topup_transferred', fn () => [
+            'subject' => 'Thành viên báo đã chuyển khoản nạp ví — '.$topup->code,
+            'icon' => '👛',
+            'lines' => [
+                'Số tiền: '.Money::format($topup->amount).' đ · Nội dung chuyển khoản: '.$topup->code,
+                'Thành viên: '.$topup->member->full_name.' (mã '.$topup->member->referral_code.')',
+                'Xác nhận: '.route('backend.wallet-topups.show', $topup),
             ],
         ]);
     }

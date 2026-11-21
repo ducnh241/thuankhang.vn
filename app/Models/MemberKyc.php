@@ -185,7 +185,7 @@ class MemberKyc extends Model
     public static function deleteImages(?string ...$paths): void
     {
         foreach (array_filter($paths) as $path) {
-            if (str_starts_with($path, self::DIRECTORY.'/') || str_starts_with($path, Order::BILL_DIRECTORY.'/')) {
+            if (str_starts_with($path, self::DIRECTORY.'/') || str_starts_with($path, Order::BILL_DIRECTORY.'/') || str_starts_with($path, WalletTopup::BILL_DIRECTORY.'/')) {
                 Storage::disk(self::DISK)->delete($path);
             }
         }

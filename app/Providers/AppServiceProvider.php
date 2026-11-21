@@ -48,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         // mỗi request (Catalog scoped), không gắn vào partial (thẻ sản phẩm lặp nhiều lần).
         View::composer(['frontend.home', 'frontend.category', 'frontend.search', 'frontend.product', 'frontend.account',
             'frontend.auth.register', 'frontend.auth.login', 'frontend.cart', 'frontend.checkout', 'frontend.orders.index',
-            'frontend.orders.show', 'frontend.profile', 'frontend.layouts.app'], function ($view) {
+            'frontend.orders.show', 'frontend.wallet.topups.show', 'frontend.profile', 'frontend.layouts.app'], function ($view) {
                 $view->with(app(Catalog::class)->layoutData());
             });
     }

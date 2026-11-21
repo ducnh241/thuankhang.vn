@@ -149,6 +149,13 @@ return [
             'export' => 'Xuất Excel',
         ],
     ],
+    'wallet_topup' => [
+        'label' => 'Nạp ví tái tiêu dùng',
+        'section' => 'Tài chính',
+        'items' => [
+            'confirm' => 'Xác nhận đã nhận tiền / trả lệnh về / hủy lệnh',
+        ],
+    ],
     'withdrawal' => [
         'label' => 'Rút tiền',
         'section' => 'Tài chính',

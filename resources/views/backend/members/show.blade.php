@@ -237,6 +237,26 @@
       </div>
     </div>
 
+    {{-- Giao dịch ví khác hoa hồng: mua hàng bằng ví, nạp tiền, chuyển ví cho / nhận từ thành viên khác, chuyển giữa hai ví --}}
+    @if ($walletMoves->isNotEmpty())
+      <div class="ant-card ant-card-bordered" data-card="wallet-moves">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Giao dịch ví gần đây</div></div></div>
+        <div class="ant-card-body">
+          @foreach ($walletMoves as $move)
+            <div @class(['flex flex-wrap items-baseline gap-x-2 text-sm', 'mt-2' => ! $loop->first]) data-wallet-move="{{ $move->type }}">
+              <span>{{ $move->typeLabel() }}</span>
+              <strong @class(['ml-auto tabular-nums', 'text-[#cf1322]' => $move->amount < 0])>{{ $move->amount >= 0 ? '+' : '−' }}{{ Money::format(abs($move->amount)) }} đ</strong>
+              <span class="w-full text-xs {{ $muted }} tabular-nums">{{ $move->created_at?->format('d/m/Y H:i') }} · {{ \App\Models\WalletTransaction::WALLETS[$move->wallet] ?? $move->wallet }}
+                @if ($move->order) · đơn @can('order')<a href="{{ route('backend.orders.show', $move->order) }}" class="font-mono">{{ $move->order->code }}</a>@else<span class="font-mono">{{ $move->order->code }}</span>@endcan @endif
+                @if ($move->topup) · lệnh @can('wallet_topup')<a href="{{ route('backend.wallet-topups.show', $move->topup) }}" class="font-mono">{{ $move->topup->code }}</a>@else<span class="font-mono">{{ $move->topup->code }}</span>@endcan @endif
+                @if ($move->counterpart) · {{ $move->amount < 0 ? 'tới' : 'từ' }} {{ $move->counterpart->full_name }} (<span class="font-mono">{{ $move->counterpart->referral_code }}</span>)@endif
+                · số dư {{ Money::format($move->balance_after) }} đ</span>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
+
     {{-- Cây nhị phân: vị trí của thành viên + hai nhánh bên dưới — Nhánh A (L) và Nhánh B (R): số người, doanh số tháng,
          nhánh yếu hơn (để tính thưởng nhóm). Người đăng ký tự chọn nhánh; vị trí gán một lần, không sửa được. --}}
     @php

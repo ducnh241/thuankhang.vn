@@ -39,12 +39,18 @@ class VietQr
     /** Mã VietQR tự tạo theo đơn; null khi thiếu mã ngân hàng / số tài khoản. */
     public static function imageUrl(Order $order, ?array $bank = null): ?string
     {
+        return self::imageUrlFor($order->total_amount, $order->code, $bank);
+    }
+
+    /** Mã VietQR tự tạo: số tiền + nội dung chuyển khoản (mã đơn / mã lệnh nạp ví); null khi thiếu mã ngân hàng / số tài khoản. */
+    public static function imageUrlFor(int $amount, string $content, ?array $bank = null): ?string
+    {
         $bank ??= self::bank();
         if (! $bank['code'] || ! $bank['account']) {
             return null;
         }
 
         return 'https://img.vietqr.io/image/'.rawurlencode($bank['code']).'-'.rawurlencode($bank['account']).'-compact2.png?'
-            .http_build_query(array_filter(['amount' => $order->total_amount, 'addInfo' => $order->code, 'accountName' => $bank['name']]));
+            .http_build_query(array_filter(['amount' => $amount, 'addInfo' => $content, 'accountName' => $bank['name']]));
     }
 }

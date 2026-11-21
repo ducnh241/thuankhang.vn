@@ -31,6 +31,7 @@ class RoleSeeder extends Seeder
         'Kế toán' => [
             'backend_access',
             'order', 'order/confirm_payment',
+            'wallet_topup', 'wallet_topup/confirm',
             'bank_transaction', 'bank_transaction/match',
             'commission', 'commission/export',
             'withdrawal', 'withdrawal/approve', 'withdrawal/paid', 'withdrawal/export',

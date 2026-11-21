@@ -122,6 +122,12 @@ class Member extends Authenticatable
         return $this->hasMany(WalletTransaction::class)->latest('id');
     }
 
+    /** Lệnh nạp ví tái tiêu dùng (mới nhất trước). */
+    public function walletTopups(): HasMany
+    {
+        return $this->hasMany(WalletTopup::class)->latest('id');
+    }
+
     /** Số dư một ví (mặc định ví rút tiền) = tổng bút toán của ví đó (ví chỉ ghi thêm). */
     public function walletBalance(string $wallet = WalletTransaction::WALLET_CASH): int
     {

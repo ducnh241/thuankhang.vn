@@ -60,6 +60,16 @@ class Order extends Model
      */
     public const MAX_OPEN_UNPAID = 3;
 
+    /** Hình thức thanh toán: chuyển khoản (QR + bill → kế toán xác nhận) hoặc trừ ví tái tiêu dùng (thanh toán ngay). */
+    public const PAYMENT_TRANSFER = 'transfer';
+
+    public const PAYMENT_WALLET = 'wallet';
+
+    public const PAYMENT_METHODS = [self::PAYMENT_TRANSFER => 'Chuyển khoản', self::PAYMENT_WALLET => 'Ví tái tiêu dùng'];
+
+    /** Tiền tố mã giao dịch tự sinh cho đơn trả bằng ví ("VI-<mã đơn>"); kế toán không nhập tay được mã bắt đầu bằng tiền tố này. */
+    public const WALLET_REFERENCE_PREFIX = 'VI-';
+
     public const DELIVERY_SHIP = 'ship';
 
     public const DELIVERY_PICKUP = 'pickup';
@@ -70,12 +80,13 @@ class Order extends Model
     private const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
     protected $fillable = [
-        'code', 'member_id', 'status', 'goods_amount', 'shipping_fee', 'total_amount', 'delivery_type',
+        'code', 'member_id', 'status', 'goods_amount', 'shipping_fee', 'total_amount', 'payment_method', 'delivery_type',
         'pickup_point_id', 'recipient_name', 'recipient_phone', 'province', 'address', 'note', 'expires_at',
     ];
 
     protected $attributes = [
         'status' => self::STATUS_NEW,
+        'payment_method' => self::PAYMENT_TRANSFER,
         'shipping_fee' => 0,
         'vat_amount' => 0, // cột cũ, không dùng (chủ dự án bỏ VAT 19/11/2026)
     ];
@@ -281,6 +292,11 @@ class Order extends Model
         return $item->variant_id
             ? ProductVariant::whereKey($item->variant_id)->whereNotNull('stock')
             : Product::withTrashed()->whereKey($item->product_id)->whereNotNull('stock');
+    }
+
+    public function isPaidByWallet(): bool
+    {
+        return $this->payment_method === self::PAYMENT_WALLET;
     }
 
     public function isPickup(): bool

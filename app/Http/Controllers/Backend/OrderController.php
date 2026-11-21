@@ -119,12 +119,14 @@ class OrderController extends Controller
             'payment_reference' => is_string($request->input('payment_reference')) ? strtoupper(trim($request->input('payment_reference'))) : $request->input('payment_reference'),
         ]);
         $data = $request->validate([
-            'payment_reference' => ['required', 'string', 'max:100', Rule::unique('orders', 'payment_reference')->ignore($order->id)],
+            'payment_reference' => ['required', 'string', 'max:100', Rule::unique('orders', 'payment_reference')->ignore($order->id),
+                Rule::unique('wallet_topups', 'payment_reference'), 'not_regex:/^'.preg_quote(Order::WALLET_REFERENCE_PREFIX, '/').'/'],
             'paid_amount' => ['required', 'integer', 'min:'.$order->total_amount, 'max:100000000000'],
             'payment_note' => [Rule::requiredIf($order->status === Order::STATUS_CANCELLED), 'nullable', 'string', 'max:300'],
         ], [
             'payment_reference.required' => 'Nhập mã giao dịch ngân hàng.',
-            'payment_reference.unique' => 'Mã giao dịch này đã dùng để xác nhận đơn khác.',
+            'payment_reference.unique' => 'Mã giao dịch này đã dùng để xác nhận đơn khác / lệnh nạp ví.',
+            'payment_reference.not_regex' => 'Mã bắt đầu bằng “'.Order::WALLET_REFERENCE_PREFIX.'” dành cho đơn trả bằng ví.',
             'paid_amount.required' => 'Nhập số tiền thực nhận.',
             'paid_amount.integer' => 'Số tiền không hợp lệ.',
             'paid_amount.min' => 'Số tiền thực nhận thấp hơn tổng đơn ('.Money::format($order->total_amount).' đ). Chờ khách chuyển bù hoặc liên hệ khách.',

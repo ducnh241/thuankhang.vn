@@ -25,6 +25,7 @@ use App\Http\Controllers\Backend\ProductReviewController;
 use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\SettingController;
 use App\Http\Controllers\Backend\UserController;
+use App\Http\Controllers\Backend\WalletTopupController;
 use App\Models\Category;
 use App\Models\Menu;
 use Illuminate\Support\Facades\Route;
@@ -97,6 +98,14 @@ Route::prefix('backend')->group(function () {
         Route::post('order/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.reject-payment')->can('order/confirm_payment');
         Route::post('order/{order}/status', [OrderController::class, 'status'])->name('orders.status')->can('order/status');
         Route::post('order/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->can('order/cancel');
+
+        // Nạp ví tái tiêu dùng (quyền: wallet_topup, wallet_topup/confirm — Kế toán). URL theo mã lệnh.
+        Route::get('wallet-topup', [WalletTopupController::class, 'index'])->name('wallet-topups.index')->can('wallet_topup');
+        Route::get('wallet-topup/{topup}', [WalletTopupController::class, 'show'])->name('wallet-topups.show')->can('wallet_topup');
+        Route::get('wallet-topup/{topup}/bill', [WalletTopupController::class, 'bill'])->name('wallet-topups.bill')->can('wallet_topup');
+        Route::post('wallet-topup/{topup}/confirm', [WalletTopupController::class, 'confirm'])->name('wallet-topups.confirm')->can('wallet_topup/confirm');
+        Route::post('wallet-topup/{topup}/reject', [WalletTopupController::class, 'reject'])->name('wallet-topups.reject')->can('wallet_topup/confirm');
+        Route::post('wallet-topup/{topup}/cancel', [WalletTopupController::class, 'cancel'])->name('wallet-topups.cancel')->can('wallet_topup/confirm');
 
         // Đánh giá sản phẩm (quyền: review, review/moderate)
         Route::get('review', [ProductReviewController::class, 'index'])->name('reviews.index')->can('review');

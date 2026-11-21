@@ -114,7 +114,7 @@ class OrderManagementTest extends TestCase
         // Bấm lại: không xác nhận lần hai; mã giao dịch không dùng lại cho đơn khác
         $this->post($url, ['payment_reference' => 'FT002', 'paid_amount' => '1.500.000'])->assertSessionHas('error');
         $this->post(route('backend.orders.confirm-payment', $other), ['payment_reference' => 'ft001', 'paid_amount' => '200000'])
-            ->assertSessionHasErrors(['payment_reference' => 'Mã giao dịch này đã dùng để xác nhận đơn khác.']);
+            ->assertSessionHasErrors(['payment_reference' => 'Mã giao dịch này đã dùng để xác nhận đơn khác / lệnh nạp ví.']);
 
         // Đơn đã hủy (tiền về muộn): bắt buộc ghi chú, khôi phục thành Đã thanh toán
         $this->post(route('backend.orders.confirm-payment', $cancelled), ['payment_reference' => 'FT003', 'paid_amount' => '300.000'])->assertSessionHasErrors('payment_note');

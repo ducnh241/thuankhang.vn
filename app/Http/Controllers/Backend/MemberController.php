@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Commission;
 use App\Models\Level;
 use App\Models\Member;
+use App\Models\WalletTransaction;
 use App\Services\BinaryTree;
 use App\Services\LevelEngine;
 use App\Support\AffiliateSettings;
@@ -105,6 +106,9 @@ class MemberController extends Controller
             'orderCount' => $member->orders()->count(),
             'legs' => BinaryTree::legs($member),
             'wallet' => $member->walletSummary(),
+            // Bút toán ví khác hoa hồng (mua hàng bằng ví, nạp, chuyển đi / nhận, chuyển giữa hai ví) — mới nhất trước
+            'walletMoves' => $member->walletTransactions()->whereNotIn('type', [WalletTransaction::TYPE_COMMISSION, WalletTransaction::TYPE_SPLIT])
+                ->with(['order:id,code', 'topup:id,code', 'counterpart:id,full_name,referral_code'])->limit(10)->get(),
             'levelHistory' => $member->levelHistories()->with(['fromLevel:id,name', 'toLevel:id,name', 'order:id,code'])->limit(20)->get(),
             'nextLevel' => LevelEngine::nextLevel($member),
             'history' => AuditLog::where('auditable_type', Member::class)->where('auditable_id', $member->id)

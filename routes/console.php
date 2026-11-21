@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 // Hủy đơn mới quá hạn thanh toán (cần cron: * * * * * php artisan schedule:run)
 Schedule::command('orders:expire')->everyMinute()->withoutOverlapping();
+// Hủy lệnh nạp ví mới quá hạn chuyển khoản
+Schedule::command('topups:expire')->everyMinute()->withoutOverlapping();

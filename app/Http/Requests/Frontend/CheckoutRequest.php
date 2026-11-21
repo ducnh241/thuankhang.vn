@@ -10,7 +10,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * Checkout (S5): người nhận, hình thức nhận hàng. Giao tận nơi → tỉnh + địa chỉ; nhận tại VP → điểm đang bật.
+ * Checkout (S5): người nhận, hình thức nhận hàng, hình thức thanh toán (chuyển khoản | ví tái tiêu dùng). Giao tận nơi →
+ * tỉnh + địa chỉ; nhận tại VP → điểm đang bật.
  */
 class CheckoutRequest extends FormRequest
 {
@@ -26,6 +27,7 @@ class CheckoutRequest extends FormRequest
             'address' => [Rule::requiredIf($ship), 'nullable', 'string', 'max:300'],
             'pickup_point_id' => [Rule::requiredIf(! $ship && $this->input('delivery_type') === Order::DELIVERY_PICKUP), 'nullable', 'integer'],
             'note' => ['nullable', 'string', 'max:500'],
+            'payment_method' => ['required', Rule::in(array_keys(Order::PAYMENT_METHODS))],
         ];
     }
 
@@ -40,12 +42,15 @@ class CheckoutRequest extends FormRequest
             'province.in' => 'Tỉnh / thành không hợp lệ.',
             'address.required' => 'Nhập địa chỉ nhận hàng.',
             'pickup_point_id.required' => 'Chọn điểm nhận hàng.',
+            'payment_method.required' => 'Chọn hình thức thanh toán.',
+            'payment_method.in' => 'Chọn hình thức thanh toán.',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $data = [];
+        // Form cũ / gọi thẳng không gửi hình thức thanh toán → chuyển khoản như trước
+        $data = $this->has('payment_method') ? [] : ['payment_method' => Order::PAYMENT_TRANSFER];
         foreach (['recipient_name', 'address', 'note'] as $field) {
             if (is_string($value = $this->input($field))) {
                 $data[$field] = trim(preg_replace('/\s+/u', ' ', $value));
