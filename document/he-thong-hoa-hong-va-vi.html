@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hoa hồng, cấp bậc &amp; ví — Thuankhang.vn</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --paper: #ffffff; --ink: #1f2933; --muted: #5f6b7a; --line: #e3e7ec;
+    --brand: #047857; --brand-soft: #e7f6ef; --amber: #b45309; --amber-soft: #fdf3e2;
+    --rose: #b42318; --rose-soft: #fdecea; --blue: #1d4ed8; --blue-soft: #e8efff; --code: #f1f3f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161b; --paper: #1a2027; --ink: #e6eaef; --muted: #9aa6b4; --line: #2c343e;
+      --brand: #34d399; --brand-soft: #123327; --amber: #f5b454; --amber-soft: #3a2a12;
+      --rose: #f58f87; --rose-soft: #3b1a18; --blue: #8fb0ff; --blue-soft: #18233d; --code: #232b34;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1180px; margin: 0 auto; gap: 32px; padding: 24px 16px 80px; }
+  nav.toc { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto; font-size: 14px; }
+  nav.toc .title { font-weight: 700; margin-bottom: 8px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a { color: var(--muted); text-decoration: none; display: block; padding: 3px 8px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--paper); color: var(--ink); }
+  nav.toc ol ol { padding-left: 12px; }
+  main { min-width: 0; }
+  header.doc { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; }
+  header.doc h1 { margin: 0 0 6px; font-size: 26px; line-height: 1.3; }
+  header.doc p { margin: 4px 0; color: var(--muted); }
+  section { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 8px 28px 24px; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin: 24px 0 12px; padding-top: 4px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; }
+  p, li { max-width: 78ch; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .table-wrap { overflow-x: auto; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  .note, .warn, .ok, .info { border-radius: 10px; padding: 12px 16px; margin: 14px 0; border: 1px solid transparent; }
+  .note { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
+  .warn { background: var(--rose-soft); border-color: color-mix(in srgb, var(--rose) 30%, transparent); }
+  .ok { background: var(--brand-soft); border-color: color-mix(in srgb, var(--brand) 30%, transparent); }
+  .info { background: var(--blue-soft); border-color: color-mix(in srgb, var(--blue) 30%, transparent); }
+  .note strong:first-child, .warn strong:first-child, .ok strong:first-child, .info strong:first-child { display: block; margin-bottom: 2px; }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 40px; margin: 10px 0; }
+  .steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: var(--paper); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .calc { background: var(--code); border-radius: 10px; padding: 14px 18px; font-variant-numeric: tabular-nums; margin: 12px 0; }
+  .calc div { display: flex; justify-content: space-between; gap: 16px; padding: 2px 0; }
+  .calc .total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; font-weight: 700; }
+  .wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 12px 0; }
+  .wallet { border-radius: 12px; padding: 16px 18px; border: 1px solid var(--line); }
+  .wallet.cash { background: var(--brand-soft); }
+  .wallet.re { background: var(--amber-soft); }
+  .wallet.tax { background: var(--rose-soft); }
+  .wallet h4 { margin: 0 0 6px; }
+  .wallet ul { margin: 6px 0 0; padding-left: 18px; }
+  .flow { width: 100%; max-width: 860px; height: auto; display: block; margin: 8px 0 16px; }
+  .flow text { fill: var(--ink); font: 13px -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .flow .sub { fill: var(--muted); font-size: 12px; }
+  .flow .box { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+  .flow .cash { fill: var(--brand-soft); stroke: var(--brand); }
+  .flow .re { fill: var(--amber-soft); stroke: var(--amber); }
+  .flow .tax { fill: var(--rose-soft); stroke: var(--rose); }
+  .flow .ext { fill: var(--blue-soft); stroke: var(--blue); }
+  .flow .arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; marker-end: url(#arr); }
+  .flow .arrow.no { stroke: var(--rose); stroke-dasharray: 5 4; }
+  .flow #arr path { fill: var(--muted); }
+  .tag { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--code); }
+  .tag.y { background: var(--brand-soft); color: var(--brand); }
+  .tag.n { background: var(--rose-soft); color: var(--rose); }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 8px 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 6px; }
+  .footer { color: var(--muted); font-size: 13px; text-align: center; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; padding: 16px; }
+    nav.toc { position: static; max-height: none; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    section, header.doc { padding-left: 16px; padding-right: 16px; }
+  }
+  @media print {
+    body { background: #fff; color: #000; font-size: 12px; }
+    .layout { display: block; padding: 0; }
+    nav.toc { display: none; }
+    section, header.doc { border: none; padding: 0; page-break-inside: auto; }
+    details { border: none; padding: 0; }
+    details > * { display: block; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Mục lục">
+    <div class="title">Mục lục</div>
+    <ol>
+      <li><a href="#tong-quan">1. Tổng quan &amp; thuật ngữ</a></li>
+      <li><a href="#cap-bac">2. Cấp bậc (level)</a>
+        <ol>
+          <li><a href="#kich-hoat">2.1 Kích hoạt tài khoản</a></li>
+          <li><a href="#len-cap">2.2 Lên cấp</a></li>
+        </ol>
+      </li>
+      <li><a href="#hoa-hong">3. Hoa hồng F1 / F2</a>
+        <ol>
+          <li><a href="#cong-thuc">3.1 Công thức</a></li>
+          <li><a href="#ty-le">3.2 Bảng tỉ lệ</a></li>
+          <li><a href="#khong-nhan">3.3 Khi nào không nhận</a></li>
+          <li><a href="#vi-du-hh">3.4 Ví dụ</a></li>
+        </ol>
+      </li>
+      <li><a href="#cac-vi">4. Các loại ví</a></li>
+      <li><a href="#mua-bang-vi">5. Mua hàng bằng ví</a></li>
+      <li><a href="#chuyen-tien">6. Chuyển tiền cho thành viên khác</a></li>
+      <li><a href="#nap-tien">7. Nạp tiền vào ví</a></li>
+      <li><a href="#chuyen-vi">8. Chuyển ví rút → ví tái tiêu dùng</a></li>
+      <li><a href="#tong-hop">9. Bảng tổng hợp dòng tiền</a></li>
+      <li><a href="#doi-chieu">10. Admin đối chiếu ở đâu</a></li>
+      <li><a href="#hoi-dap">11. Hỏi đáp cho support</a></li>
+      <li><a href="#chua-co">12. Chưa có trong hệ thống</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="doc">
+      <h1>Hoa hồng, cấp bậc &amp; ví — quy trình và cách hệ thống xử lý</h1>
+      <p>Tài liệu cho quản trị viên đối chiếu số liệu và cho bộ phận hỗ trợ giải đáp thành viên.</p>
+      <p>Cập nhật: 21/11/2026 · Áp dụng cho website Thuankhang.vn (Phase 1).</p>
+    </header>
+
+    <!-- 1 -->
+    <section id="tong-quan">
+      <h2>1. Tổng quan &amp; thuật ngữ</h2>
+      <p>Mỗi thành viên có <strong>một người giới thiệu cố định</strong> (gắn lúc đăng ký qua mã / link giới thiệu, không tự đổi được). Khi một đơn hàng được <strong>thanh toán</strong>, hệ thống làm 3 việc trong cùng một lần xử lý:</p>
+      <ol class="steps">
+        <li>Trả <strong>hoa hồng F1</strong> cho người giới thiệu trực tiếp của người mua và <strong>hoa hồng F2</strong> cho người giới thiệu của F1.</li>
+        <li>Chia mỗi khoản hoa hồng vào <strong>ví rút tiền</strong>, <strong>ví tái tiêu dùng</strong> và khấu trừ <strong>thuế TNCN</strong>.</li>
+        <li>Cộng tiền hàng vào <strong>doanh số cá nhân cộng dồn</strong> của người mua, kích hoạt tài khoản (nếu là đơn đầu) và xét <strong>lên cấp</strong>.</li>
+      </ol>
+      <div class="table-wrap"><table>
+        <tr><th>Thuật ngữ</th><th>Nghĩa</th></tr>
+        <tr><td>Người mua</td><td>Thành viên đặt đơn. Không nhận hoa hồng từ đơn của chính mình.</td></tr>
+        <tr><td>F1 (của một đơn)</td><td>Người giới thiệu trực tiếp của người mua.</td></tr>
+        <tr><td>F2 (của một đơn)</td><td>Người giới thiệu của F1 (tầng thứ hai). Không có tầng F3.</td></tr>
+        <tr><td>Tiền hàng</td><td>Tổng giá bán các sản phẩm trong đơn (giá đã gồm thuế, <strong>không</strong> tính phí giao hàng).</td></tr>
+        <tr><td>Đơn đã thanh toán</td><td>Đơn chuyển khoản được kế toán xác nhận, hoặc đơn trả bằng ví tái tiêu dùng (thanh toán ngay).</td></tr>
+        <tr><td>Doanh số cộng dồn</td><td>Tổng tiền hàng của mọi đơn <em>tự mua</em> đã thanh toán của thành viên, từ trước tới nay. Dùng để xét cấp.</td></tr>
+        <tr><td>Bút toán ví</td><td>Một dòng cộng (+) hoặc trừ (−) tiền trong ví. Ví chỉ ghi thêm, không sửa / xóa dòng cũ; số dư = tổng các dòng.</td></tr>
+      </table></div>
+      <div class="info"><strong>Mọi con số trong tài liệu là cấu hình hiện tại</strong>Mốc cấp, tên cấp, tỉ lệ hoa hồng, phí doanh nghiệp, phần tái tiêu dùng, thuế TNCN đều chỉnh được trong quản trị (Affiliate → Configuration). Khi đối chiếu một đơn cụ thể, luôn xem số đã lưu trên đơn / sổ hoa hồng — hệ thống lưu lại tỉ lệ, cấp, phí tại thời điểm tính nên đổi cấu hình về sau không làm thay đổi đơn cũ.</div>
+    </section>
+
+    <!-- 2 -->
+    <section id="cap-bac">
+      <h2>2. Cấp bậc (level)</h2>
+      <p>Cấp của thành viên được xét theo <strong>doanh số cộng dồn</strong> (tiền tự mua). Cấp quyết định tỉ lệ hoa hồng thành viên được hưởng khi người khác mua hàng (xem <a href="#ty-le">bảng tỉ lệ</a>).</p>
+      <div class="table-wrap"><table>
+        <tr><th>Thứ tự</th><th>Tên cấp (cấu hình hiện tại)</th><th class="num">Mốc doanh số cộng dồn</th><th>Ghi chú</th></tr>
+        <tr><td>0</td><td>Chưa kích hoạt</td><td class="num">0 đ</td><td>Mới đăng ký, chưa có đơn nào được thanh toán. Không nhận hoa hồng.</td></tr>
+        <tr><td>1</td><td>Khách hàng</td><td class="num">1 đ</td><td>Có đơn đầu tiên được thanh toán là đạt.</td></tr>
+        <tr><td>2</td><td>Cộng tác viên</td><td class="num">3.000.000 đ</td><td></td></tr>
+        <tr><td>3</td><td>Đại lý</td><td class="num">15.000.000 đ</td><td></td></tr>
+        <tr><td>4</td><td>Đại lý cấp 1</td><td class="num">150.000.000 đ</td><td>Cấp VP tỉnh</td></tr>
+        <tr><td>5</td><td>Nhà phân phối</td><td class="num">300.000.000 đ</td><td>Cấp VP tỉnh</td></tr>
+      </table></div>
+      <div class="note"><strong>Kiểm tra lại tên và mốc cấp trên website thật</strong>Bảng trên lấy từ cấu hình ngày 21/11/2026. Tên cấp đổi tự do được; hệ thống xét cấp theo <em>mốc tiền</em>, không theo tên. Xem cấu hình đang dùng ở <strong>Affiliate → Configuration → Levels</strong>.</div>
+
+      <h3 id="kich-hoat">2.1 Kích hoạt tài khoản</h3>
+      <ul>
+        <li>Tài khoản được <strong>kích hoạt</strong> khi có <strong>đơn tự mua đầu tiên được thanh toán</strong> (chuyển khoản đã xác nhận hoặc trả bằng ví).</li>
+        <li>Quản trị viên có quyền "Kích hoạt tài khoản thủ công" có thể kích hoạt tay (ở trang thành viên, hoặc tick ô "Kích hoạt tài khoản thành viên" khi duyệt KYC). Kích hoạt tay đưa thành viên đang ở "Chưa kích hoạt" lên cấp kế tiếp đang bật (hiện là Khách hàng), nhưng <em>không</em> cộng doanh số.</li>
+        <li>Chỉ thành viên <strong>đã kích hoạt</strong> mới nhận hoa hồng từ đơn của tuyến dưới.</li>
+        <li>Kích hoạt là một chiều: không có thao tác hủy kích hoạt.</li>
+      </ul>
+
+      <h3 id="len-cap">2.2 Lên cấp</h3>
+      <ol class="steps">
+        <li>Đơn của thành viên được thanh toán → cộng <strong>tiền hàng</strong> của đơn vào doanh số cộng dồn (không tính phí giao hàng).</li>
+        <li>Cấp mới = cấp đang bật có <strong>mốc cao nhất ≤ doanh số cộng dồn</strong>. Một đơn lớn có thể nhảy nhiều cấp một lần.</li>
+        <li>Lên cấp có hiệu lực <strong>ngay</strong>; được ghi vào lịch sử cấp của thành viên (kèm mã đơn làm lên cấp).</li>
+      </ol>
+      <ul>
+        <li><strong>Không bao giờ hạ cấp</strong>, kể cả khi quản trị đổi mốc hoặc tắt một cấp.</li>
+        <li>Đơn trả bằng <strong>ví tái tiêu dùng</strong> được cộng doanh số như đơn chuyển khoản.</li>
+        <li>Tiền <strong>nạp vào ví</strong>, tiền <strong>nhận chuyển</strong> từ người khác, hoa hồng nhận được — <strong>không</strong> tính vào doanh số.</li>
+        <li>Mỗi đơn chỉ được cộng doanh số một lần.</li>
+      </ul>
+      <div class="calc">
+        <div><span>Ví dụ: doanh số cộng dồn đang có</span><span>2.000.000 đ (Khách hàng)</span></div>
+        <div><span>Đơn mới được thanh toán, tiền hàng</span><span>+ 1.500.000 đ</span></div>
+        <div class="total"><span>Doanh số cộng dồn mới → đạt mốc 3.000.000 đ</span><span>3.500.000 đ → Cộng tác viên</span></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="hoa-hong">
+      <h2>3. Hoa hồng F1 / F2</h2>
+      <p>Hoa hồng được tính và cộng ví <strong>ngay lúc đơn được thanh toán</strong>:</p>
+      <ul>
+        <li>Đơn chuyển khoản: lúc kế toán bấm <em>Xác nhận đã thanh toán</em>.</li>
+        <li>Đơn trả bằng ví tái tiêu dùng: ngay lúc thành viên bấm <em>Thanh toán</em>.</li>
+      </ul>
+      <p>Áp dụng cho <strong>mọi đơn</strong>, kể cả mua lại nhiều lần. Người mua không nhận hoa hồng của chính mình nhưng tuyến trên vẫn nhận.</p>
+
+      <h3 id="cong-thuc">3.1 Công thức</h3>
+      <div class="calc">
+        <div><span>Cơ sở hoa hồng</span><span>= Tiền hàng × (1 − 5% phí doanh nghiệp)</span></div>
+        <div><span>Hoa hồng F1</span><span>= Cơ sở × tỉ lệ F1 theo <strong>cấp của F1</strong></span></div>
+        <div><span>Hoa hồng F2</span><span>= Cơ sở × tỉ lệ F2 theo <strong>cấp của F2</strong></span></div>
+      </div>
+      <ul>
+        <li><strong>Tiền hàng</strong> = giá bán đã gồm thuế, <strong>không tách VAT</strong>, <strong>không tính phí giao hàng</strong>.</li>
+        <li>Tỉ lệ lấy theo <strong>cấp của người hưởng tại thời điểm đơn được thanh toán</strong> (không phải cấp của người mua).</li>
+        <li>Tỉ lệ lấy theo <strong>phiên bản bảng tỉ lệ đang có hiệu lực</strong> lúc đơn được thanh toán. Lưu bảng tỉ lệ mới chỉ áp dụng cho đơn thanh toán sau đó.</li>
+        <li>Mọi phép tính <strong>làm tròn xuống</strong> tới đồng.</li>
+      </ul>
+      <h4>Chia mỗi khoản hoa hồng</h4>
+      <div class="calc">
+        <div><span>Thuế TNCN (khấu trừ, không vào ví nào)</span><span>= làm tròn xuống (Hoa hồng × 10%)</span></div>
+        <div><span>Vào ví tái tiêu dùng</span><span>= làm tròn xuống (Hoa hồng × 20%)</span></div>
+        <div class="total"><span>Vào ví rút tiền (nhận phần lẻ)</span><span>= Hoa hồng − thuế − tái tiêu dùng (≈ 70%)</span></div>
+      </div>
+      <p>Tỉ lệ thuế TNCN và phần tái tiêu dùng chỉnh ở <strong>Affiliate → Configuration → Parameters</strong>; đổi chỉ áp dụng cho hoa hồng tính sau đó.</p>
+
+      <h3 id="ty-le">3.2 Bảng tỉ lệ (phiên bản hiệu lực từ 06/11/2026)</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Cấp của người hưởng</th><th class="num">Tỉ lệ F1</th><th class="num">Tỉ lệ F2</th></tr>
+        <tr><td>Chưa kích hoạt</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>Khách hàng</td><td class="num">0%</td><td class="num">0%</td></tr>
+        <tr><td>Cộng tác viên</td><td class="num">10%</td><td class="num">7%</td></tr>
+        <tr><td>Đại lý</td><td class="num">20%</td><td class="num">7%</td></tr>
+        <tr><td>Đại lý cấp 1</td><td class="num">20%</td><td class="num">7%</td></tr>
+        <tr><td>Nhà phân phối</td><td class="num">20%</td><td class="num">7%</td></tr>
+      </table></div>
+      <p>Bảng đang dùng và các phiên bản cũ: <strong>Affiliate → Configuration → Commission rates</strong>.</p>
+
+      <h3 id="khong-nhan">3.3 Khi nào người hưởng không nhận hoa hồng</h3>
+      <p>Hệ thống vẫn ghi một dòng trong sổ hoa hồng với trạng thái <span class="tag n">Không được nhận</span> kèm lý do, nhưng <strong>không cộng ví và không tính bù về sau</strong>:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Lý do hiện trong sổ</th><th>Giải thích</th></tr>
+        <tr><td>Tài khoản người hưởng đang bị khóa</td><td>Tài khoản bị khóa tại lúc đơn được thanh toán.</td></tr>
+        <tr><td>Người hưởng chưa kích hoạt tài khoản</td><td>Người hưởng chưa từng có đơn tự mua được thanh toán (và chưa được kích hoạt tay).</td></tr>
+        <tr><td>Cấp … chưa có hoa hồng F1/F2 (tỉ lệ 0%)</td><td>Cấp của người hưởng có tỉ lệ 0% (ví dụ cấp Khách hàng).</td></tr>
+        <tr><td>Hoa hồng làm tròn xuống bằng 0 đ</td><td>Đơn quá nhỏ.</td></tr>
+      </table></div>
+      <p>Ngoài ra không có dòng hoa hồng nào khi người mua không có người giới thiệu (với F1), hoặc F1 không có người giới thiệu (với F2).</p>
+
+      <h3 id="vi-du-hh">3.4 Ví dụ đầy đủ</h3>
+      <p>An (Đại lý) giới thiệu Bình (Cộng tác viên); Bình giới thiệu Cường. Cường mua đơn tiền hàng <strong>3.000.000 đ</strong> (phí ship COD không tính). Kế toán xác nhận thanh toán:</p>
+      <div class="calc">
+        <div><span>Tiền hàng</span><span>3.000.000 đ</span></div>
+        <div><span>− 5% phí doanh nghiệp</span><span>− 150.000 đ</span></div>
+        <div class="total"><span>Cơ sở hoa hồng</span><span>2.850.000 đ</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <tr><th>Người hưởng</th><th class="num">Hoa hồng</th><th class="num">Ví rút tiền</th><th class="num">Ví tái tiêu dùng</th><th class="num">Thuế TNCN</th></tr>
+        <tr><td>Bình — F1, Cộng tác viên 10%</td><td class="num">285.000</td><td class="num">199.500</td><td class="num">57.000</td><td class="num">28.500</td></tr>
+        <tr><td>An — F2, Đại lý 7%</td><td class="num">199.500</td><td class="num">139.650</td><td class="num">39.900</td><td class="num">19.950</td></tr>
+      </table></div>
+      <p>Cùng lúc: doanh số cộng dồn của Cường +3.000.000 đ; nếu đây là đơn đầu, tài khoản Cường được kích hoạt và lên thẳng Cộng tác viên (đạt mốc 3.000.000 đ).</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="cac-vi">
+      <h2>4. Các loại ví</h2>
+      <div class="wallets">
+        <div class="wallet cash">
+          <h4>Ví rút tiền</h4>
+          <div>Nhận ≈ <strong>70%</strong> mỗi khoản hoa hồng.</div>
+          <ul>
+            <li>Dùng để rút tiền về tài khoản ngân hàng (chức năng rút đang xây dựng — tối thiểu 500.000 đ, cần KYC).</li>
+            <li>Chuyển được sang ví tái tiêu dùng của chính mình (một chiều).</li>
+            <li>Không dùng trực tiếp để mua hàng, không chuyển cho người khác.</li>
+          </ul>
+        </div>
+        <div class="wallet re">
+          <h4>Ví tái tiêu dùng</h4>
+          <div>Nhận ≈ <strong>20%</strong> mỗi khoản hoa hồng, tiền nạp, tiền người khác chuyển tới, tiền chuyển từ ví rút.</div>
+          <ul>
+            <li>Dùng để <strong>mua hàng</strong> trên website.</li>
+            <li>Chuyển được cho thành viên khác (cần KYC).</li>
+            <li><strong>Không rút ra tiền mặt</strong>, không chuyển ngược về ví rút tiền.</li>
+          </ul>
+        </div>
+        <div class="wallet tax">
+          <h4>Thuế TNCN (không phải ví)</h4>
+          <div><strong>10%</strong> mỗi khoản hoa hồng, khấu trừ ngay lúc cộng hoa hồng.</div>
+          <ul>
+            <li>Không vào ví nào của thành viên.</li>
+            <li>Ghi lại trên từng dòng hoa hồng để đối chiếu.</li>
+          </ul>
+        </div>
+      </div>
+      <p>Nguyên tắc chung của ví:</p>
+      <ul>
+        <li>Ví <strong>không bao giờ âm</strong>: mọi thao tác trừ tiền đều kiểm tra số dư tại đúng thời điểm trừ; bấm nhiều lần / mở nhiều tab cùng lúc cũng chỉ trừ được tới khi hết tiền.</li>
+        <li>Mỗi dòng ví ghi kèm <strong>số dư sau giao dịch</strong>, đơn / lệnh nạp / người chuyển–nhận liên quan.</li>
+        <li>Không ai (kể cả quản trị) sửa hoặc xóa được dòng ví đã ghi. Hiện <strong>chưa có</strong> chức năng điều chỉnh số dư tay trong quản trị.</li>
+      </ul>
+      <svg class="flow" viewBox="0 0 860 330" role="img" aria-label="Sơ đồ dòng tiền giữa các ví">
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" /></marker></defs>
+        <rect class="box ext" x="10" y="20" width="200" height="56" rx="10" /><text x="110" y="44" text-anchor="middle">Hoa hồng F1 / F2</text><text class="sub" x="110" y="62" text-anchor="middle">khi đơn tuyến dưới thanh toán</text>
+        <rect class="box ext" x="10" y="140" width="200" height="56" rx="10" /><text x="110" y="164" text-anchor="middle">Nạp tiền (chuyển khoản)</text><text class="sub" x="110" y="182" text-anchor="middle">kế toán xác nhận</text>
+        <rect class="box ext" x="10" y="250" width="200" height="56" rx="10" /><text x="110" y="274" text-anchor="middle">Thành viên khác chuyển tới</text><text class="sub" x="110" y="292" text-anchor="middle">theo mã giới thiệu</text>
+        <rect class="box cash" x="330" y="20" width="200" height="56" rx="10" /><text x="430" y="44" text-anchor="middle">Ví rút tiền</text><text class="sub" x="430" y="62" text-anchor="middle">≈ 70% hoa hồng</text>
+        <rect class="box tax" x="330" y="96" width="200" height="34" rx="10" /><text x="430" y="118" text-anchor="middle">Thuế TNCN 10%</text>
+        <rect class="box re" x="330" y="180" width="200" height="56" rx="10" /><text x="430" y="204" text-anchor="middle">Ví tái tiêu dùng</text><text class="sub" x="430" y="222" text-anchor="middle">20% hoa hồng + nạp + nhận</text>
+        <rect class="box" x="650" y="20" width="200" height="56" rx="10" /><text x="750" y="44" text-anchor="middle">Rút về ngân hàng</text><text class="sub" x="750" y="62" text-anchor="middle">đang xây dựng</text>
+        <rect class="box" x="650" y="160" width="200" height="56" rx="10" /><text x="750" y="184" text-anchor="middle">Mua hàng</text><text class="sub" x="750" y="202" text-anchor="middle">đơn thanh toán ngay</text>
+        <rect class="box" x="650" y="250" width="200" height="56" rx="10" /><text x="750" y="274" text-anchor="middle">Chuyển cho thành viên khác</text><text class="sub" x="750" y="292" text-anchor="middle">cần KYC, ≥ 10.000 đ</text>
+        <path class="arrow" d="M210 44 L328 44" /><path class="arrow" d="M210 54 L328 112" /><path class="arrow" d="M210 64 Q270 140 328 196" />
+        <path class="arrow" d="M210 168 L328 204" /><path class="arrow" d="M210 278 L328 222" />
+        <path class="arrow" d="M430 76 L430 96" /><path class="arrow" d="M455 76 Q470 128 455 178" /><text class="sub" x="478" y="150">chuyển 1 chiều</text>
+        <path class="arrow" d="M530 44 L648 44" /><path class="arrow" d="M530 204 L648 188" /><path class="arrow" d="M530 220 L648 276" />
+      </svg>
+    </section>
+
+    <!-- 5 -->
+    <section id="mua-bang-vi">
+      <h2>5. Mua hàng bằng ví tái tiêu dùng</h2>
+      <h3>Điều kiện</h3>
+      <ul>
+        <li>Số dư ví tái tiêu dùng <strong>≥ tổng tiền đơn</strong>. Không trả một phần bằng ví, một phần bằng chuyển khoản.</li>
+        <li>Ví không đủ: ô "Ví tái tiêu dùng" ở trang thanh toán bị khóa, hiện "Còn thiếu … đ" và link <em>Nạp tiền vào ví</em>.</li>
+        <li>Thành viên đang có 3 đơn chuyển khoản chưa thanh toán vẫn mua được bằng ví (ô chuyển khoản bị khóa, ô ví vẫn chọn được nếu đủ tiền).</li>
+      </ul>
+      <h3>Quy trình thành viên</h3>
+      <ol class="steps">
+        <li>Thêm sản phẩm vào giỏ → <em>Thanh toán</em>.</li>
+        <li>Nhập người nhận, hình thức nhận hàng như bình thường; ở mục <em>Hình thức thanh toán</em> chọn <strong>Ví tái tiêu dùng</strong> (thấy số dư hiện tại).</li>
+        <li>Bấm <em>Thanh toán</em> → ví bị trừ ngay, đơn chuyển thẳng sang <strong>Đã thanh toán</strong>, màn hình báo số dư còn lại.</li>
+      </ol>
+      <h3>Hệ thống xử lý (trong cùng một lần, hoặc tất cả hoặc không gì cả)</h3>
+      <ol class="steps">
+        <li>Kiểm tra lại số dư và tồn kho. Hết hàng hoặc ví không đủ → không tạo đơn, không trừ ví.</li>
+        <li>Tạo đơn, giữ hàng, trừ ví tái tiêu dùng đúng tổng tiền đơn (dòng ví loại <em>Thanh toán đơn hàng</em>, gắn mã đơn).</li>
+        <li>Xác nhận thanh toán tự động: mã giao dịch <code>VI-&lt;mã đơn&gt;</code>, người xác nhận "Hệ thống", ghi chú "Thanh toán bằng ví tái tiêu dùng". Không cần kế toán.</li>
+        <li><strong>Tính như đơn chuyển khoản</strong>: trả hoa hồng F1 / F2 cho tuyến trên, cộng doanh số cộng dồn, kích hoạt và xét lên cấp người mua.</li>
+        <li>Gửi thông báo "Đơn hàng mới … (đã thanh toán bằng ví)" cho bộ phận vận hành để giao hàng.</li>
+      </ol>
+      <div class="note"><strong>Lưu ý</strong>
+        <ul>
+          <li>Đơn đã thanh toán (kể cả trả bằng ví) <strong>không hủy được</strong> và <strong>không hoàn tiền về ví</strong> trong Phase 1.</li>
+          <li>Kế toán không nhập tay được mã giao dịch bắt đầu bằng <code>VI-</code> (dành riêng cho đơn trả bằng ví).</li>
+          <li>Phí giao hàng tận nơi vẫn là COD, khách trả cho đơn vị vận chuyển, không trừ ví.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="chuyen-tien">
+      <h2>6. Chuyển tiền ví tái tiêu dùng cho thành viên khác</h2>
+      <h3>Điều kiện</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Mục</th><th>Quy định</th></tr>
+        <tr><td>Người chuyển</td><td>Phải được <strong>duyệt KYC</strong>. Chưa duyệt → trang chuyển tiền bị khóa, có link sang trang KYC.</td></tr>
+        <tr><td>Người nhận</td><td>Bất kỳ thành viên nào <strong>chưa bị khóa</strong>, xác định bằng <strong>mã giới thiệu</strong>. Không cần cùng tuyến, không cần KYC. Không chuyển cho chính mình.</td></tr>
+        <tr><td>Từ ví / tới ví</td><td>Ví tái tiêu dùng của người chuyển → <strong>ví tái tiêu dùng</strong> của người nhận. Ví rút tiền không chuyển cho người khác được.</td></tr>
+        <tr><td>Số tiền</td><td>Tối thiểu <strong>10.000 đ</strong>, không vượt số dư. Không phí, không hạn mức ngày (giới hạn kỹ thuật 1 tỷ đ / lần để chống gõ nhầm).</td></tr>
+        <tr><td>Xác nhận</td><td>Nhập <strong>mật khẩu đăng nhập</strong>. Chuyển ngay, không cần quản trị duyệt.</td></tr>
+      </table></div>
+      <h3>Quy trình thành viên</h3>
+      <ol class="steps">
+        <li><em>Tài khoản → Ví → Chuyển tiền</em>, nhập mã giới thiệu người nhận và số tiền → <em>Tiếp tục</em>.</li>
+        <li>Trang xác nhận hiện <strong>tên rút gọn</strong> người nhận (ví dụ "Nguyễn V. An") kèm mã, số tiền, số dư sau khi chuyển. Kiểm tra kỹ, nhập mật khẩu → bấm <em>Chuyển</em>.</li>
+        <li>Sai mật khẩu: ở lại trang xác nhận, chưa chuyển. Đúng: chuyển ngay, sang trang lịch sử ví.</li>
+      </ol>
+      <h3>Hệ thống xử lý</h3>
+      <ul>
+        <li>Kiểm tra lại mọi điều kiện ngay lúc chuyển (KYC, khóa tài khoản, số dư).</li>
+        <li>Ghi 2 dòng ví: người chuyển <em>Chuyển tiền đi</em> (−), người nhận <em>Nhận tiền chuyển</em> (+), mỗi dòng ghi tên + mã của bên kia.</li>
+        <li>Ghi nhật ký hệ thống trên thành viên chuyển.</li>
+        <li><strong>Không</strong> tính doanh số, <strong>không</strong> sinh hoa hồng.</li>
+      </ul>
+      <div class="warn"><strong>Chuyển nhầm không tự hoàn được</strong>Tiền đã chuyển nằm trong ví người nhận; hệ thống không có thao tác thu hồi. Hướng dẫn thành viên liên hệ người nhận để chuyển lại.</div>
+    </section>
+
+    <!-- 7 -->
+    <section id="nap-tien">
+      <h2>7. Nạp tiền vào ví tái tiêu dùng</h2>
+      <p>Quy trình giống thanh toán đơn hàng bằng chuyển khoản: chuyển khoản → tải ảnh bill → kế toán đối chiếu sao kê và xác nhận → cộng ví.</p>
+      <h3>Điều kiện</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Mục</th><th>Quy định</th></tr>
+        <tr><td>Số tiền một lệnh</td><td>Tối thiểu <strong>100.000 đ</strong> (tối đa 1 tỷ đ).</td></tr>
+        <tr><td>Số lệnh chưa xong</td><td>Tối đa <strong>3 lệnh</strong> đang chờ chuyển khoản / chờ xác nhận cùng lúc.</td></tr>
+        <tr><td>Hạn chuyển khoản</td><td>Bằng hạn thanh toán đơn hàng (hiện <strong>24 giờ</strong>). Quá hạn mà chưa báo chuyển khoản → lệnh tự hủy.</td></tr>
+        <tr><td>Mã lệnh</td><td><code>NAP</code> + 8 ký tự, ví dụ <code>NAPU92BF2VP</code>. Đây cũng là <strong>nội dung chuyển khoản</strong>.</td></tr>
+        <tr><td>Số tiền cộng ví</td><td>Bằng <strong>số tiền công ty thực nhận</strong> (kế toán nhập), không phải số ghi trên lệnh.</td></tr>
+      </table></div>
+      <h3>Trạng thái lệnh nạp</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Trạng thái</th><th>Ý nghĩa</th><th>Ai chuyển sang</th></tr>
+        <tr><td>Chờ chuyển khoản</td><td>Vừa tạo; trang lệnh hiện QR + thông tin chuyển khoản công ty, đếm hạn.</td><td>Thành viên tạo lệnh</td></tr>
+        <tr><td>Chờ xác nhận</td><td>Thành viên đã tải ảnh bill và bấm "Tôi đã chuyển khoản". Dừng đếm hạn.</td><td>Thành viên</td></tr>
+        <tr><td>Đã cộng ví</td><td>Kế toán xác nhận; tiền đã vào ví tái tiêu dùng.</td><td>Kế toán</td></tr>
+        <tr><td>Đã hủy</td><td>Thành viên tự hủy, kế toán hủy, hoặc quá hạn.</td><td>Thành viên / Kế toán / Hệ thống</td></tr>
+      </table></div>
+      <h3>Quy trình thành viên</h3>
+      <ol class="steps">
+        <li><em>Tài khoản → Ví → Nạp tiền</em>, nhập số tiền → <em>Tạo lệnh nạp</em>.</li>
+        <li>Quét mã QR (hoặc chuyển tay) <strong>đúng số tiền</strong> và <strong>nội dung = mã lệnh</strong>.</li>
+        <li>Chụp màn hình giao dịch thành công, tải lên ô <em>Ảnh bill</em> (bắt buộc, JPG / PNG / WEBP) → bấm <em>Tôi đã chuyển khoản</em>.</li>
+        <li>Chờ kế toán xác nhận. Lệnh chưa báo chuyển khoản thì tự hủy được bằng nút <em>Hủy lệnh</em>.</li>
+      </ol>
+      <h3>Quy trình kế toán (Quản trị → Wallet top-ups)</h3>
+      <p>Cần quyền <em>Nạp ví tái tiêu dùng</em> + <em>Xác nhận</em> (mặc định nhóm Kế toán). Tab mặc định <strong>Chờ xác nhận</strong>, lệnh báo trước nằm trên. Bộ phận nhận thông báo Telegram / email khi thành viên báo đã chuyển khoản (nếu đã bật ở Cài đặt → Thông báo).</p>
+      <ol class="steps">
+        <li>Mở lệnh, xem ảnh bill, <strong>đối chiếu sao kê ngân hàng</strong> (số tiền + nội dung = mã lệnh). Ảnh bill do thành viên tự tải, chỉ để tham khảo.</li>
+        <li>Đã nhận đủ (≥ số trên lệnh): nhập <strong>mã giao dịch ngân hàng</strong> + <strong>số tiền thực nhận</strong> → <em>Xác nhận, cộng ví</em>. Chuyển thừa: cộng đúng số thực nhận, hiện ghi chú "Thừa … đ".</li>
+        <li>Chưa thấy tiền hoặc <strong>chuyển thiếu</strong>: bấm <em>Chưa nhận được tiền</em> kèm lý do → lệnh về "Chờ chuyển khoản", hạn tính lại từ lúc đó; thành viên chuyển bù rồi gửi lại bill (ảnh mới thay ảnh cũ).</li>
+        <li>Lệnh không hợp lệ: <em>Hủy lệnh</em> kèm lý do.</li>
+        <li>Lệnh đã hủy nhưng tiền về muộn: vẫn xác nhận được, <strong>bắt buộc ghi chú</strong>; lệnh được khôi phục và cộng ví.</li>
+      </ol>
+      <div class="note"><strong>Quy tắc mã giao dịch</strong>Mỗi mã giao dịch ngân hàng chỉ dùng được <strong>một lần trên toàn hệ thống</strong> — dùng chung với đơn hàng. Một khoản tiền đã xác nhận cho đơn hàng thì không dùng để xác nhận lệnh nạp được, và ngược lại. Xác nhận là không hoàn tác được; bấm lại cũng không cộng ví hai lần.</div>
+      <p>Tiền nạp <strong>không</strong> tính doanh số, <strong>không</strong> sinh hoa hồng. Doanh số và hoa hồng chỉ phát sinh khi thành viên dùng tiền đó mua hàng (mục 5).</p>
+    </section>
+
+    <!-- 8 -->
+    <section id="chuyen-vi">
+      <h2>8. Chuyển từ ví rút tiền sang ví tái tiêu dùng</h2>
+      <ul>
+        <li><strong>Một chiều</strong>: chỉ từ ví rút tiền sang ví tái tiêu dùng của chính mình. Không có chiều ngược lại.</li>
+        <li>Tối thiểu <strong>10.000 đ</strong>, không vượt số dư ví rút tiền. Không phí, không cần duyệt, không cần KYC.</li>
+        <li>Thành viên: <em>Tài khoản → Ví → Chuyển sang ví tái tiêu dùng</em>, nhập số tiền, xác nhận.</li>
+        <li>Hệ thống ghi 2 dòng ví: ví rút tiền <em>Chuyển sang ví tái tiêu dùng</em> (−), ví tái tiêu dùng <em>Chuyển từ ví rút tiền</em> (+).</li>
+        <li>Không tính doanh số, không sinh hoa hồng.</li>
+      </ul>
+      <div class="warn"><strong>Không đảo ngược được</strong>Tiền đã sang ví tái tiêu dùng thì không rút ra tiền mặt được nữa. Nhắc thành viên cân nhắc trước khi chuyển.</div>
+    </section>
+
+    <!-- 9 -->
+    <section id="tong-hop">
+      <h2>9. Bảng tổng hợp dòng tiền</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Sự kiện</th><th>Ví rút tiền</th><th>Ví tái tiêu dùng</th><th>Doanh số / lên cấp</th><th>Sinh hoa hồng F1/F2</th><th>Cần duyệt</th></tr>
+        <tr><td>Đơn tuyến dưới được thanh toán (người hưởng)</td><td>+ ≈70% hoa hồng</td><td>+ 20% hoa hồng</td><td>—</td><td>—</td><td>Theo đơn</td></tr>
+        <tr><td>Tự mua — chuyển khoản</td><td>—</td><td>—</td><td><span class="tag y">Có</span></td><td><span class="tag y">Có</span></td><td>Kế toán xác nhận</td></tr>
+        <tr><td>Tự mua — trả bằng ví</td><td>—</td><td>− tổng đơn</td><td><span class="tag y">Có</span></td><td><span class="tag y">Có</span></td><td>Không</td></tr>
+        <tr><td>Nạp tiền</td><td>—</td><td>+ số thực nhận</td><td><span class="tag n">Không</span></td><td><span class="tag n">Không</span></td><td>Kế toán xác nhận</td></tr>
+        <tr><td>Chuyển cho người khác</td><td>—</td><td>− (người chuyển) / + (người nhận)</td><td><span class="tag n">Không</span></td><td><span class="tag n">Không</span></td><td>Không (cần KYC + mật khẩu)</td></tr>
+        <tr><td>Chuyển ví rút → tái tiêu dùng</td><td>−</td><td>+</td><td><span class="tag n">Không</span></td><td><span class="tag n">Không</span></td><td>Không</td></tr>
+      </table></div>
+      <h3>Tên loại giao dịch trong lịch sử ví</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Tên hiển thị</th><th>Ví</th><th>Dấu</th><th>Kèm theo</th></tr>
+        <tr><td>Hoa hồng</td><td>Rút tiền / Tái tiêu dùng</td><td>+</td><td>Mã đơn, tầng F1/F2</td></tr>
+        <tr><td>Chia lại hoa hồng cũ</td><td>Rút tiền / Tái tiêu dùng</td><td>− / +</td><td>Chỉ có với hoa hồng cũ trước 19/11/2026 (cộng 100% vào ví rút, sau đó được chia lại 70/20/10)</td></tr>
+        <tr><td>Thanh toán đơn hàng</td><td>Tái tiêu dùng</td><td>−</td><td>Mã đơn</td></tr>
+        <tr><td>Nạp tiền</td><td>Tái tiêu dùng</td><td>+</td><td>Mã lệnh nạp</td></tr>
+        <tr><td>Chuyển tiền đi / Nhận tiền chuyển</td><td>Tái tiêu dùng</td><td>− / +</td><td>Tên + mã giới thiệu bên kia</td></tr>
+        <tr><td>Chuyển sang ví tái tiêu dùng / Chuyển từ ví rút tiền</td><td>Rút tiền / Tái tiêu dùng</td><td>− / +</td><td>—</td></tr>
+      </table></div>
+    </section>
+
+    <!-- 10 -->
+    <section id="doi-chieu">
+      <h2>10. Admin đối chiếu ở đâu</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Cần xem</th><th>Vào đâu (quản trị)</th><th>Quyền</th></tr>
+        <tr><td>Số dư hai ví, tổng hoa hồng, thuế đã trừ của một thành viên</td><td>Members → mở thành viên → thẻ <em>Ví hoa hồng</em></td><td>Thành viên</td></tr>
+        <tr><td>Từng dòng hoa hồng (cả dòng không được nhận + lý do), số dư sau mỗi dòng</td><td>Thẻ <em>Ví hoa hồng</em> → <em>Xem sổ hoa hồng</em></td><td>Thành viên hoặc Sổ hoa hồng</td></tr>
+        <tr><td>Mua bằng ví, nạp, chuyển đi / nhận, chuyển giữa hai ví (10 dòng gần nhất)</td><td>Members → mở thành viên → thẻ <em>Giao dịch ví gần đây</em></td><td>Thành viên</td></tr>
+        <tr><td>Hoa hồng của một đơn (người hưởng, cấp, tỉ lệ, cơ sở, phần chia)</td><td>Orders → mở đơn → thẻ <em>Hoa hồng</em></td><td>Đơn hàng</td></tr>
+        <tr><td>Đơn trả bằng ví hay chuyển khoản, mã giao dịch, ai xác nhận</td><td>Orders → mở đơn → thẻ <em>Thanh toán</em> (dòng <em>Hình thức</em>)</td><td>Đơn hàng</td></tr>
+        <tr><td>Lệnh nạp, ảnh bill, mã giao dịch, số thực nhận, lịch sử xử lý</td><td>Wallet top-ups → mở lệnh</td><td>Nạp ví tái tiêu dùng</td></tr>
+        <tr><td>Doanh số cộng dồn, cấp hiện tại, lịch sử lên cấp</td><td>Members → mở thành viên</td><td>Thành viên</td></tr>
+        <tr><td>Trạng thái KYC (điều kiện chuyển tiền)</td><td>KYC</td><td>KYC</td></tr>
+        <tr><td>Ai đã làm gì, lúc nào</td><td>Audit log (nhật ký hệ thống)</td><td>Nhật ký hệ thống</td></tr>
+        <tr><td>Mốc cấp, bảng tỉ lệ, phí doanh nghiệp, % tái tiêu dùng, % thuế, hạn thanh toán</td><td>Configuration → Levels / Commission rates / Parameters</td><td>Theo từng mục cấu hình</td></tr>
+        <tr><td>Tài khoản ngân hàng + QR công ty hiện cho thành viên</td><td>Settings → tab <em>Thanh toán</em></td><td>Cài đặt website</td></tr>
+      </table></div>
+      <p>Phía thành viên: <em>Tài khoản → Ví</em> (số dư hai ví, lịch sử hoa hồng có chi tiết cách tính từng dòng) và <em>Lịch sử giao dịch ví</em> (mọi dòng cộng / trừ, lọc theo ví).</p>
+      <h3>Cách đối chiếu số dư</h3>
+      <ol class="steps">
+        <li>Mở sổ hoa hồng / giao dịch ví của thành viên, sắp theo thời gian.</li>
+        <li>Mỗi dòng có <strong>số dư sau</strong>. Số dư sau của dòng mới nhất phải bằng số dư đang hiện ở thẻ ví.</li>
+        <li>Số dư ví = tổng mọi dòng (+) và (−) của ví đó từ trước tới nay.</li>
+      </ol>
+    </section>
+
+    <!-- 11 -->
+    <section id="hoi-dap">
+      <h2>11. Hỏi đáp cho support</h2>
+      <details><summary>Sao tôi không nhận được hoa hồng đơn của người tôi giới thiệu?</summary>
+        <p>Kiểm tra lần lượt:</p>
+        <ol>
+          <li>Đơn đã <strong>được thanh toán</strong> chưa? Đơn chuyển khoản chỉ tính khi kế toán xác nhận.</li>
+          <li>Thành viên có đúng là F1 (người giới thiệu trực tiếp) hoặc F2 của người mua không?</li>
+          <li>Mở sổ hoa hồng của thành viên: nếu có dòng <em>Không được nhận</em> thì xem lý do (chưa kích hoạt, bị khóa, cấp có tỉ lệ 0%).</li>
+        </ol>
+        <p>Dòng không được nhận <strong>không được tính bù</strong> khi thành viên kích hoạt / lên cấp sau đó.</p></details>
+      <details><summary>Sao hoa hồng vào ví rút tiền chỉ khoảng 70%?</summary><p>Mỗi khoản hoa hồng được chia: khoảng 70% vào ví rút tiền, 20% vào ví tái tiêu dùng, 10% khấu trừ thuế TNCN. Thành viên bấm vào từng dòng ở trang Ví để xem chi tiết cách tính.</p></details>
+      <details><summary>Sao hoa hồng tính trên số nhỏ hơn giá trị đơn?</summary><p>Cơ sở hoa hồng = tiền hàng trừ 5% phí doanh nghiệp; không tính phí giao hàng. Ví dụ đơn 3.000.000 đ → cơ sở 2.850.000 đ.</p></details>
+      <details><summary>Tỉ lệ của tôi là bao nhiêu? Sao lần này khác lần trước?</summary><p>Tỉ lệ theo cấp <strong>của chính người nhận hoa hồng</strong> tại lúc đơn được thanh toán, và theo bảng tỉ lệ có hiệu lực lúc đó. Thành viên lên cấp hoặc công ty đổi bảng tỉ lệ thì các đơn sau tính theo tỉ lệ mới; đơn cũ giữ nguyên.</p></details>
+      <details><summary>Tôi mua bao nhiêu thì lên cấp? Tôi có bị xuống cấp không?</summary><p>Xem mốc ở <a href="#cap-bac">mục 2</a>. Doanh số chỉ tính tiền tự mua (đơn đã thanh toán, gồm cả đơn trả bằng ví). Không bao giờ bị xuống cấp.</p></details>
+      <details><summary>Rút tiền ở ví tái tiêu dùng được không?</summary><p>Không. Ví tái tiêu dùng chỉ để mua hàng hoặc chuyển cho thành viên khác.</p></details>
+      <details><summary>Chuyển từ ví tái tiêu dùng về ví rút tiền được không?</summary><p>Không. Chỉ chuyển được chiều ví rút tiền → ví tái tiêu dùng.</p></details>
+      <details><summary>Ví có tiền nhưng không chọn được "Ví tái tiêu dùng" khi thanh toán</summary><p>Số dư phải đủ <strong>toàn bộ</strong> tổng đơn; không trả một phần bằng ví. Trang thanh toán ghi rõ số tiền còn thiếu. Thành viên nạp thêm, chuyển thêm từ ví rút tiền, hoặc chọn chuyển khoản.</p></details>
+      <details><summary>Đơn trả bằng ví có hủy / hoàn tiền về ví được không?</summary><p>Không. Đơn đã thanh toán không hủy được và hiện chưa có chức năng hoàn tiền (Phase 1).</p></details>
+      <details><summary>Tôi không chuyển tiền cho người khác được</summary><p>Người chuyển phải được duyệt KYC. Ngoài ra: số tiền tối thiểu 10.000 đ, không vượt số dư ví tái tiêu dùng, mã giới thiệu người nhận phải đúng và tài khoản người nhận không bị khóa.</p></details>
+      <details><summary>Tôi chuyển nhầm người</summary><p>Hệ thống không thu hồi được. Thành viên liên hệ người nhận để chuyển lại. Có thể tra người nhận ở thẻ <em>Giao dịch ví gần đây</em> của người chuyển.</p></details>
+      <details><summary>Tôi đã nạp tiền mà chưa thấy cộng ví</summary>
+        <ol>
+          <li>Thành viên đã tải bill và bấm "Tôi đã chuyển khoản" chưa? Lệnh "Chờ chuyển khoản" thì kế toán chưa nhận được yêu cầu.</li>
+          <li>Lệnh "Chờ xác nhận": kế toán đang đối chiếu.</li>
+          <li>Lệnh bị trả về "Chờ chuyển khoản": xem lý do trong lịch sử lệnh (thường là chuyển thiếu / chưa thấy tiền) → chuyển bù rồi gửi lại bill.</li>
+          <li>Lệnh "Đã hủy" do quá hạn mà khách đã chuyển: kế toán đối chiếu sao kê rồi xác nhận lệnh đó (kèm ghi chú).</li>
+        </ol></details>
+      <details><summary>Tôi nạp 200.000 đ nhưng ví chỉ cộng / cộng nhiều hơn?</summary><p>Ví cộng theo số tiền công ty <strong>thực nhận</strong> theo sao kê. Chuyển thiếu thì lệnh bị trả về để chuyển bù; chuyển thừa thì cộng cả phần thừa.</p></details>
+      <details><summary>Tiền nạp có được tính doanh số / hoa hồng không?</summary><p>Không. Chỉ khi dùng tiền trong ví để mua hàng thì đơn đó mới tính doanh số và sinh hoa hồng cho tuyến trên.</p></details>
+    </section>
+
+    <!-- 12 -->
+    <section id="chua-co">
+      <h2>12. Chưa có trong hệ thống (tính đến 21/11/2026)</h2>
+      <ul>
+        <li><strong>Rút tiền</strong> từ ví rút tiền về ngân hàng (quy định đã chốt: tối thiểu 500.000 đ, cần KYC).</li>
+        <li><strong>Thưởng KPI tháng / thưởng nhóm theo cây nhị phân</strong>: mới có màn hình cấu hình bậc KPI (3% / 5% / 7% / 9%, tối thiểu 5 F1), chưa tính tiền và chưa cộng ví.</li>
+        <li>Hủy / hoàn tiền đơn đã thanh toán, thu hồi hoa hồng.</li>
+        <li>Điều chỉnh số dư ví tay trong quản trị.</li>
+        <li>Tự động xác nhận chuyển khoản qua webhook ngân hàng (hiện kế toán xác nhận tay).</li>
+      </ul>
+    </section>
+
+    <p class="footer">Tài liệu nội bộ Thuankhang.vn — cập nhật khi có thay đổi quy tắc hoặc cấu hình.</p>
+  </main>
+</div>
+</body>
+</html>
