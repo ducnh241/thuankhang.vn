@@ -366,6 +366,9 @@ class BinaryTreeTest extends TestCase
             ->assertSeeInOrder(['Doanh số tháng '.now()->format('m/Y'), 'Nhánh A:', '2.500.000 đ', '2 người', 'Nhánh B:', '1.200.000 đ', '3 người', 'Yếu hơn: Nhánh B'])
             // Chú giải cấp bậc theo cấu hình
             ->assertSeeInOrder(['Cấp bậc:', 'Chưa kích hoạt', 'Nhân viên', 'Cộng tác viên', 'Đại lý'])
+            // Thanh thu phóng + toàn màn hình nằm ngay trên sơ đồ
+            ->assertSeeInOrder(['data-tree-zoom', 'data-zoom="out"', 'data-zoom="reset"', '100%', 'data-zoom="in"', 'data-zoom="fit"', 'Vừa khung',
+                'data-fullscreen', 'Toàn màn hình', 'id="binary-tree"'], false)
             ->getContent();
 
         $dom = new \DOMDocument;

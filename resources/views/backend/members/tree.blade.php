@@ -63,7 +63,22 @@
     </div>
   </div>
 
-  <div class="ant-card ant-card-bordered">
+  {{-- Thu phóng (−, %, +, Vừa khung; Ctrl / ⌘ + lăn chuột; phím + − 0 khi đang chọn sơ đồ) + xem toàn màn hình; kéo chuột để
+       di chuyển. JS: resources/backend/js/tree-zoom.js ([data-tree-zoom]); mức thu phóng nhớ theo trình duyệt. --}}
+  <div class="ant-card ant-card-bordered btree-card" data-tree-zoom>
+    <div class="btree-toolbar" role="toolbar" aria-label="Thu phóng sơ đồ">
+      <span class="btree-toolbar-title">{{ $member->full_name }} <span class="{{ $muted }}">· {{ $depth }} tầng</span></span>
+      <div class="ant-btn-group">
+        <button type="button" class="ant-btn ant-btn-sm" data-zoom="out" title="Thu nhỏ (−)" aria-label="Thu nhỏ">{{ ant_icon('zoom-out') }}</button>
+        <button type="button" class="ant-btn ant-btn-sm btree-zoom-value" data-zoom="reset" title="Về 100% (0)" aria-label="Về kích thước gốc">100%</button>
+        <button type="button" class="ant-btn ant-btn-sm" data-zoom="in" title="Phóng to (+)" aria-label="Phóng to">{{ ant_icon('zoom-in') }}</button>
+      </div>
+      <button type="button" class="ant-btn ant-btn-sm" data-zoom="fit" title="Thu nhỏ vừa khung để thấy cả cây">{{ ant_icon('column-width') }}<span class="max-sm:hidden">Vừa khung</span></button>
+      <button type="button" class="ant-btn ant-btn-sm" data-fullscreen title="Xem toàn màn hình (Esc để thoát)">
+        <span data-fullscreen-enter>{{ ant_icon('fullscreen') }}<span class="max-sm:hidden">Toàn màn hình</span></span>
+        <span data-fullscreen-exit hidden>{{ ant_icon('fullscreen-exit') }}<span class="max-sm:hidden">Thoát toàn màn hình</span></span>
+      </button>
+    </div>
     <div class="btree" id="binary-tree" tabindex="0" aria-label="Cây nhị phân của {{ $member->full_name }}">
       <ul>
         @include('backend.members._tree-node', ['node' => $tree, 'side' => null, 'weak' => false, 'isTop' => true])

@@ -3418,3 +3418,76 @@ a.project-thumb:hover {
   color: rgba(0, 0, 0, 0.45);
   font-variant-numeric: tabular-nums;
 }
+
+/* Sơ đồ cây nhị phân: thanh thu phóng + chế độ toàn màn hình (JS: tree-zoom.js). Thu phóng bằng thuộc tính CSS zoom trên
+   <ul> gốc (khác transform: kích thước cuộn đổi theo nên thanh cuộn luôn đúng). Toàn màn hình: Fullscreen API; trình duyệt
+   không hỗ trợ (Safari iPhone) thì phủ kín cửa sổ bằng lớp .is-full. */
+.btree-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.btree-toolbar-title {
+  margin-right: auto;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.btree-toolbar .ant-btn,
+.btree-toolbar .ant-btn > span:not(.anticon) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btree-toolbar [hidden] {
+  display: none !important;
+}
+.btree-zoom-value {
+  min-width: 58px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.btree {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* Chỉ bật trong tích tắc lúc "Vừa khung" đo chiều rộng tự nhiên của cây (bình thường <ul> gốc giãn ra bằng khung) */
+.btree.btree-measure > ul {
+  width: max-content;
+  min-width: 0;
+}
+.btree.is-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+.btree-card:fullscreen,
+.btree-card.is-full {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  background: #fff;
+}
+.btree-card.is-full {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+}
+.btree-card:fullscreen .btree,
+.btree-card.is-full .btree {
+  flex: 1;
+  min-height: 0;
+}
+.btree-card:fullscreen::backdrop {
+  background: #fff;
+}
+body.btree-full-open {
+  overflow: hidden;
+}

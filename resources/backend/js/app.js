@@ -14,6 +14,7 @@ import initUserForm from './user-form';
 import initGroupForm from './group-form';
 import initSettings from './settings';
 import initTreePages from './tree-page';
+import initTreeZooms from './tree-zoom';
 import initPageForm from './page-form';
 import initProductForm from './product-form';
 import initLinkPickers from './link-picker';
@@ -43,6 +44,7 @@ $(() => {
   initGroupForm();
   initSettings();
   initTreePages();
+  initTreeZooms();
   initPageForm();
   initProductForm();
   initLinkPickers();
