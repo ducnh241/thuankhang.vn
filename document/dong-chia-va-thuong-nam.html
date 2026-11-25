@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Đồng chia &amp; thưởng năm — đã chốt</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --paper: #ffffff; --ink: #1f2933; --muted: #5f6b7a; --line: #e3e7ec;
+    --brand: #047857; --brand-soft: #e7f6ef; --amber: #b45309; --amber-soft: #fdf3e2;
+    --rose: #b42318; --rose-soft: #fdecea; --blue: #1d4ed8; --blue-soft: #e8efff; --code: #f1f3f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161b; --paper: #1a2027; --ink: #e6eaef; --muted: #9aa6b4; --line: #2c343e;
+      --brand: #34d399; --brand-soft: #123327; --amber: #f5b454; --amber-soft: #3a2a12;
+      --rose: #f58f87; --rose-soft: #3b1a18; --blue: #8fb0ff; --blue-soft: #18233d; --code: #232b34;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1180px; margin: 0 auto; gap: 32px; padding: 24px 16px 80px; }
+  nav.toc { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto; font-size: 14px; }
+  nav.toc .title { font-weight: 700; margin-bottom: 8px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a { color: var(--muted); text-decoration: none; display: block; padding: 3px 8px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--paper); color: var(--ink); }
+  nav.toc ol ol { padding-left: 12px; }
+  main { min-width: 0; }
+  header.doc { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; }
+  header.doc h1 { margin: 0 0 6px; font-size: 26px; line-height: 1.3; }
+  header.doc p { margin: 4px 0; color: var(--muted); }
+  section { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 8px 28px 24px; margin-bottom: 24px; }
+  h2 { font-size: 21px; margin: 24px 0 12px; padding-top: 4px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; }
+  p, li { max-width: 78ch; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--code); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .table-wrap { overflow-x: auto; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  .note, .warn, .ok, .info { border-radius: 10px; padding: 12px 16px; margin: 14px 0; border: 1px solid transparent; }
+  .note { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
+  .warn { background: var(--rose-soft); border-color: color-mix(in srgb, var(--rose) 30%, transparent); }
+  .ok { background: var(--brand-soft); border-color: color-mix(in srgb, var(--brand) 30%, transparent); }
+  .info { background: var(--blue-soft); border-color: color-mix(in srgb, var(--blue) 30%, transparent); }
+  .note strong:first-child, .warn strong:first-child, .ok strong:first-child, .info strong:first-child { display: block; margin-bottom: 2px; }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 40px; margin: 10px 0; }
+  .steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: var(--paper); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .calc { background: var(--code); border-radius: 10px; padding: 14px 18px; font-variant-numeric: tabular-nums; margin: 12px 0; }
+  .calc div { display: flex; justify-content: space-between; gap: 16px; padding: 2px 0; }
+  .calc .total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; font-weight: 700; }
+  .wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 12px 0; }
+  .wallet { border-radius: 12px; padding: 16px 18px; border: 1px solid var(--line); }
+  .wallet.cash { background: var(--brand-soft); }
+  .wallet.re { background: var(--amber-soft); }
+  .wallet.tax { background: var(--rose-soft); }
+  .wallet h4 { margin: 0 0 6px; }
+  .wallet ul { margin: 6px 0 0; padding-left: 18px; }
+  .flow { width: 100%; max-width: 860px; height: auto; display: block; margin: 8px 0 16px; }
+  .flow text { fill: var(--ink); font: 13px -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .flow .sub { fill: var(--muted); font-size: 12px; }
+  .flow .box { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+  .flow .cash { fill: var(--brand-soft); stroke: var(--brand); }
+  .flow .re { fill: var(--amber-soft); stroke: var(--amber); }
+  .flow .tax { fill: var(--rose-soft); stroke: var(--rose); }
+  .flow .ext { fill: var(--blue-soft); stroke: var(--blue); }
+  .flow .arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; marker-end: url(#arr); }
+  .flow .arrow.no { stroke: var(--rose); stroke-dasharray: 5 4; }
+  .flow #arr path { fill: var(--muted); }
+  .tag { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--code); }
+  .tag.y { background: var(--brand-soft); color: var(--brand); }
+  .tag.n { background: var(--rose-soft); color: var(--rose); }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 8px 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 6px; }
+  .footer { color: var(--muted); font-size: 13px; text-align: center; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; padding: 16px; }
+    nav.toc { position: static; max-height: none; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    section, header.doc { padding-left: 16px; padding-right: 16px; }
+  }
+  @media print {
+    body { background: #fff; color: #000; font-size: 12px; }
+    .layout { display: block; padding: 0; }
+    nav.toc { display: none; }
+    section, header.doc { border: none; padding: 0; page-break-inside: auto; }
+    details { border: none; padding: 0; }
+    details > * { display: block; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Mục lục">
+    <div class="title">Mục lục</div>
+    <ol>
+      <li><a href="#tong-quan">1. Tổng quan</a></li>
+      <li><a href="#dong-chia">2. Đồng chia</a>
+        <ol>
+          <li><a href="#dc-nhom">2.1 Các nhóm đồng chia</a></li>
+          <li><a href="#dc-quy">2.2 Quỹ và cách chia</a></li>
+          <li><a href="#dc-top">2.3 Top 100 và vào / ra nhóm</a></li>
+          <li><a href="#dc-chot">2.4 Chốt và cộng ví</a></li>
+          <li><a href="#dc-vd">2.5 Ví dụ</a></li>
+        </ol>
+      </li>
+      <li><a href="#nhom-nho">3. Doanh số nhóm nhỏ (cộng dồn nhánh mạnh)</a></li>
+      <li><a href="#thuong-thang">4. Thưởng tháng</a></li>
+      <li><a href="#thuong-nam">5. Thưởng cuối năm</a></li>
+      <li><a href="#vi-nhan">6. Tiền vào ví nào</a></li>
+      <li><a href="#con-mo">7. Quỹ: chỉ đơn mới trong tháng</a></li>
+      <li><a href="#da-chot">8. Các điểm đã chốt</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="doc">
+      <h1>Đồng chia, thưởng tháng &amp; thưởng cuối năm</h1>
+      <p><strong>Bản đã chốt</strong> — chủ dự án xác nhận ngày 24/11/2026. Chưa có phần nào được lập trình.</p>
+      <p>Chỗ in nghiêng là đề xuất của bên kỹ thuật mà chủ dự án không sửa, coi như đã chốt.</p>
+    </header>
+
+    <section id="tong-quan">
+      <h2>1. Tổng quan</h2>
+      <p>Ngoài hoa hồng F1 / F2 (đang chạy), hệ thống sẽ có thêm 3 khoản:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Khoản</th><th>Ai được nhận</th><th>Tính trên</th><th>Kỳ</th><th>Vào ví</th></tr>
+        <tr><td><strong>Đồng chia</strong></td><td>Tối đa 100 người mỗi nhóm (mỗi cấp có mốc là một nhóm)</td><td>5% × (tổng tiền các đơn vào gói của nhóm <strong>thanh toán trong tháng</strong> − 5% phí DN), chia đều</td><td>Tháng</td><td>Ví tái tiêu dùng</td></tr>
+        <tr><td><strong>Thưởng tháng</strong></td><td>Người đạt bậc KPI, đủ số F1 tối thiểu</td><td>Doanh số nhóm nhỏ của tháng × % theo bậc</td><td>Tháng</td><td>100% ví rút tiền</td></tr>
+        <tr><td><strong>Thưởng cuối năm</strong></td><td>Người có nhóm nhỏ cả năm từ 1 tỷ</td><td>Doanh số nhóm nhỏ của năm × 1% / 2% / 3%</td><td>Năm</td><td>70% ví rút · 20% ví tái tiêu dùng · 10% thuế TNCN</td></tr>
+      </table></div>
+    </section>
+
+    <section id="dong-chia">
+      <h2>2. Đồng chia</h2>
+
+      <h3 id="dc-nhom">2.1 Các nhóm đồng chia</h3>
+      <p>Mỗi cấp có mốc ở <strong>Affiliate → Configuration → Levels</strong> là một nhóm. Thành viên <strong>vào nhóm</strong> khi có <strong>một đơn</strong> (không cộng dồn nhiều đơn) có tiền hàng đủ mốc của cấp đó và chưa tới mốc cấp kế tiếp. Theo cấu hình hiện tại:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Nhóm (theo cấp)</th><th>Một đơn có tiền hàng</th><th class="num">Nhận đủ thì ra khỏi nhóm</th></tr>
+        <tr><td>Cộng tác viên</td><td>từ 3.000.000 đ đến dưới 15.000.000 đ</td><td class="num">3.000.000 đ</td></tr>
+        <tr><td>Đại lý</td><td>từ 15.000.000 đ đến dưới 150.000.000 đ</td><td class="num">15.000.000 đ</td></tr>
+        <tr><td>Đại lý cấp 1</td><td>từ 150.000.000 đ đến dưới 300.000.000 đ</td><td class="num">150.000.000 đ</td></tr>
+        <tr><td>Nhà phân phối</td><td>từ 300.000.000 đ</td><td class="num">300.000.000 đ</td></tr>
+      </table></div>
+      <ul>
+        <li>Mốc lấy theo cấu hình cấp bậc; đổi mốc ở trang Levels thì nhóm đổi theo cho các đơn sau đó. Cấp "Khách hàng" (mốc 1 đ) và "Chưa kích hoạt" <strong>không</strong> phải là nhóm đồng chia — chỉ từ Cộng tác viên trở lên.</li>
+        <li>Mua nhiều đơn nhỏ cộng lại đủ mốc thì <strong>không</strong> vào nhóm.</li>
+        <li><em>Mỗi người tối đa một suất mỗi nhóm; người có đơn ở hai mức khác nhau thì đứng ở cả hai nhóm.</em></li>
+      </ul>
+
+      <h3 id="dc-quy">2.2 Quỹ và cách chia (mỗi tháng, từng nhóm)</h3>
+      <div class="calc">
+        <div><span>Tổng tiền hàng các đơn vào gói của nhóm</span><span>= các đơn vào gói <strong>được thanh toán trong tháng đó</strong></span></div>
+        <div><span>− 5% chi phí doanh nghiệp</span><span>= tổng × 95%</span></div>
+        <div><span>Quỹ đồng chia của nhóm</span><span>= (tổng × 95%) × 5%</span></div>
+        <div class="total"><span>Mỗi người nhận</span><span>= Quỹ ÷ số người trong nhóm (tối đa 100)</span></div>
+      </div>
+      <ul>
+        <li>Nhóm có <strong>từ 100 người trở xuống</strong>: chia đều cho tất cả. Có <strong>hơn 100 người</strong> mới lấy top 100.</li>
+        <li>Quỹ nhóm nào chỉ chia cho người của nhóm đó.</li>
+        <li>Quỹ mỗi tháng phụ thuộc doanh số gói mới của tháng đó; tháng không có đơn vào gói mới thì quỹ = 0, không ai nhận.</li>
+        <li>Chỉ chia theo <strong>tháng</strong>, không có đồng chia năm.</li>
+        <li>Làm tròn xuống tới đồng; phần lẻ công ty giữ.</li>
+      </ul>
+
+      <h3 id="dc-top">2.3 Top 100 và vào / ra nhóm</h3>
+      <ol class="steps">
+        <li>Xếp người trong nhóm theo <strong>thời điểm đơn vào gói được thanh toán</strong> (lúc kế toán xác nhận thanh toán). Đơn trả bằng ví tái tiêu dùng (thanh toán ngay, không qua kế toán) vẫn được vào nhóm, xếp theo thời điểm thanh toán đó.</li>
+        <li>Mỗi tháng, 100 người đầu được chia; từ người thứ 101 là hàng chờ.</li>
+        <li>Người đã nhận <strong>tổng đồng chia của nhóm</strong> đủ mức ra (3tr / 15tr / 150tr / 300tr) thì ra khỏi nhóm; người kế tiếp trong hàng chờ vào thay. <em>Người ra sau kỳ chốt tháng này thì người thay được chia từ tháng sau.</em></li>
+        <li><em>Tháng cuối chỉ nhận phần còn thiếu cho đủ mức ra; phần dư công ty giữ.</em></li>
+      </ol>
+
+      <h3 id="dc-chot">2.4 Chốt và cộng ví</h3>
+      <ul>
+        <li>Chốt số liệu cuối tháng; chi trả từ ngày 1 đến ngày 5 tháng sau.</li>
+        <li><em>Ngày 1 hệ thống lập bảng tạm tính; kế toán xem và bấm duyệt trong ngày 1–5; duyệt xong mới cộng ví và ghi lịch sử.</em></li>
+        <li>Tiền vào <strong>ví tái tiêu dùng</strong>. <em>100%, không trừ thuế TNCN.</em></li>
+        <li><em>Người bị khóa tài khoản tại lúc chốt thì không nhận tháng đó.</em></li>
+      </ul>
+
+      <h3 id="dc-vd">2.5 Ví dụ — nhóm Cộng tác viên, một tháng</h3>
+      <div class="table-wrap"><table>
+        <tr><th></th><th class="num">Nhóm có 60 người</th><th class="num">Nhóm có 130 người</th></tr>
+        <tr><td>Tổng tiền các đơn vào gói trong tháng</td><td class="num">300.000.000 đ</td><td class="num">300.000.000 đ</td></tr>
+        <tr><td>− 5% chi phí doanh nghiệp</td><td class="num">285.000.000 đ</td><td class="num">285.000.000 đ</td></tr>
+        <tr><td>Quỹ đồng chia 5%</td><td class="num">14.250.000 đ</td><td class="num">14.250.000 đ</td></tr>
+        <tr><td>Chia cho</td><td class="num">60 người</td><td class="num">top 100 (30 người chờ)</td></tr>
+        <tr><td><strong>Mỗi người nhận</strong></td><td class="num"><strong>237.500 đ</strong></td><td class="num"><strong>142.500 đ</strong></td></tr>
+      </table></div>
+    </section>
+
+    <section id="nhom-nho">
+      <h2>3. Doanh số nhóm nhỏ (cộng dồn nhánh mạnh)</h2>
+      <p>Dùng cho cả thưởng tháng và thưởng cuối năm. Mỗi thành viên có hai nhánh trong cây nhị phân: Nhánh A và Nhánh B.</p>
+      <ol class="steps">
+        <li>Doanh số mỗi nhánh trong kỳ = phần còn lại chuyển sang từ kỳ trước + tiền hàng các đơn đã thanh toán trong kỳ của mọi người trong nhánh.</li>
+        <li><strong>Nhóm nhỏ</strong> = nhánh có doanh số thấp hơn. Thưởng tính trên số này.</li>
+        <li>Sang kỳ sau: <strong>nhánh nhỏ về 0</strong>; <strong>nhánh lớn giữ phần chênh lệch</strong> (nhánh lớn − nhánh nhỏ) cộng với doanh số kỳ mới.</li>
+      </ol>
+      <div class="table-wrap"><table>
+        <tr><th>Tháng</th><th class="num">Nhánh A</th><th class="num">Nhánh B</th><th class="num">Nhóm nhỏ (tính thưởng)</th><th class="num">Chuyển sang tháng sau</th></tr>
+        <tr><td>Tháng 1</td><td class="num">50tr</td><td class="num">70tr</td><td class="num"><strong>50tr</strong></td><td class="num">A 0 · B 20tr</td></tr>
+        <tr><td>Tháng 2 (mới: A 40tr, B 10tr)</td><td class="num">0 + 40tr = 40tr</td><td class="num">20tr + 10tr = 30tr</td><td class="num"><strong>30tr</strong></td><td class="num">A 10tr · B 0</td></tr>
+      </table></div>
+      <p>Đã chốt: thưởng tính trên <strong>nhánh nhỏ</strong> (ví dụ tháng 1 là 50tr), nhánh lớn giữ phần chênh lệch 20tr sang tháng sau.</p>
+    </section>
+
+    <section id="thuong-thang">
+      <h2>4. Thưởng tháng</h2>
+      <p>Theo bảng bậc ở <strong>Affiliate → Configuration → KPI tiers</strong> (cấu hình hiện tại):</p>
+      <div class="table-wrap"><table>
+        <tr><th>Doanh số nhóm nhỏ của tháng</th><th class="num">Thưởng</th><th class="num">F1 tối thiểu</th></tr>
+        <tr><td>Từ 10.000.000 đ đến dưới 100.000.000 đ</td><td class="num">3%</td><td class="num">5</td></tr>
+        <tr><td>Từ 100.000.000 đ đến dưới 500.000.000 đ</td><td class="num">5%</td><td class="num">5</td></tr>
+        <tr><td>Từ 500.000.000 đ đến dưới 1.000.000.000 đ</td><td class="num">7%</td><td class="num">5</td></tr>
+        <tr><td>Từ 1.000.000.000 đ</td><td class="num">9%</td><td class="num">5</td></tr>
+      </table></div>
+      <ul>
+        <li>% áp lên <strong>toàn bộ</strong> doanh số nhóm nhỏ theo bậc đạt được (không lũy tiến). Ví dụ nhóm nhỏ 150tr → 5% × 150tr = <strong>7.500.000 đ</strong>.</li>
+        <li>Nhận <strong>đủ 100% vào ví rút tiền</strong> (không chia ví tái tiêu dùng, không trừ thuế).</li>
+        <li><em>Doanh số tính theo tiền hàng nguyên giá (không trừ 5% phí DN); 5 F1 tối thiểu là 5 F1 đã kích hoạt; người nhận phải đã kích hoạt và không bị khóa; trả ngày 10 (đang cấu hình) qua bước kế toán duyệt.</em></li>
+        <li>Tháng không đạt bậc nào (dưới 10tr hoặc chưa đủ 5 F1): hai nhánh vẫn được đối trừ và chuyển sang như bình thường.</li>
+      </ul>
+    </section>
+
+    <section id="thuong-nam">
+      <h2>5. Thưởng cuối năm</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Doanh số nhóm nhỏ của năm</th><th class="num">Thưởng</th></tr>
+        <tr><td>Từ 1 tỷ đến dưới 3 tỷ</td><td class="num">1%</td></tr>
+        <tr><td>Từ 3 tỷ đến dưới 5 tỷ</td><td class="num">2%</td></tr>
+        <tr><td>Từ 5 tỷ</td><td class="num">3%</td></tr>
+      </table></div>
+      <ul>
+        <li>% áp lên toàn bộ số theo bậc đạt được.</li>
+        <li>Chia <strong>70% ví rút tiền, 20% ví tái tiêu dùng, 10% thuế TNCN</strong>.</li>
+        <li>Doanh số nhóm nhỏ của năm = <strong>cộng doanh số nhóm nhỏ của 12 tháng</strong> trong năm (mỗi tháng đã đối trừ như mục 3).</li>
+        <li><em>Năm dương lịch; chốt 31/12, kế toán duyệt và cộng ví trong 01–05/01.</em></li>
+      </ul>
+      <div class="calc">
+        <div><span>Ví dụ: nhóm nhỏ cả năm</span><span>4.000.000.000 đ → bậc 2%</span></div>
+        <div><span>Thưởng cuối năm</span><span>80.000.000 đ</span></div>
+        <div><span>→ Ví rút tiền 70%</span><span>56.000.000 đ</span></div>
+        <div><span>→ Ví tái tiêu dùng 20%</span><span>16.000.000 đ</span></div>
+        <div class="total"><span>→ Thuế TNCN 10%</span><span>8.000.000 đ</span></div>
+      </div>
+    </section>
+
+    <section id="vi-nhan">
+      <h2>6. Tiền vào ví nào</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Khoản</th><th class="num">Ví rút tiền</th><th class="num">Ví tái tiêu dùng</th><th class="num">Thuế TNCN</th></tr>
+        <tr><td>Hoa hồng F1 / F2 (đang chạy)</td><td class="num">70%</td><td class="num">20%</td><td class="num">10%</td></tr>
+        <tr><td>Đồng chia</td><td class="num">—</td><td class="num">100%</td><td class="num">—</td></tr>
+        <tr><td>Thưởng tháng</td><td class="num">100%</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>Thưởng cuối năm</td><td class="num">70%</td><td class="num">20%</td><td class="num">10%</td></tr>
+      </table></div>
+    </section>
+
+    <section id="con-mo">
+      <h2>7. Quỹ đồng chia: chỉ tính đơn mới trong tháng</h2>
+      <p>Đã chốt <strong>cách A</strong>: quỹ của nhóm chỉ tính trên các đơn vào gói <strong>được thanh toán trong tháng đó</strong>, không tính lại đơn của những người đã ở trong nhóm từ trước.</p>
+      <div class="calc">
+        <div><span>Ví dụ: nhóm Cộng tác viên đang có 85 người; tháng này có 5 đơn vào gói mới, mỗi đơn 3tr</span><span></span></div>
+        <div><span>Tổng tiền đơn vào gói mới trong tháng</span><span>15.000.000 đ</span></div>
+        <div><span>Quỹ = 15.000.000 × 95% × 5%</span><span>712.500 đ</span></div>
+        <div class="total"><span>Chia đều 85 người</span><span>8.382 đ / người</span></div>
+      </div>
+      <div class="note"><strong>Hệ quả cần biết khi giải đáp thành viên</strong>Số tiền mỗi người nhận mỗi tháng thay đổi theo doanh số gói mới của cả nhóm và số người trong nhóm. Nhóm đông mà ít đơn mới thì mỗi người nhận ít và sẽ mất nhiều tháng mới đủ mức ra (3tr / 15tr / 150tr / 300tr).</div>
+    </section>
+
+    <section id="da-chot">
+      <h2>8. Tóm tắt các điểm đã chốt (24/11/2026)</h2>
+      <ul>
+        <li>Nhóm đồng chia theo các cấp ở trang Levels; vào nhóm bằng <strong>một đơn đủ mốc</strong>, không cộng dồn.</li>
+        <li>Quỹ mỗi nhóm = 5% × (tổng tiền các đơn vào gói thanh toán trong tháng − 5% phí DN), chia đều; quá 100 người mới lấy top 100; nhận đủ mức của nhóm thì ra, người sau vào thay; lặp lại hằng tháng.</li>
+        <li>Top 100 xếp theo thời điểm đơn vào gói được thanh toán (kế toán xác nhận).</li>
+        <li>Đồng chia chỉ theo tháng, vào ví tái tiêu dùng.</li>
+        <li>Thưởng tháng nhận đủ 100% vào ví rút tiền; thưởng năm chia 70 / 20 / 10.</li>
+        <li>Nhóm nhỏ tính theo tháng và theo năm; nhánh nhỏ về 0, nhánh lớn giữ phần chênh lệch sang kỳ sau.</li>
+        <li>% thưởng áp lên toàn bộ số tiền theo bậc đạt được.</li>
+        <li>Cấp "Khách hàng" không phải nhóm đồng chia; chỉ từ Cộng tác viên trở lên.</li>
+        <li>Thưởng nhóm nhỏ tính trên nhánh nhỏ; nhánh lớn giữ phần chênh lệch.</li>
+        <li>Đơn vào gói trả bằng ví tái tiêu dùng vẫn được vào nhóm.</li>
+        <li>Nhóm nhỏ của năm = cộng nhóm nhỏ của 12 tháng; tháng không đạt bậc thưởng vẫn đối trừ hai nhánh.</li>
+        <li>Các đề xuất khác chủ dự án không sửa được giữ nguyên (phần in nghiêng ở các mục trên).</li>
+      </ul>
+    </section>
+
+    <p class="footer">Bản đã chốt 24/11/2026 — làm cơ sở lập trình đồng chia, thưởng tháng, thưởng cuối năm.</p>
+  </main>
+</div>
+</body>
+</html>

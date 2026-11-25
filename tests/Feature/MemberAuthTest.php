@@ -229,15 +229,20 @@ class MemberAuthTest extends TestCase
         // Trang danh sách: chỉ thành viên trực tiếp (Yến) với họ tên + cấp hiện tại; không lộ SĐT / email
         $this->get('/tai-khoan/thanh-vien')->assertOk()
             ->assertSee('data-team-direct>1<', false)->assertSee('data-team-total>3<', false)
-            ->assertSeeInOrder(['Họ và tên', 'Cấp hiện tại', 'Trần Hải Yến', 'Cộng tác viên'])
+            ->assertSeeInOrder(['Họ và tên', 'Cấp hiện tại', '<span class="sr-only">Số thành viên bên dưới</span>', 'Trần Hải Yến', 'Tham gia ngày '.$yen->created_at->format('d/m/Y'), 'Cộng tác viên', 'data-below="2"'], false)
             ->assertDontSee('Thành viên A')->assertDontSee('Thành viên B')->assertDontSee('Người Ngoài Nhánh')->assertDontSee('Đinh Thu Hà')
             ->assertDontSee('0911000111')->assertDontSee('yen@example.com');
 
         // Yến: 2 thành viên trực tiếp (A, B), nhánh 2 người; Hà: 2 trực tiếp, nhánh 5 người; A: chưa có ai
         $this->actingAs($yen, 'member')->get('/tai-khoan/thanh-vien')->assertOk()
             ->assertSee('data-team-direct>2<', false)->assertSee('data-team-total>2<', false)
-            ->assertSee('Thành viên A')->assertSee('Nhân viên')->assertSee('Thành viên B')->assertSee('Chưa kích hoạt')->assertDontSee('Nguyễn Thị Huyền');
+            ->assertSee('Thành viên A')->assertSee('Nhân viên')->assertSee('Thành viên B')->assertSee('Chưa kích hoạt')->assertDontSee('Nguyễn Thị Huyền')
+            ->assertSee('data-below="0"', false)->assertDontSee('data-below="1"', false);
         $this->actingAs($ha, 'member')->get('/tai-khoan')->assertSee('data-f1-count>2<', false)->assertSee('data-team-count>5<', false);
+        // Số bên cạnh mỗi người = số người bên dưới trong CÂY NHỊ PHÂN, không phải số F1: Huyền chỉ có 1 F1 (Yến) nhưng bên
+        // dưới có 3 người (Yến, A, B); Người Ngoài Nhánh chưa có ai
+        $this->get('/tai-khoan/thanh-vien')->assertOk()->assertSee('data-team-total>5<', false)
+            ->assertSeeInOrder(['Người Ngoài Nhánh', 'data-below="0"', 'Nguyễn Thị Huyền', 'data-below="3"'], false);
         $leaf = Member::where('full_name', 'Thành viên A')->sole();
         $this->actingAs($leaf, 'member')->get('/tai-khoan')->assertSee('data-f1-count>0<', false)->assertSee('data-team-count>0<', false);
         $this->actingAs($leaf, 'member')->get('/tai-khoan/thanh-vien')->assertOk()->assertSee('Bạn chưa giới thiệu ai')->assertSee($leaf->referral_code);

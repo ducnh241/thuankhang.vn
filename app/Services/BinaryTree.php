@@ -166,6 +166,25 @@ class BinaryTree
         return $build($member->id, 0);
     }
 
+    /**
+     * Số người nằm dưới từng thành viên trong $ids trong cây nhị phân (không gồm chính họ) — chỉ đếm những người thuộc cây
+     * con của $rootId (một lần duyệt cho cả danh sách). Người không nằm trong cây con đó (chưa được xếp chỗ) → 0.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, int> id => số người bên dưới
+     */
+    public static function countsBelow(int $rootId, array $ids): array
+    {
+        $nodes = self::subtree($rootId);
+        $children = self::childrenMap($nodes);
+        $counts = [];
+        foreach ($ids as $id) {
+            $counts[$id] = $nodes->has($id) ? self::totals($id, $children, [])['count'] - 1 : 0;
+        }
+
+        return $counts;
+    }
+
     /** Id mọi người nằm dưới một thành viên trong cây nhị phân (không gồm chính họ). */
     public static function branchIds(int $memberId): array
     {
