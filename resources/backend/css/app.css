@@ -3491,3 +3491,12 @@ a.project-thumb:hover {
 body.btree-full-open {
   overflow: hidden;
 }
+
+/* Thân thẻ Ant (.ant-card-body) có ::before / ::after kiểu clearfix (display: table). Khi thân thẻ dùng flex / grid, hai phần tử
+   giả này thành ô trống trong lưới (lệch cột) hoặc thêm khoảng gap thừa → tắt đi. */
+.ant-card-body.flex::before,
+.ant-card-body.flex::after,
+.ant-card-body.grid::before,
+.ant-card-body.grid::after {
+  display: none;
+}

@@ -254,6 +254,28 @@ cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topu
   Trang chi tiết ghi "Chỉ xem" cho người không có quyền duyệt và liệt kê người có quyền duyệt (`ProfitShareController::approvers`,
   Root admin luôn duyệt được, không liệt kê).
 
+## Dashboard quản trị (25/11/2026 — A1)
+
+- `Backend\DashboardController` + `backend/dashboard.blade.php`, mỗi khối theo quyền: "Việc cần xử lý" (đơn chờ xác nhận
+  thanh toán — order, KYC chờ duyệt — kyc, lệnh nạp chờ xác nhận — wallet_topup, đồng chia tháng trước chờ duyệt trong ngày 1–5
+  — profit_share); Doanh thu (order) = tiền hàng đơn đã thanh toán (gồm đơn trả bằng ví, theo `paid_at`): tháng này + % so
+  cùng kỳ tháng trước, hôm nay, toàn thời gian, theo hình thức thanh toán, giá trị đơn TB; thẻ Sản phẩm / Đơn / Đánh giá /
+  Thành viên / KYC; đơn theo trạng thái; thành viên theo cấp bậc (cấp hiện tại, %).
+- "So sánh với kỳ trước" `?ky=thang|quy|nam` (`DashboardController::ranges`): kỳ này tới hiện tại vs CÙNG KỲ trước (đầu kỳ
+  trước + đúng thời gian đã trôi, không vượt hết kỳ trước) + cả kỳ trước; chỉ số: doanh thu, đơn đã thanh toán, giá trị TB,
+  đơn đặt mới (order), thành viên đăng ký / kích hoạt mới (member), hoa hồng phát sinh (member | commission), tiền nạp ví đã
+  xác nhận (wallet_topup). Test: `tests/Feature/DashboardMetricsTest.php`.
+- Chỉ số mở rộng (`App\Services\DashboardMetrics`, partial `backend/dashboard/_extended.blade.php`; theo kỳ ?ky đang chọn trừ khi
+  ghi khác): doanh thu 12 tháng (biểu đồ cột CSS) · top 10 sản phẩm (order_items của đơn đã thanh toán) · doanh thu theo nơi
+  nhận (giao tận nơi / từng VP) · đơn bị hủy / quá hạn (đơn đặt trong kỳ, theo nguồn hủy) — các khối trên cần `order`; chi
+  trả affiliate / doanh thu (hoa hồng credited + đồng chia duyệt trong kỳ; `order` + `member|commission`); số dư ví toàn hệ
+  thống + số người đủ mức rút (`member|commission`, hiện tại); top giới thiệu + top doanh số nhóm nhỏ (cây nhị phân, tính một
+  lượt cho cả cây, chưa tính phần chuyển sang) + chưa kích hoạt sau 30 ngày (`member`). Truy vấn chạy được cả SQLite (test).
+- Khối So sánh có biểu đồ doanh thu LŨY KẾ kỳ này vs kỳ trước (`DashboardMetrics::cumulativeRevenue`: theo ngày với tháng / quý,
+  theo tháng với năm; kỳ này dừng ở hôm nay; SVG vẽ ở server, tooltip `<title>` từng điểm) và cột "So sánh" (thanh xanh kỳ này /
+  xám cùng kỳ trước) cho từng chỉ số.
+- CSS: `.ant-card-body.flex|grid::before/::after { display: none }` — clearfix của Ant làm lệch lưới / thừa gap.
+
 ## Live có đơn thật — KHÔNG xóa đơn; tính bù hoa hồng cho đơn cũ (17/11/2026)
 
 - Chủ dự án 17/11/2026: live đã có đơn thật (9 đơn lúc đó), **tuyệt đối không xóa đơn / không làm mất dữ liệu live**.
