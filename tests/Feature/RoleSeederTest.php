@@ -18,14 +18,14 @@ class RoleSeederTest extends TestCase
         return User::factory()->create(['group_id' => Group::where('name', $role)->value('id')]);
     }
 
-    public function test_seeds_four_roles_with_expected_permissions(): void
+    public function test_seeds_default_roles_with_expected_permissions(): void
     {
         $this->seed(RoleSeeder::class);
 
-        $this->assertEqualsCanonicalizing(['Super admin', 'Vận hành', 'Kế toán', 'CSKH'], Group::pluck('name')->all());
+        $this->assertEqualsCanonicalizing(['Super admin', 'Vận hành', 'Kế toán', 'CSKH', 'Giám đốc', 'Quản lý phòng ban'], Group::pluck('name')->all());
         $this->assertEqualsCanonicalizing(Group::allPermissionKeys(), Group::where('name', 'Super admin')->value('permission_data'));
 
-        foreach (['Super admin', 'Vận hành', 'Kế toán', 'CSKH'] as $role) {
+        foreach (['Super admin', 'Vận hành', 'Kế toán', 'CSKH', 'Giám đốc', 'Quản lý phòng ban'] as $role) {
             $this->assertTrue($this->member($role)->canAccessBackend(), $role);
         }
 
@@ -36,6 +36,16 @@ class RoleSeederTest extends TestCase
         $this->assertFalse($ops->can('bank_transaction/match'));
         $this->assertFalse($ops->can('affiliate_commission/edit'));
         $this->assertFalse($ops->can('audit_log'));
+
+        // Đồng chia: Giám đốc / Quản lý phòng ban chỉ xem; Kế toán xem + duyệt (cộng ví)
+        foreach (['Giám đốc', 'Quản lý phòng ban'] as $role) {
+            $viewer = $this->member($role);
+            $this->assertTrue($viewer->can('profit_share'), $role);
+            $this->assertFalse($viewer->can('profit_share/approve'), $role);
+            $this->assertFalse($viewer->can('order'), $role);
+        }
+        $this->assertTrue($this->member('Kế toán')->can('profit_share/approve'));
+        $this->assertFalse($ops->can('profit_share'));
 
         $accountant = $this->member('Kế toán');
         $this->assertTrue($accountant->can('bank_transaction/match'));
@@ -75,7 +85,7 @@ class RoleSeederTest extends TestCase
 
         $this->seed(RoleSeeder::class);
 
-        $this->assertSame(4, Group::count());
+        $this->assertSame(6, Group::count());
         $this->assertSame(['backend_access'], Group::where('name', 'CSKH')->value('permission_data'));
     }
 }

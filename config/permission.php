@@ -156,6 +156,14 @@ return [
             'confirm' => 'Xác nhận đã nhận tiền / trả lệnh về / hủy lệnh',
         ],
     ],
+    // Xem = xem bảng chia từng tháng (Giám đốc, Quản lý phòng ban, Kế toán); Duyệt = bấm duyệt để cộng ví tái tiêu dùng
+    'profit_share' => [
+        'label' => 'Đồng chia (xem bảng chia)',
+        'section' => 'Tài chính',
+        'items' => [
+            'approve' => 'Duyệt bảng chia, cộng ví (ngày 1–5 hằng tháng)',
+        ],
+    ],
     'withdrawal' => [
         'label' => 'Rút tiền',
         'section' => 'Tài chính',

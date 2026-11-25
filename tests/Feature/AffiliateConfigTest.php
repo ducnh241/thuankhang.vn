@@ -350,6 +350,7 @@ class AffiliateConfigTest extends TestCase
             'business_fee_percent' => '5,5', 'commission_warning_percent' => '30', 'min_withdraw' => '1.000.000', 'pit_percent' => '10', 'reconsume_percent' => '20',
             'shipping_fee' => '35.000', 'order_code_prefix' => ' thk ', 'payment_expiry_hours' => '12', 'ref_cookie_days' => '60',
             'max_vp_per_province' => '',
+            'profit_share_percent' => '5', 'profit_share_min_amount' => '3.000.000', 'profit_share_slots' => '100',
         ];
         $this->actingAs($root)->put('/backend/affiliate/settings', $valid)
             ->assertRedirect(route('backend.affiliate.settings.edit'))->assertSessionHas('success');

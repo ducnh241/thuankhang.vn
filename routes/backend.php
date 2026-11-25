@@ -23,6 +23,7 @@ use App\Http\Controllers\Backend\PickupPointController;
 use App\Http\Controllers\Backend\ProductController;
 use App\Http\Controllers\Backend\ProductReviewController;
 use App\Http\Controllers\Backend\ProfileController;
+use App\Http\Controllers\Backend\ProfitShareController;
 use App\Http\Controllers\Backend\SettingController;
 use App\Http\Controllers\Backend\UserController;
 use App\Http\Controllers\Backend\WalletTopupController;
@@ -106,6 +107,11 @@ Route::prefix('backend')->group(function () {
         Route::post('wallet-topup/{topup}/confirm', [WalletTopupController::class, 'confirm'])->name('wallet-topups.confirm')->can('wallet_topup/confirm');
         Route::post('wallet-topup/{topup}/reject', [WalletTopupController::class, 'reject'])->name('wallet-topups.reject')->can('wallet_topup/confirm');
         Route::post('wallet-topup/{topup}/cancel', [WalletTopupController::class, 'cancel'])->name('wallet-topups.cancel')->can('wallet_topup/confirm');
+
+        // Đồng chia (quyền: profit_share, profit_share/approve — Kế toán). {period} = YYYY-MM
+        Route::get('profit-share', [ProfitShareController::class, 'index'])->name('profit-share.index')->can('profit_share');
+        Route::get('profit-share/{period}', [ProfitShareController::class, 'show'])->name('profit-share.show')->can('profit_share')->where('period', '\d{4}-\d{2}');
+        Route::post('profit-share/{period}/approve', [ProfitShareController::class, 'approve'])->name('profit-share.approve')->can('profit_share/approve')->where('period', '\d{4}-\d{2}')->middleware('throttle:10,1');
 
         // Đánh giá sản phẩm (quyền: review, review/moderate)
         Route::get('review', [ProductReviewController::class, 'index'])->name('reviews.index')->can('review');

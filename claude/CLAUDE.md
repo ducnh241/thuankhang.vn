@@ -229,6 +229,31 @@ cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topu
   link "Lịch sử giao dịch ví" → `/tai-khoan/vi/giao-dich?vi=cash|reconsume` (mọi bút toán). Admin: chi tiết thành viên có thẻ
   "Giao dịch ví gần đây" (10 bút toán khác hoa hồng); chi tiết đơn ghi "Hình thức". Test: `tests/Feature/ReconsumeWalletTest.php`.
 
+## Đồng chia (25/11/2026 — chốt trong document/dong-chia-va-thuong-nam.html)
+
+- `App\Services\ProfitShare`. Nhóm = mỗi cấp đang bật có mốc ≥ Tham số chung "Mốc gói nhỏ nhất tính đồng chia"
+  (`profit_share_min_amount`, 3tr → Cộng tác viên, Đại lý, 2 cấp VP; "Khách hàng" 1 đ không chia). Đơn vào gói = MỘT đơn đã
+  thanh toán có tiền hàng từ mốc cấp đó tới dưới mốc cấp kế (không cộng dồn; đơn trả bằng ví vẫn tính). Mỗi người một suất
+  mỗi nhóm (đơn vào gói đầu tiên), xếp theo `paid_at` của đơn đó.
+- Quỹ tháng của nhóm = tổng tiền hàng các đơn vào gói THANH TOÁN TRONG THÁNG × (1 − `business_fee_percent`) ×
+  `profit_share_percent` (5%); chia đều (làm tròn xuống) cho người còn trong nhóm, tối đa `profit_share_slots` (100) người
+  vào trước; còn lại là hàng chờ. Người bị khóa không được xếp (đơn của họ vẫn góp quỹ). Nhận đủ mốc cấp lúc vào
+  (`cap_amount`) thì ra; tháng cuối chỉ nhận phần còn thiếu. Phần lẻ / dư công ty giữ.
+- CHƯA duyệt thì không lưu gì: `calculate($period)` tính trực tiếp từ đơn hàng + suất đã lưu. Duyệt (`approve`) chỉ từ ngày 1
+  đến hết ngày 5 tháng sau (`APPROVE_LAST_DAY`), tính lại và so `fingerprint` với bảng kế toán đang xem (lệch → từ chối, tải
+  lại), rồi trong một transaction: `profit_share_periods` / `_groups` / `_lines` (ảnh chụp, chỉ ghi thêm), tạo / cập nhật
+  `profit_share_entries` (received_amount, exited_period), cộng ví tái tiêu dùng (`WalletTransaction::TYPE_PROFIT_SHARE`,
+  `profit_share_line_id`). Quá hạn không duyệt được (tháng đó không chia).
+- Quản trị → Profit sharing (`/backend/profit-share`, `Backend\ProfitShareController`, quyền `profit_share` +
+  `profit_share/approve`, migration `2026_11_30_000001` tự tick cho nhóm có `order/confirm_payment`): danh sách tháng (trạng
+  thái, hạn duyệt, quỹ, đã chia); chi tiết tháng: tổng, bảng các nhóm, mỗi nhóm cách tính quỹ từng bước, đơn vào gói trong
+  tháng, danh sách được chia (hạng, ngày vào + mã đơn, đã nhận trước, nhận tháng này, sau / mức ra), hàng chờ, bị khóa, đã ra
+  từ trước. Test: `tests/Feature/ProfitShareTest.php`.
+- Quyền (25/11/2026): `profit_share` = chỉ xem; `profit_share/approve` = duyệt / cộng ví. Nhóm "Giám đốc" và "Quản lý phòng
+  ban" (RoleSeeder + migration `2026_12_01_000001`, chỉ tạo khi DB đã có nhóm quyền) chỉ có quyền xem; Kế toán xem + duyệt.
+  Trang chi tiết ghi "Chỉ xem" cho người không có quyền duyệt và liệt kê người có quyền duyệt (`ProfitShareController::approvers`,
+  Root admin luôn duyệt được, không liệt kê).
+
 ## Live có đơn thật — KHÔNG xóa đơn; tính bù hoa hồng cho đơn cũ (17/11/2026)
 
 - Chủ dự án 17/11/2026: live đã có đơn thật (9 đơn lúc đó), **tuyệt đối không xóa đơn / không làm mất dữ liệu live**.

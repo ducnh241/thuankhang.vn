@@ -32,10 +32,15 @@ class RoleSeeder extends Seeder
             'backend_access',
             'order', 'order/confirm_payment',
             'wallet_topup', 'wallet_topup/confirm',
+            'profit_share', 'profit_share/approve',
             'bank_transaction', 'bank_transaction/match',
             'commission', 'commission/export',
             'withdrawal', 'withdrawal/approve', 'withdrawal/paid', 'withdrawal/export',
         ],
+
+        // Đồng chia: chỉ XEM bảng chia (duyệt / cộng ví chỉ Kế toán hoặc nhóm được tick quyền duyệt)
+        'Giám đốc' => ['backend_access', 'profit_share'],
+        'Quản lý phòng ban' => ['backend_access', 'profit_share'],
 
         // A8 Đơn hàng, A10 Thành viên (xem, khoá / mở; sửa người giới thiệu để Vận hành)
         'CSKH' => [

@@ -33,10 +33,13 @@ class WalletTransaction extends Model
 
     public const TYPE_CONVERT = 'convert';
 
+    public const TYPE_PROFIT_SHARE = 'profit_share';
+
     public const TYPES = [
         self::TYPE_COMMISSION => 'Hoa hồng', self::TYPE_SPLIT => 'Chia lại hoa hồng cũ',
         self::TYPE_PURCHASE => 'Thanh toán đơn hàng', self::TYPE_TRANSFER_OUT => 'Chuyển tiền đi',
         self::TYPE_TRANSFER_IN => 'Nhận tiền chuyển', self::TYPE_TOPUP => 'Nạp tiền', self::TYPE_CONVERT => 'Chuyển giữa hai ví',
+        self::TYPE_PROFIT_SHARE => 'Đồng chia',
     ];
 
     public const WALLET_CASH = 'cash';
@@ -46,7 +49,7 @@ class WalletTransaction extends Model
     public const WALLETS = [self::WALLET_CASH => 'Ví rút tiền', self::WALLET_RECONSUME => 'Ví tái tiêu dùng'];
 
     protected $fillable = [
-        'member_id', 'wallet', 'type', 'amount', 'balance_after', 'commission_id', 'order_id', 'topup_id', 'counterpart_id', 'note', 'created_at',
+        'member_id', 'wallet', 'type', 'amount', 'balance_after', 'commission_id', 'order_id', 'topup_id', 'counterpart_id', 'profit_share_line_id', 'note', 'created_at',
     ];
 
     protected function casts(): array

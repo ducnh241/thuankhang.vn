@@ -105,6 +105,13 @@ return [
                     'icon' => 'wallet',
                 ],
                 [
+                    'label' => 'Profit sharing',
+                    'route' => 'backend.profit-share.index',
+                    'active' => 'backend.profit-share.*',
+                    'can' => 'profit_share',
+                    'icon' => 'share-alt',
+                ],
+                [
                     'label' => 'Configuration',
                     'icon' => 'fund',
                     'children' => [
