@@ -99,6 +99,10 @@ Route::prefix('backend')->group(function () {
         Route::post('order/{order}/reject-payment', [OrderController::class, 'rejectPayment'])->name('orders.reject-payment')->can('order/confirm_payment');
         Route::post('order/{order}/status', [OrderController::class, 'status'])->name('orders.status')->can('order/status');
         Route::post('order/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->can('order/cancel');
+        Route::get('order/{order}/exchange', [OrderController::class, 'exchangeForm'])->name('orders.exchange')->can('order/exchange');
+        Route::post('order/{order}/exchange', [OrderController::class, 'exchange'])->name('orders.exchange.store')->can('order/exchange')->middleware('throttle:20,1');
+        // Xem đơn như khách thấy trên website (chỉ xem)
+        Route::get('order/{order}/preview', [OrderController::class, 'preview'])->name('orders.preview')->can('order');
 
         // Nạp ví tái tiêu dùng (quyền: wallet_topup, wallet_topup/confirm — Kế toán). URL theo mã lệnh.
         Route::get('wallet-topup', [WalletTopupController::class, 'index'])->name('wallet-topups.index')->can('wallet_topup');

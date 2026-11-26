@@ -33,7 +33,12 @@
     <h1 class="page-topbar-title font-mono">{{ $order->code }}</h1>
     <span class="ant-tag ant-tag-{{ Order::STATUS_COLORS[$status] }} m-0" id="order-status">{{ $order->statusLabel() }}</span>
   </div>
-  <div class="page-topbar-right"></div>
+  <div class="page-topbar-right">
+    <a href="{{ route('backend.orders.preview', $order) }}" target="_blank" rel="noopener" class="ant-btn" id="order-preview" title="Xem đơn đúng như khách thấy trên website (chỉ xem)">{{ ant_icon('eye') }}<span class="max-sm:hidden">Xem trên website</span></a>
+    @if ($order->canExchange() && $me->can('order/exchange'))
+      <a href="{{ route('backend.orders.exchange', $order) }}" class="ant-btn ant-btn-primary" id="order-exchange">{{ ant_icon('swap-right') }}<span class="max-sm:hidden">Đổi sản phẩm</span></a>
+    @endif
+  </div>
 @endsection
 
 @section('content')
@@ -56,13 +61,21 @@
               @foreach ($order->items as $item)
                 <tr class="ant-table-row">
                   <td class="ant-table-cell">
-                    @if ($item->product && ! $item->product->trashed() && auth()->user()->can('product/edit'))
-                      <a href="{{ route('backend.products.edit', $item->product) }}">{{ $item->product_name }}</a>
-                    @else
-                      {{ $item->product_name }}
-                    @endif
-                    @if ($item->variant_name)<div class="text-xs" data-item-variant>Phân loại: {{ $item->variant_name }}</div>@endif
-                    @if ($item->sku)<div class="text-xs font-mono {{ $muted }}">{{ $item->sku }}</div>@endif
+                    @php $thumb = $item->variant?->image ?? $item->product?->cover; @endphp
+                    <div class="flex items-center gap-3">
+                      <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#f0f0f0] bg-white text-[rgba(0,0,0,0.25)]" data-item-thumb>
+                        @if ($thumb)<img src="{{ $thumb->url() }}" alt="" loading="lazy" class="size-full object-contain" />@else{{ ant_icon('picture') }}@endif
+                      </span>
+                      <div class="min-w-0">
+                        @if ($item->product && ! $item->product->trashed() && auth()->user()->can('product/edit'))
+                          <a href="{{ route('backend.products.edit', $item->product) }}">{{ $item->product_name }}</a>
+                        @else
+                          {{ $item->product_name }}
+                        @endif
+                        @if ($item->variant_name)<div class="text-xs" data-item-variant>Phân loại: {{ $item->variant_name }}</div>@endif
+                        @if ($item->sku)<div class="text-xs font-mono {{ $muted }}">{{ $item->sku }}</div>@endif
+                      </div>
+                    </div>
                   </td>
                   <td class="ant-table-cell tabular-nums" style="text-align: right">{{ Money::format($item->unit_price) }} đ</td>
                   <td class="ant-table-cell tabular-nums" style="text-align: right">{{ $item->qty }}</td>
@@ -167,17 +180,47 @@
       </div>
     </div>
 
+    {{-- Lịch sử đổi sản phẩm (tổng tiền không đổi) --}}
+    @if ($order->exchanges->isNotEmpty())
+      <div class="ant-card ant-card-bordered" data-card="exchanges">
+        <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Lịch sử đổi sản phẩm ({{ $order->exchanges->count() }})</div></div></div>
+        <div class="ant-card-body flex flex-col gap-4">
+          @foreach ($order->exchanges as $ex)
+            @php
+              $change = $ex->changes();
+              $label = fn (array $l) => $l['name'].($l['variant'] ? ' — '.$l['variant'] : '').' × '.$l['qty'].' ('.Money::format($l['line_amount']).' đ)';
+            @endphp
+            <div @class(['text-sm', 'border-t border-[#f0f0f0] pt-4' => ! $loop->first]) data-exchange="{{ $ex->id }}">
+              <div class="flex flex-wrap gap-x-2"><span class="tabular-nums {{ $muted }}">{{ $ex->created_at?->format('d/m/Y H:i') }}</span><span class="font-medium">{{ $ex->actorName() }}</span><span>· Lý do: {{ $ex->reason }}</span></div>
+              <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_1fr] md:items-start">
+                <div data-removed><div class="text-xs {{ $muted }}">Bớt / bỏ</div>@forelse ($change['removed'] as $l)<div class="text-[#cf1322]">− {{ $label($l) }}</div>@empty<div class="{{ $muted }}">—</div>@endforelse</div>
+                <div class="hidden text-lg {{ $muted }} md:block">→</div>
+                <div data-added><div class="text-xs {{ $muted }}">Thêm</div>@forelse ($change['added'] as $l)<div class="font-medium text-[#389e0d]">+ {{ $label($l) }}</div>@empty<div class="{{ $muted }}">—</div>@endforelse</div>
+              </div>
+              <div class="mt-1 text-xs {{ $muted }} tabular-nums">@if ($change['unchanged'])Giữ nguyên {{ $change['unchanged'] }} sản phẩm khác · @endif Tổng tiền hàng giữ nguyên {{ Money::format($ex->goods_amount) }} đ</div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
+
     <div class="ant-card ant-card-bordered" data-card="history">
       <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Lịch sử</div></div></div>
       <div class="ant-card-body">
-        @foreach ($timeline as $label => $time)
-          <div @class(['flex flex-wrap gap-x-2 text-sm', 'mt-2' => ! $loop->first])><span class="tabular-nums {{ $muted }}">{{ $time->format('d/m/Y H:i') }}</span><span>{{ $label }}</span></div>
-        @endforeach
-        @foreach ($history as $log)
-          <div class="mt-2 flex flex-wrap gap-x-2 text-sm">
-            <span class="tabular-nums {{ $muted }}">{{ $log->created_at?->format('d/m/Y H:i') }}</span>
-            <span class="font-medium">{{ $log->actorName() }}</span>
-            <span>{{ $log->description ?: $log->actionLabel() }}</span>
+        @php
+          // Gộp mốc trạng thái + nhật ký + các lần đổi sản phẩm, xếp theo thời gian. Nhật ký đổi sản phẩm thay bằng bản tóm tắt
+          // (chỉ phần thay đổi) lấy từ order_exchanges.
+          $events = collect($timeline)->map(fn ($time, $label) => ['time' => $time, 'actor' => null, 'text' => $label])->values()
+              ->concat($history->reject(fn ($log) => str_starts_with((string) $log->description, 'Đổi sản phẩm đơn'))
+                  ->map(fn ($log) => ['time' => $log->created_at, 'actor' => $log->actorName(), 'text' => $log->description ?: $log->actionLabel()]))
+              ->concat($order->exchanges->map(fn ($ex) => ['time' => $ex->created_at, 'actor' => $ex->actorName(), 'text' => 'Đổi sản phẩm: '.$ex->summary().' · Lý do: '.$ex->reason]))
+              ->filter(fn ($e) => $e['time'])->sortBy(fn ($e) => $e['time']->getTimestamp())->values();
+        @endphp
+        @foreach ($events as $event)
+          <div @class(['flex flex-wrap gap-x-2 text-sm', 'mt-2' => ! $loop->first]) data-event>
+            <span class="tabular-nums {{ $muted }}">{{ $event['time']->format('d/m/Y H:i') }}</span>
+            @if ($event['actor'])<span class="font-medium">{{ $event['actor'] }}</span>@endif
+            <span>{{ $event['text'] }}</span>
           </div>
         @endforeach
       </div>

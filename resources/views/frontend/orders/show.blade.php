@@ -7,6 +7,8 @@
     use App\Support\Money;
 
     $status = $order->displayStatus();
+    $adminPreview = $adminPreview ?? false; // quản trị xem đơn như khách thấy (backend/order/{code}/preview): ẩn mọi nút thao tác
+    $lastExchange = $order->exchanges()->first();
     $hasBank = \App\Support\VietQr::configured($bank);
     $copy = 'rounded border border-slate-300 bg-white px-2 py-0.5 font-sans text-xs font-normal text-slate-700 hover:border-brand-500';
 @endphp
@@ -15,12 +17,20 @@
 
 @section('content')
   <div class="mx-auto max-w-4xl px-4 pt-8">
-    <a href="{{ route('member.orders.index') }}" class="text-sm text-brand-700 hover:underline">‹ Đơn hàng của tôi</a>
+    @if ($adminPreview)
+      <div class="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900" data-admin-preview>
+        Bạn đang xem đơn <strong>như khách thấy trên website</strong> (bản xem của quản trị — các nút thao tác của khách đã ẩn).
+      </div>
+    @endif
+    @unless ($adminPreview)<a href="{{ route('member.orders.index') }}" class="text-sm text-brand-700 hover:underline">‹ Đơn hàng của tôi</a>@endunless
     <div class="mt-2 flex flex-wrap items-center gap-3">
       <h1 class="text-2xl font-bold text-slate-900">Đơn <span class="font-mono">{{ $order->code }}</span></h1>
       @include('frontend.orders.status', ['order' => $order])
     </div>
     <p class="mt-1 text-sm text-slate-500">Đặt lúc {{ $order->created_at->format('d/m/Y H:i') }}</p>
+    @if ($lastExchange)
+      <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900" data-exchanged>Đơn đã được đổi sản phẩm ngày {{ $lastExchange->created_at?->format('d/m/Y') }} (tổng tiền không đổi). Danh sách sản phẩm bên dưới là sau khi đổi.</p>
+    @endif
 
     @if ($order->isAwaitingPayment())
       <section class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 md:p-6" data-payment>
@@ -51,7 +61,7 @@
         @endif
         {{-- Bắt buộc tải ảnh bill chuyển khoản rồi mới bấm được "Tôi đã chuyển khoản" (JS bật nút khi đã chọn ảnh; máy chủ
              kiểm tra lại). Ô ảnh dùng chung JS [data-kyc-image]: xem trước + thu nhỏ ảnh trước khi gửi. --}}
-        <div class="mt-5 border-t border-amber-200 pt-4">
+        <div @class(['mt-5 border-t border-amber-200 pt-4', 'hidden' => $adminPreview])>
           <form method="POST" action="{{ route('member.orders.transferred', $order) }}" enctype="multipart/form-data" novalidate data-bill-form>
             @csrf
             <div class="grid gap-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-center" data-kyc-image data-max-bytes="{{ \App\Models\MemberKyc::maxKilobytes() * 1024 }}" data-target-bytes="{{ 450 * 1024 }}">

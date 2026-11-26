@@ -276,6 +276,26 @@ cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topu
   xám cùng kỳ trước) cho từng chỉ số.
 - CSS: `.ant-card-body.flex|grid::before/::after { display: none }` — clearfix của Ant làm lệch lưới / thừa gap.
 
+## Đổi sản phẩm trong đơn (26/11/2026)
+
+- `App\Services\OrderExchanger::exchange` — 1 đổi 1, 1 đổi nhiều, nhiều đổi 1: bớt / bỏ dòng đang có (giữ giá trên đơn) + thêm
+  sản phẩm đang bán (giá bán HIỆN TẠI, có biến thể thì phải chọn). TỔNG TIỀN HÀNG MỚI PHẢI BẰNG ĐÚNG TỔNG CŨ → tiền khách trả,
+  hoa hồng, doanh số, đồng chia không đổi (không tính lại gì). Chỉ `Order::canExchange()`: đơn mới còn hạn / chờ xác nhận / đã
+  thanh toán. Đơn đang giữ hàng: trả kho phần bớt, trừ kho phần thêm theo chênh lệch ròng (không đủ → chặn). Lý do ≥ 5 ký tự.
+  Lưu `order_exchanges` (append-only, trước / sau) + AuditLog. Không giới hạn số lần, không gửi tin cho khách.
+  Không đổi sang chính sản phẩm (đúng phân loại) đang bớt / bỏ (đổi phân loại khác thì được). Thêm sản phẩm trùng dòng đang
+  giữ (cùng sản phẩm, phân loại, đơn giá) → cộng vào dòng đó, không tạo dòng trùng. Chặn: sản phẩm giá 0đ (không thêm hàng
+  tặng), lý do > 300 ký tự, > 30 dòng thêm. Form cũ gửi lại / gửi đồng thời: khóa đơn + tính lại từ dòng hiện tại → chỉ 1 lần
+  thành công (đã thử trên MySQL QA, 3 request song song).
+- Quyền `order/exchange`: KHÔNG cấp qua migration (quản trị tự tick); RoleSeeder tick sẵn Vận hành, CSKH khi cài mới. Màn `backend/order/{code}/exchange` (JS
+  `order-exchange.js` tính trực tiếp, nút xác nhận chỉ bật khi khớp). Bộ chọn sản phẩm có tìm kiếm (không dấu): "còn thiếu" của
+  dòng = tổng cũ − các dòng khác; sản phẩm có giá chia hết số đó lên đầu (giá cao trước) + tự điền SL, còn lại khóa (ô "cho
+  chọn cả sản phẩm không chia hết" để ghép). Danh sách nằm trong `<script type="application/json" data-exchange-options>`.
+  Thẻ "Thêm sản phẩm" để `relative z-10` vì `.ant-table` có z-index 0 (bảng chọn bị thẻ sau đè). Trang đơn admin có thẻ "Lịch sử đổi sản phẩm"; trang
+  đơn của khách hiện "Đơn đã được đổi sản phẩm ngày …".
+- Nút "Xem trên website" (`backend.orders.preview`, quyền `order`): render `frontend.orders.show` với `adminPreview` — banner,
+  ẩn form bill / hủy đơn và link "Đơn hàng của tôi". Test: `tests/Feature/OrderExchangeTest.php`.
+
 ## Live có đơn thật — KHÔNG xóa đơn; tính bù hoa hồng cho đơn cũ (17/11/2026)
 
 - Chủ dự án 17/11/2026: live đã có đơn thật (9 đơn lúc đó), **tuyệt đối không xóa đơn / không làm mất dữ liệu live**.

@@ -109,6 +109,7 @@ return [
             'confirm_payment' => 'Xác nhận đã thanh toán / chưa nhận được tiền',
             'status' => 'Cập nhật Đang giao / Hoàn tất',
             'cancel' => 'Huỷ đơn chưa thanh toán',
+            'exchange' => 'Đổi sản phẩm trong đơn (tổng tiền không đổi)',
         ],
     ],
     'review' => [

@@ -157,6 +157,18 @@ class Order extends Model
         return MemberKyc::readImage($this->payment_bill);
     }
 
+    /** Lịch sử đổi sản phẩm (mới nhất trước). */
+    public function exchanges(): HasMany
+    {
+        return $this->hasMany(OrderExchange::class)->latest('id');
+    }
+
+    /** Đổi sản phẩm: đơn mới còn hạn, chờ xác nhận thanh toán, hoặc đã thanh toán (chưa giao). */
+    public function canExchange(): bool
+    {
+        return in_array($this->displayStatus(), [self::STATUS_NEW, self::STATUS_AWAITING, self::STATUS_PAID], true);
+    }
+
     /** Các dòng hoa hồng F1 / F2 của đơn (ghi lúc xác nhận thanh toán). */
     public function commissions(): HasMany
     {

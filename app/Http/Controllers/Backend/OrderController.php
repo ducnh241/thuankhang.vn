@@ -8,9 +8,12 @@ use App\Models\Commission;
 use App\Models\Member;
 use App\Models\Order;
 use App\Models\PickupPoint;
+use App\Models\Product;
+use App\Services\OrderExchanger;
 use App\Services\OrderPayment;
 use App\Support\AffiliateSettings;
 use App\Support\Money;
+use App\Support\VietQr;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,11 +88,63 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $order->load(['member.level', 'items.product', 'pickupPoint', 'confirmer', 'commissions.beneficiary:id,full_name']);
+        $order->load(['member.level', 'items.product.cover', 'items.variant.image', 'pickupPoint', 'confirmer', 'commissions.beneficiary:id,full_name', 'exchanges']);
 
         return view('backend.orders.show', [
             'order' => $order,
             'history' => AuditLog::where('auditable_type', Order::class)->where('auditable_id', $order->id)->latest('id')->limit(30)->get(),
+        ]);
+    }
+
+    /**
+     * Đổi sản phẩm (order/exchange): bớt / bỏ sản phẩm đang có, thêm sản phẩm khác (giá bán hiện tại); tổng tiền hàng mới phải
+     * bằng đúng tổng cũ (App\Services\OrderExchanger). Danh sách sản phẩm để chọn: đang bán, mỗi biến thể đang bán một dòng.
+     */
+    public function exchangeForm(Order $order): View|RedirectResponse
+    {
+        if (! $order->canExchange()) {
+            return redirect()->route('backend.orders.show', $order)->with('error', 'Đơn ở trạng thái “'.$order->statusLabel().'” không đổi sản phẩm được.');
+        }
+        // Danh sách để chọn (bộ chọn có tìm kiếm, order-exchange.js): giá bán hiện tại, tồn kho, ảnh
+        $options = Product::with(['activeVariants.image', 'cover'])->where('status', true)->orderBy('name')->get(['id', 'name', 'price', 'stock', 'status'])
+            ->flatMap(fn (Product $p) => $p->hasVariants()
+                ? $p->activeVariants->map(fn ($v) => ['value' => $p->id.':'.$v->id, 'label' => $p->name.' — '.$v->name, 'price' => $v->effectivePrice($p),
+                    'stock' => $v->stock, 'thumb' => ($v->image ?? $p->cover)?->url()])
+                : [['value' => (string) $p->id, 'label' => $p->name, 'price' => (int) $p->price, 'stock' => $p->stock, 'thumb' => $p->cover?->url()]])
+            ->values();
+
+        return view('backend.orders.exchange', ['order' => $order->load(['items.product.cover', 'items.variant.image']), 'options' => $options]);
+    }
+
+    public function exchange(Request $request, Order $order): RedirectResponse
+    {
+        $keep = is_array($request->input('keep')) ? $request->input('keep') : [];
+        $adds = collect(is_array($request->input('adds')) ? $request->input('adds') : [])->filter(fn ($row) => is_array($row))->map(function (array $row) {
+            [$product, $variant] = array_pad(explode(':', is_string($row['product'] ?? null) ? $row['product'] : '', 2), 2, null);
+
+            return ['product_id' => $product, 'variant_id' => $variant, 'qty' => is_scalar($row['qty'] ?? null) ? $row['qty'] : null];
+        })->values()->all();
+        $reason = is_string($request->input('reason')) ? $request->input('reason') : '';
+
+        $result = OrderExchanger::exchange($order, $keep, $adds, $reason, $request->user('web'));
+        if (is_string($result)) {
+            return back()->withInput()->with('error', $result);
+        }
+
+        return redirect()->route('backend.orders.show', $order)->with('success', "Đã đổi sản phẩm đơn {$order->code}. Tổng tiền hàng giữ nguyên ".Money::format($order->goods_amount).' đ.');
+    }
+
+    /** Xem đơn như khách thấy trên website (chỉ xem, không có nút thao tác) — để đối chiếu, vd sau khi đổi sản phẩm. */
+    public function preview(Order $order): View
+    {
+        $bank = VietQr::bank();
+
+        return view('frontend.orders.show', [
+            'order' => $order->load(['items.product.cover', 'items.variant.image', 'pickupPoint', 'exchanges']),
+            'bank' => $bank,
+            'qr' => $order->isAwaitingPayment() ? ($bank['qr_image'] ?? VietQr::imageUrl($order, $bank)) : null,
+            'qrIsStatic' => (bool) $bank['qr_image'],
+            'adminPreview' => true,
         ]);
     }
 

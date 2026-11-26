@@ -20,7 +20,7 @@ class RoleSeeder extends Seeder
             'backend_access',
             'product', 'product/add', 'product/edit', 'product/delete',
             'pickup_point', 'pickup_point/add', 'pickup_point/edit', 'pickup_point/delete',
-            'order', 'order/status', 'order/cancel',
+            'order', 'order/status', 'order/cancel', 'order/exchange',
             'review', 'review/moderate',
             'file', 'file/upload', 'file/delete',
             'member', 'member/lock', 'member/activate', 'member/referrer',
@@ -45,7 +45,7 @@ class RoleSeeder extends Seeder
         // A8 Đơn hàng, A10 Thành viên (xem, khoá / mở; sửa người giới thiệu để Vận hành)
         'CSKH' => [
             'backend_access',
-            'order', 'order/status', 'order/cancel',
+            'order', 'order/status', 'order/cancel', 'order/exchange',
             'review', 'review/moderate',
             'member', 'member/lock',
         ],
