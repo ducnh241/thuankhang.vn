@@ -40,8 +40,9 @@
           <div class="mt-4 flex flex-col gap-6 md:flex-row md:items-start">
             @if ($qr)
               <figure class="mx-auto w-56 shrink-0 rounded-xl bg-white p-2 shadow-sm md:mx-0">
-                <img src="{{ $qr }}" alt="Mã QR chuyển khoản đơn {{ $order->code }}" width="220" height="220" class="w-full" data-qr="{{ $qrIsStatic ? 'uploaded' : 'vietqr' }}" />
-                <figcaption class="mt-1 text-center text-xs text-slate-500">{{ $qrIsStatic ? 'Quét bằng app ngân hàng, rồi nhập đúng số tiền và nội dung' : 'Quét bằng app ngân hàng' }}</figcaption>
+                <img src="{{ $qr['url'] }}" alt="Mã QR chuyển khoản đơn {{ $order->code }}" width="220" height="220" class="w-full" data-qr="{{ $qr['static'] ? 'uploaded' : 'vietqr' }}"
+                     @if ($qr['fallback']) data-qr-fallback="{{ $qr['fallback'] }}" @endif />
+                <figcaption class="mt-1 text-center text-xs text-slate-500" data-qr-caption>{{ $qr['static'] ? 'Quét bằng app ngân hàng, rồi nhập đúng số tiền và nội dung' : 'Quét bằng app ngân hàng — số tiền và nội dung đã điền sẵn' }}</figcaption>
               </figure>
             @endif
             <dl class="grid flex-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[150px_minmax(0,1fr)]">

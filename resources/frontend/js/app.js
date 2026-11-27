@@ -94,6 +94,23 @@ document.addEventListener('click', async e => {
 });
 
 /*
+ * Mã QR chuyển khoản (trang đơn / lệnh nạp ví): ảnh VietQR có sẵn số tiền + nội dung lấy từ img.vietqr.io. Ảnh đó không tải
+ * được (mất mạng, dịch vụ lỗi, mã ngân hàng sai) → đổi sang ảnh QR công ty đã tải lên (data-qr-fallback), báo khách tự nhập
+ * số tiền và nội dung.
+ */
+document.querySelectorAll('img[data-qr-fallback]').forEach(img => {
+  const useFallback = () => {
+    if (img.dataset.qr === 'uploaded') return;
+    img.dataset.qr = 'uploaded';
+    img.src = img.dataset.qrFallback;
+    const caption = img.closest('figure')?.querySelector('[data-qr-caption]');
+    if (caption) caption.textContent = 'Quét bằng app ngân hàng, rồi nhập đúng số tiền và nội dung';
+  };
+  img.addEventListener('error', useFallback);
+  if (img.complete && img.naturalWidth === 0) useFallback(); // lỗi trước khi script chạy
+});
+
+/*
  * KYC (S10): ô ảnh CCCD [data-kyc-image] — xem trước ảnh vừa chọn. Ảnh chụp bằng điện thoại thường nặng 3–8 MB, trong khi
  * máy chủ hay giới hạn dung lượng một lần gửi (nginx mặc định 1 MB cho cả form) → thu nhỏ ngay trên máy trước khi gửi:
  * lần lượt thử các mức (cạnh dài, chất lượng JPEG) cho tới khi ảnh ≤ mức đích của ô (data-target-bytes; mặc định 360 KB

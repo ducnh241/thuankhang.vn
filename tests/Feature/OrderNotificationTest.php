@@ -12,6 +12,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Support\AffiliateSettings;
 use App\Support\NotificationSettings;
+use App\Support\VietQr;
 use Database\Seeders\AffiliateConfigSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -157,18 +158,39 @@ class OrderNotificationTest extends TestCase
         $path = Setting::get('pay_qr');
         Storage::disk('public')->assertExists($path);
 
-        // Trang đơn: hiện ảnh QR đã tải (không dùng mã VietQR tự tạo), kèm thông tin để khách nhập tay số tiền + nội dung
+        // Có mã ngân hàng + số tài khoản: mã VietQR điền sẵn đúng số tiền + mã đơn; ảnh đã tải chỉ là dự phòng khi ảnh VietQR lỗi
         $this->actingAs($member, 'member')->get(route('member.orders.show', $order))->assertOk()
+            ->assertSee('src="https://img.vietqr.io/image/VCB-0011001234567-compact2.png?amount=1230000&amp;addInfo='.$order->code, false)
+            ->assertSee('data-qr="vietqr"', false)->assertSee('data-qr-fallback="'.Storage::disk('public')->url($path).'"', false)
+            ->assertSee('số tiền và nội dung đã điền sẵn')->assertSee('Vietcombank')->assertSee('0011001234567')->assertSee('1.230.000đ')->assertSee($order->code);
+
+        // Chưa có mã ngân hàng: chỉ còn ảnh đã tải (mã tĩnh) — khách tự nhập số tiền + nội dung
+        $this->actingAs($root, 'web')->put('/backend/setting', ['_tab' => 'payment', 'site_name' => 'Thuận Khang', 'pay_bank_name' => 'Vietcombank',
+            'pay_bank_account' => '0011001234567'])->assertSessionHasNoErrors();
+        $this->actingAs($member, 'member')->get(route('member.orders.show', $order))
             ->assertSee('src="'.Storage::disk('public')->url($path).'"', false)->assertSee('data-qr="uploaded"', false)->assertDontSee('img.vietqr.io', false)
-            ->assertSee('rồi nhập đúng số tiền và nội dung')->assertSee('Vietcombank')->assertSee('0011001234567')->assertSee('1.230.000đ')->assertSee($order->code);
+            ->assertDontSee('data-qr-fallback', false)->assertSee('rồi nhập đúng số tiền và nội dung');
 
         // Bỏ ảnh QR: quay về mã VietQR tự tạo theo đơn; xóa cả số tài khoản: hướng dẫn gọi hotline
         $this->actingAs($root, 'web')->put('/backend/setting', ['_tab' => 'payment', 'site_name' => 'Thuận Khang', 'pay_bank_code' => 'VCB', 'pay_bank_account' => '0011001234567', 'remove_payment_qr' => '1'])->assertSessionHasNoErrors();
         Storage::disk('public')->assertMissing($path);
         $this->actingAs($member, 'member')->get(route('member.orders.show', $order))
-            ->assertSee('data-qr="vietqr"', false)->assertSee('img.vietqr.io/image/VCB-0011001234567', false)->assertSee('VCB');
+            ->assertSee('data-qr="vietqr"', false)->assertSee('img.vietqr.io/image/VCB-0011001234567', false)->assertSee('VCB')->assertDontSee('data-qr-fallback', false);
         $this->actingAs($root, 'web')->put('/backend/setting', ['_tab' => 'payment', 'site_name' => 'Thuận Khang'])->assertSessionHasNoErrors();
         $this->actingAs($member, 'member')->get(route('member.orders.show', $order))->assertDontSee('data-qr', false)->assertSee('liên hệ hotline');
+    }
+
+    public function test_qr_choice_prefers_amount_filled_vietqr(): void
+    {
+        $bank = ['code' => 'TCB', 'account' => '19001234567', 'name' => 'CONG TY THUAN KHANG', 'qr_image' => 'https://x.test/qr.png'];
+        $url = 'https://img.vietqr.io/image/TCB-19001234567-compact2.png?amount=3037000&addInfo=TK53AWP9K7&accountName=CONG+TY+THUAN+KHANG';
+
+        // Đủ mã ngân hàng + số tài khoản: VietQR đúng số tiền + mã đơn, ảnh đã tải làm dự phòng
+        $this->assertSame(['url' => $url, 'static' => false, 'fallback' => 'https://x.test/qr.png'], VietQr::qr(3037000, 'TK53AWP9K7', $bank));
+        $this->assertSame(['url' => $url, 'static' => false, 'fallback' => null], VietQr::qr(3037000, 'TK53AWP9K7', [...$bank, 'qr_image' => null]));
+        // Thiếu mã ngân hàng: ảnh tĩnh; không có gì: null
+        $this->assertSame(['url' => 'https://x.test/qr.png', 'static' => true, 'fallback' => null], VietQr::qr(3037000, 'TK53AWP9K7', [...$bank, 'code' => null]));
+        $this->assertNull(VietQr::qr(3037000, 'TK53AWP9K7', [...$bank, 'code' => null, 'qr_image' => null]));
     }
 
     public function test_notification_tab_and_permissions(): void

@@ -142,8 +142,7 @@ class OrderController extends Controller
         return view('frontend.orders.show', [
             'order' => $order->load(['items.product.cover', 'items.variant.image', 'pickupPoint', 'exchanges']),
             'bank' => $bank,
-            'qr' => $order->isAwaitingPayment() ? ($bank['qr_image'] ?? VietQr::imageUrl($order, $bank)) : null,
-            'qrIsStatic' => (bool) $bank['qr_image'],
+            'qr' => $order->isAwaitingPayment() ? VietQr::qr($order->total_amount, $order->code, $bank) : null,
             'adminPreview' => true,
         ]);
     }

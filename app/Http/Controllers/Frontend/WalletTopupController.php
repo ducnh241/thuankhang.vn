@@ -73,8 +73,7 @@ class WalletTopupController extends Controller
         return view('frontend.wallet.topups.show', [
             'topup' => $topup,
             'bank' => $bank,
-            'qr' => $topup->isAwaitingPayment() ? ($bank['qr_image'] ?? VietQr::imageUrlFor($topup->amount, $topup->code, $bank)) : null,
-            'qrIsStatic' => (bool) $bank['qr_image'],
+            'qr' => $topup->isAwaitingPayment() ? VietQr::qr($topup->amount, $topup->code, $bank) : null,
         ]);
     }
 

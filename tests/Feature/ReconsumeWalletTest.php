@@ -12,6 +12,7 @@ use App\Models\Member;
 use App\Models\MemberKyc;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
@@ -287,6 +288,12 @@ class ReconsumeWalletTest extends TestCase
 
         $this->get(route('member.topups.show', $topup))->assertOk()->assertSee($topup->code)->assertSee('250.000đ')
             ->assertSee('data-bill-form', false)->assertSee('Tôi đã chuyển khoản');
+        // Mã QR lệnh nạp: điền sẵn đúng số tiền nạp + mã lệnh (có mã ngân hàng + số tài khoản)
+        Setting::put('pay_bank_code', 'TCB');
+        Setting::put('pay_bank_account', '19001234567');
+        $this->get(route('member.topups.show', $topup))
+            ->assertSee('src="https://img.vietqr.io/image/TCB-19001234567-compact2.png?amount=250000&amp;addInfo='.$topup->code.'"', false)
+            ->assertSee('data-qr="vietqr"', false);
 
         // Lệnh của người khác: 404
         $this->actingAs($this->member(), 'member')->get(route('member.topups.show', $topup))->assertNotFound();

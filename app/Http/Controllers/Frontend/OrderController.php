@@ -36,8 +36,7 @@ class OrderController extends Controller
             'order' => $order->load(['items.product.cover', 'items.variant.image', 'pickupPoint']),
             'bank' => $bank = VietQr::bank(),
             // Ảnh mã QR công ty tải lên (ưu tiên), không có thì mã VietQR tự tạo theo đơn
-            'qr' => $order->isAwaitingPayment() ? ($bank['qr_image'] ?? VietQr::imageUrl($order, $bank)) : null,
-            'qrIsStatic' => (bool) $bank['qr_image'],
+            'qr' => $order->isAwaitingPayment() ? VietQr::qr($order->total_amount, $order->code, $bank) : null,
         ]);
     }
 

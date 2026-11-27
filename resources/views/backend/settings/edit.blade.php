@@ -184,7 +184,7 @@
             <div class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
               @foreach ([
                   'pay_bank_name' => ['Tên ngân hàng', 100, 'VD: Vietcombank – CN Hà Nội', '', 'Tên hiện cho khách.'],
-                  'pay_bank_code' => ['Mã ngân hàng (VietQR)', 20, 'VD: VCB hoặc 970436', 'uppercase', 'Tên viết tắt hoặc mã BIN theo VietQR. Có mã này thì hệ thống tự tạo mã QR theo từng đơn khi chưa tải ảnh QR.'],
+                  'pay_bank_code' => ['Mã ngân hàng (VietQR)', 20, 'VD: VCB hoặc 970436', 'uppercase', 'Tên viết tắt hoặc mã BIN theo VietQR. Có mã này + số tài khoản thì mã QR ở trang đơn / nạp ví điền sẵn đúng số tiền và mã đơn.'],
                   'pay_bank_account' => ['Số tài khoản', 30, 'VD: 0011001234567', 'uppercase tabular-nums', ''],
                   'pay_account_name' => ['Tên chủ tài khoản', 100, 'VD: CONG TY TNHH THUAN KHANG', 'uppercase', 'In hoa, không dấu, đúng như trên ngân hàng.'],
               ] as $name => [$label, $max, $placeholder, $class, $hint])
@@ -206,10 +206,10 @@
         <div class="ant-card ant-card-bordered" data-card="payment-qr" @unless ($isRoot) inert @endunless>
           <div class="ant-card-head"><div class="ant-card-head-wrapper"><div class="ant-card-head-title">Mã QR chuyển khoản</div></div></div>
           <div class="ant-card-body">
-            <p class="settings-card-desc">Tải ảnh mã QR của tài khoản công ty (lưu từ app ngân hàng). Khách quét mã này ở trang đơn rồi nhập số tiền và nội dung chuyển khoản.</p>
+            <p class="settings-card-desc">Ảnh mã QR của tài khoản công ty (lưu từ app ngân hàng) — dự phòng. Đã nhập mã ngân hàng + số tài khoản thì khách thấy mã VietQR điền sẵn số tiền và mã đơn; ảnh này chỉ hiện khi chưa có mã ngân hàng hoặc mã VietQR không tải được (khách tự nhập số tiền, nội dung).</p>
             @php
                 [$field, $key, $label, $accept, $maxSize, $hint, $typeMessage, $sizeMessage] = ['payment_qr', 'pay_qr', 'Ảnh mã QR', 'image/png,image/jpeg,image/webp', 2 * 1024 * 1024,
-                    'PNG, JPG hoặc WEBP, tối đa 2 MB. Không tải ảnh: nếu đã nhập mã ngân hàng và số tài khoản thì hệ thống tự tạo mã VietQR có sẵn số tiền và mã đơn.',
+                    'PNG, JPG hoặc WEBP, tối đa 2 MB.',
                     'Chọn ảnh PNG, JPG hoặc WEBP.', 'Ảnh mã QR tối đa 2 MB.'];
             @endphp
             @include('backend.settings._image')

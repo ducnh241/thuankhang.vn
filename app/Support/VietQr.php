@@ -5,10 +5,10 @@ namespace App\Support;
 use App\Models\Order;
 
 /**
- * Thông tin chuyển khoản hiện cho khách ở trang đơn (Cài đặt → tab Thanh toán) và mã QR:
- *   - công ty đã tải ảnh mã QR lên → dùng ảnh đó (mã tĩnh: khách tự nhập số tiền + nội dung);
- *   - chưa tải ảnh nhưng có mã ngân hàng + số tài khoản → tự tạo mã VietQR theo đơn (ảnh từ img.vietqr.io: số tiền =
- *     tổng đơn, nội dung = mã đơn).
+ * Thông tin chuyển khoản hiện cho khách ở trang đơn / lệnh nạp ví (Cài đặt → tab Thanh toán) và mã QR (27/11/2026):
+ *   - có mã ngân hàng + số tài khoản → LUÔN tạo mã VietQR có sẵn đúng số tiền và nội dung (mã đơn / mã lệnh nạp) — ảnh từ
+ *     img.vietqr.io; ảnh QR công ty đã tải lên (nếu có) làm dự phòng khi ảnh VietQR không tải được (JS đổi ảnh);
+ *   - thiếu mã ngân hàng nhưng đã tải ảnh QR → dùng ảnh đó (mã tĩnh: khách tự nhập số tiền + nội dung).
  */
 class VietQr
 {
@@ -34,6 +34,20 @@ class VietQr
         $bank ??= self::bank();
 
         return (bool) $bank['account'] && (bool) $bank['label'];
+    }
+
+    /**
+     * Mã QR hiện cho khách: ['url', 'static' (true = ảnh tĩnh, khách tự nhập tiền), 'fallback' (ảnh tĩnh dự phòng khi ảnh
+     * VietQR lỗi, hoặc null)]; null khi không có mã nào.
+     */
+    public static function qr(int $amount, string $content, ?array $bank = null): ?array
+    {
+        $bank ??= self::bank();
+        if ($dynamic = self::imageUrlFor($amount, $content, $bank)) {
+            return ['url' => $dynamic, 'static' => false, 'fallback' => $bank['qr_image']];
+        }
+
+        return $bank['qr_image'] ? ['url' => $bank['qr_image'], 'static' => true, 'fallback' => null] : null;
     }
 
     /** Mã VietQR tự tạo theo đơn; null khi thiếu mã ngân hàng / số tài khoản. */

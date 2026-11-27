@@ -382,9 +382,10 @@ cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topu
   không đổi (mục dưới).
 - Thông tin chuyển khoản + mã QR: **Cài đặt → tab "Thanh toán"** (`/backend/setting?tab=payment`): tên ngân hàng, mã ngân
   hàng VietQR, số tài khoản, tên chủ tài khoản (khóa `pay_*` trong settings — chuyển từ `aff_bank_*` của Tham số chung,
-  migration `2026_11_19_000001`), và **ảnh mã QR của công ty** tải lên (`pay_qr`, disk public `settings/`). Trang đơn: có
-  ảnh QR tải lên thì hiện ảnh đó (khách tự nhập số tiền + nội dung); chưa tải thì tự tạo mã VietQR theo đơn nếu có mã
-  ngân hàng + số tài khoản (`App\Support\VietQr`). **Chỉ Root admin sửa được** các ô này (`SiteSettings::rootOnlyKeys()`)
+  migration `2026_11_19_000001`), và **ảnh mã QR của công ty** tải lên (`pay_qr`, disk public `settings/`). Trang đơn /
+  lệnh nạp ví / admin xem trước (27/11/2026, `VietQr::qr()`): có mã ngân hàng + số tài khoản → LUÔN mã VietQR điền sẵn đúng
+  số tiền + mã đơn (img.vietqr.io); ảnh QR tải lên chỉ là dự phòng (`data-qr-fallback`, JS frontend đổi ảnh khi VietQR lỗi)
+  hoặc dùng khi chưa có mã ngân hàng (khách tự nhập tiền). **Chỉ Root admin sửa được** các ô này (`SiteSettings::rootOnlyKeys()`)
   — đây là tài khoản khách chuyển tiền vào.
 - Trang thanh toán và trang đơn của khách **không tách dòng VAT** (giá đã gồm VAT); `orders.vat_amount` vẫn lưu để tính
   hoa hồng.
