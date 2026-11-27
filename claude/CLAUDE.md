@@ -376,6 +376,13 @@ cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topu
 - Hoa hồng F1 / F2 + ví: xem mục riêng bên dưới. Test: `tests/Feature/LevelEngineTest.php`.
 
 ## Luồng mua hàng + thông báo cho kế toán (16/11/2026)
+
+- Nút −/+ số lượng ở giỏ hàng và trang thanh toán (27/11/2026): partial `frontend/partials/qty-stepper` (truyền đủ tham số,
+  kể cả `'name' => null` — @include thừa hưởng biến trang gọi). JS `[data-cart-qty]` (frontend/js/app.js): gửi PATCH
+  `shop.cart.update` bằng fetch sau 400ms (bấm liên tiếp gửi 1 lần), `CartController::update` trả JSON khi `expectsJson()`
+  (qty thật, max theo tồn kho mới, thành tiền dòng, tạm tính, tổng số món, lỗi tồn kho) → cập nhật tại chỗ, không tải lại
+  trang; trang thanh toán giữ các ô đã nhập và đổi trạng thái đủ / thiếu ví (`data-pay-wallet` + `data-reconsume`). Không JS:
+  form thường như cũ. Con trỏ bàn tay cho mọi nút: quy tắc chung trong `resources/frontend/css/app.css` (@layer base).
 - Luồng: **Thêm vào giỏ** (ở lại trang, thông báo có nút "Xem giỏ hàng" / "Thanh toán") hoặc **Mua ngay** (sang thẳng
   `/thanh-toan`) → nhập người nhận + hình thức nhận như cũ → bấm **Thanh toán** → tạo đơn, sang trang đơn hiện thông tin
   chuyển khoản đã cấu hình + mã QR → khách chuyển khoản rồi bấm "Tôi đã chuyển khoản", hoặc "Hủy đơn". Trạng thái đơn

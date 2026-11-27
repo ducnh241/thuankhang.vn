@@ -108,7 +108,8 @@ class ReconsumeWalletTest extends TestCase
 
         // Trang thanh toán: có lựa chọn ví + số dư
         $this->actingAs($buyer, 'member')->withSession([Cart::SESSION_KEY => [$product->id => 2]])->get(route('shop.checkout'))->assertOk()
-            ->assertSee('Ví tái tiêu dùng')->assertSee('data-wallet-reconsume>1.200.000đ', false)->assertDontSee('data-wallet-short', false);
+            ->assertSee('Ví tái tiêu dùng')->assertSee('data-wallet-reconsume>1.200.000đ', false)
+            ->assertSee('data-wallet-short hidden', false)->assertSee('data-reconsume="1200000"', false);
 
         $response = $this->checkout($buyer, $product, 2);
         $order = Order::sole();
@@ -145,7 +146,7 @@ class ReconsumeWalletTest extends TestCase
         $product = $this->product(['stock' => 5]);
 
         $this->actingAs($buyer, 'member')->withSession([Cart::SESSION_KEY => [$product->id => 2]])->get(route('shop.checkout'))->assertOk()
-            ->assertSee('Còn thiếu 1đ.')->assertSee(route('member.topups.index'));
+            ->assertSeeText('Còn thiếu 1đ.')->assertSee(route('member.topups.index'));
 
         $this->checkout($buyer, $product, 2)->assertRedirect(route('shop.checkout'))->assertSessionHasErrors('payment_method');
         $this->assertSame(0, Order::count());

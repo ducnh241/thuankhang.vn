@@ -71,6 +71,41 @@ class CheckoutTest extends TestCase
         $this->assertSame([], session(Cart::SESSION_KEY));
     }
 
+    public function test_quantity_steppers_update_cart_in_place(): void
+    {
+        $a = $this->product(['name' => 'Sản phẩm A', 'price' => 110000, 'stock' => 4]);
+        $b = $this->product(['name' => 'Sản phẩm B', 'price' => 50000]);
+        $this->withSession([Cart::SESSION_KEY => [$a->id => 2, $b->id => 1]]);
+
+        // Giỏ hàng: mỗi dòng có nút −/+ (giới hạn theo tồn kho), thành tiền dòng để cập nhật tại chỗ
+        $this->get('/gio-hang')->assertOk()
+            ->assertSee('data-cart-qty', false)->assertSee('data-qty-step="-1"', false)->assertSee('data-qty-step="1"', false)
+            ->assertSee('aria-label="Tăng số lượng Sản phẩm A"', false)->assertSee('id="qty-'.$a->id.'" type="number" name="qty" value="2" min="1" max="4"', false)
+            ->assertSee('data-line-total>220.000đ', false);
+
+        // Bấm +/− (fetch, Accept: JSON): trả số liệu mới, không chuyển trang
+        $json = ['Accept' => 'application/json'];
+        $this->patch("/gio-hang/{$a->id}", ['qty' => 3], $json)->assertOk()
+            ->assertExactJson(['qty' => 3, 'max' => 4, 'line_amount' => 330000, 'line_text' => '330.000đ', 'subtotal' => 380000, 'subtotal_text' => '380.000đ', 'count' => 4, 'error' => null]);
+        // Vượt tồn kho: hạ về số còn lại + báo
+        $this->patch("/gio-hang/{$a->id}", ['qty' => 9], $json)->assertOk()
+            ->assertJson(['qty' => 4, 'max' => 4, 'line_text' => '440.000đ', 'subtotal' => 490000, 'count' => 5, 'error' => '“Sản phẩm A” chỉ còn 4 sản phẩm.']);
+        $this->patch("/gio-hang/{$a->id}", ['qty' => 100], $json)->assertUnprocessable();
+        // Hết hàng: dòng bị bỏ khỏi giỏ (qty 0 → trang tải lại)
+        $a->update(['stock' => 0]);
+        $this->patch("/gio-hang/{$a->id}", ['qty' => 1], $json)->assertOk()->assertJson(['qty' => 0, 'max' => 0, 'subtotal' => 50000, 'count' => 1, 'error' => '“Sản phẩm A” đã hết hàng.']);
+        $this->assertSame([$b->id => 1], session(Cart::SESSION_KEY));
+        // Không có JS: form thường vẫn quay về giỏ
+        $this->patch("/gio-hang/{$b->id}", ['qty' => 2])->assertRedirect(route('shop.cart'));
+        $this->assertSame([$b->id => 2], session(Cart::SESSION_KEY));
+
+        // Trang thanh toán: nút −/+ trong tóm tắt đơn gửi tới cùng địa chỉ, ô số không có name (không lẫn vào form đặt hàng)
+        $member = Member::factory()->create();
+        $this->actingAs($member, 'member')->get(route('shop.checkout'))->assertOk()
+            ->assertSee('data-url="'.route('shop.cart.update', (string) $b->id).'"', false)->assertSee('data-summary-count>2<', false)
+            ->assertSee('id="checkout-qty-'.$b->id.'" type="number" value="2" min="1" max="99"', false)->assertSee('data-line-total>100.000đ', false);
+    }
+
     public function test_checkout_requires_member_login(): void
     {
         $product = $this->product();

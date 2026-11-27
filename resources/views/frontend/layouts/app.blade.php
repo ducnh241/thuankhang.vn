@@ -237,7 +237,7 @@
             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">{!! $tab['icon'] !!}</svg>
             {{ $tab['label'] }}
             @if (! empty($tab['badge']))
-              <span class="absolute top-1 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{{ $tab['badge'] > 99 ? '99+' : $tab['badge'] }}</span>
+              <span class="absolute top-1 left-1/2 ml-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white" @if ($tab['route'] === 'shop.cart') data-cart-count @endif>{{ $tab['badge'] > 99 ? '99+' : $tab['badge'] }}</span>
             @endif
           </a>
         </li>

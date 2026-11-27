@@ -35,13 +35,12 @@
                 @if ($owner->tracksStock() && $line['qty'] > $owner->stock)
                   <div class="mt-1 text-xs font-medium text-rose-600" data-stock-warning>{{ $owner->stock > 0 ? 'Chỉ còn '.$owner->stock.' sản phẩm — giảm số lượng để đặt hàng' : 'Đã hết hàng — xóa khỏi giỏ để đặt hàng' }}</div>
                 @endif
+                <p class="mt-1 text-xs font-medium text-rose-600" data-line-message hidden></p>
                 <div class="mt-3 flex flex-wrap items-center gap-3">
-                  <form method="POST" action="{{ route('shop.cart.update', $line['key']) }}" class="flex items-center gap-2">
+                  <form method="POST" action="{{ route('shop.cart.update', $line['key']) }}" class="flex items-center gap-2" data-cart-qty>
                     @csrf
                     @method('PATCH')
-                    <label for="qty-{{ $slug }}" class="sr-only">Số lượng</label>
-                    <input id="qty-{{ $slug }}" type="number" name="qty" value="{{ $line['qty'] }}" min="1" max="{{ max(1, $owner->maxOrderQty()) }}" data-autosubmit
-                      class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-center text-sm outline-none focus:border-brand-500" />
+                    @include('frontend.partials.qty-stepper', ['id' => 'qty-'.$slug, 'name' => 'qty', 'value' => $line['qty'], 'max' => $owner->maxOrderQty(), 'label' => $product->name])
                     <noscript><button type="submit" class="text-sm text-brand-700">Cập nhật</button></noscript>
                   </form>
                   <form method="POST" action="{{ route('shop.cart.destroy', $line['key']) }}">
@@ -51,7 +50,7 @@
                   </form>
                 </div>
               </div>
-              <div class="shrink-0 text-right font-semibold text-slate-900">{{ Money::format($line['line_amount']) }}đ</div>
+              <div class="shrink-0 text-right font-semibold tabular-nums text-slate-900" data-line-total>{{ Money::format($line['line_amount']) }}đ</div>
             </div>
           @endforeach
         </div>

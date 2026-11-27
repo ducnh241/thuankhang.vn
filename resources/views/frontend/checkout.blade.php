@@ -114,17 +114,15 @@
                 <span class="block text-sm text-slate-500">{{ $transferBlocked ? 'Bạn đang có '.Order::MAX_OPEN_UNPAID.' đơn chưa thanh toán' : 'Quét mã QR, tải ảnh bill — kế toán xác nhận' }}</span>
               </span>
             </label>
-            <label @class(['flex gap-3 rounded-xl border border-slate-300 p-4 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50', 'cursor-pointer' => $walletEnough, 'opacity-60' => ! $walletEnough]) data-pay-wallet>
+            {{-- Đủ / thiếu ví đổi theo tổng đơn khi khách đổi số lượng (JS [data-checkout]: data-reconsume) --}}
+            <label @class(['flex gap-3 rounded-xl border border-slate-300 p-4 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50', 'cursor-pointer' => $walletEnough, 'opacity-60' => ! $walletEnough]) data-pay-wallet data-reconsume="{{ $reconsume }}">
               <input type="radio" name="payment_method" value="{{ Order::PAYMENT_WALLET }}" class="mt-1 accent-brand-600" @checked($payment === Order::PAYMENT_WALLET && $walletEnough) @disabled(! $walletEnough) />
               <span>
                 <span class="block font-medium text-slate-900">Ví tái tiêu dùng</span>
                 <span class="block text-sm text-slate-500">Số dư: <strong class="tabular-nums text-slate-700" data-wallet-reconsume>{{ Money::format($reconsume) }}đ</strong></span>
-                @if ($walletEnough)
-                  <span class="block text-xs text-slate-500">Trừ ví ngay, đơn được thanh toán luôn.</span>
-                @else
-                  <span class="block text-xs text-rose-600" data-wallet-short>Còn thiếu {{ Money::format($subtotal - $reconsume) }}đ.
-                    <a href="{{ route('member.topups.index') }}" class="font-medium text-brand-700 underline">Nạp tiền vào ví</a></span>
-                @endif
+                <span class="block text-xs text-slate-500" data-wallet-ok{{ $walletEnough ? '' : ' hidden' }}>Trừ ví ngay, đơn được thanh toán luôn.</span>
+                <span class="block text-xs text-rose-600" data-wallet-short{{ $walletEnough ? ' hidden' : '' }}>Còn thiếu <span data-wallet-short-amount>{{ Money::format(max(0, $subtotal - $reconsume)) }}đ</span>.
+                  <a href="{{ route('member.topups.index') }}" class="font-medium text-brand-700 underline">Nạp tiền vào ví</a></span>
               </span>
             </label>
           </div>
@@ -139,10 +137,21 @@
       </div>
 
       <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="font-semibold text-slate-900">Đơn hàng ({{ $lines->sum('qty') }} sản phẩm)</h2>
-        <ul class="mt-4 space-y-3 text-sm">
+        <h2 class="font-semibold text-slate-900">Đơn hàng (<span data-summary-count>{{ $lines->sum('qty') }}</span> sản phẩm)</h2>
+        {{-- Đổi số lượng ngay tại đây (nút −/+): cập nhật giỏ bằng fetch, không tải lại trang — các ô đã nhập ở bên trái giữ nguyên --}}
+        <ul class="mt-4 divide-y divide-slate-100 text-sm">
           @foreach ($lines as $line)
-            <li class="flex justify-between gap-3"><span class="min-w-0 text-slate-600"><span class="line-clamp-2">{{ $line['product']->name }}{{ $line['variant'] ? ' — '.$line['variant']->name : '' }}</span><span class="text-slate-400">× {{ $line['qty'] }}</span></span><span class="shrink-0 font-medium">{{ Money::format($line['line_amount']) }}đ</span></li>
+            @php $label = $line['product']->name.($line['variant'] ? ' — '.$line['variant']->name : ''); @endphp
+            <li class="py-3 first:pt-0" data-cart-line="{{ $line['key'] }}">
+              <span class="line-clamp-2 text-slate-700">{{ $label }}</span>
+              <span class="block text-xs text-slate-400">{{ Money::format($line['unit_price']) }}đ</span>
+              <div class="mt-2 flex items-center justify-between gap-3" data-cart-qty data-url="{{ route('shop.cart.update', $line['key']) }}">
+                @include('frontend.partials.qty-stepper', ['id' => 'checkout-qty-'.str_replace(':', '-', $line['key']), 'name' => null, 'value' => $line['qty'],
+                    'max' => ($line['variant'] ?? $line['product'])->maxOrderQty(), 'label' => $label])
+                <span class="shrink-0 font-medium tabular-nums" data-line-total>{{ Money::format($line['line_amount']) }}đ</span>
+              </div>
+              <p class="mt-1 text-xs font-medium text-rose-600" data-line-message hidden></p>
+            </li>
           @endforeach
         </ul>
         <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">

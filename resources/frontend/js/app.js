@@ -351,12 +351,17 @@ if (checkout) {
   syncInfo();
 }
 
-// Chọn số lượng (trang sản phẩm): nút −/+ trong [data-qty], giữ trong khoảng min–max của ô số
+// Chọn số lượng (trang sản phẩm, giỏ hàng, thanh toán): nút −/+ trong [data-qty], giữ trong khoảng min–max của ô số
 const syncQty = box => {
   const input = box.querySelector('input');
   const value = Number(input.value) || 1;
   box.querySelector('[data-qty-step="-1"]').disabled = value <= Number(input.min || 1);
   box.querySelector('[data-qty-step="1"]').disabled = value >= Number(input.max || 99);
+};
+const clampQty = input => {
+  const min = Number(input.min || 1);
+  const max = Number(input.max || 99);
+  input.value = String(Math.min(max, Math.max(min, Math.floor(Number(input.value)) || min)));
 };
 document.querySelectorAll('[data-qty]').forEach(box => {
   syncQty(box);
@@ -371,6 +376,105 @@ document.addEventListener('click', e => {
   const max = Number(input.max || 99);
   input.value = Math.min(max, Math.max(min, (Number(input.value) || min) + Number(step.dataset.qtyStep)));
   syncQty(box);
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+/*
+ * Giỏ hàng / thanh toán: đổi số lượng một dòng ([data-cart-qty]: form PATCH ở giỏ, khối data-url ở trang thanh toán) → gửi
+ * bằng fetch sau 400ms (bấm −/+ liên tiếp chỉ gửi một lần), không tải lại trang — trang thanh toán giữ nguyên các ô đã nhập.
+ * Máy chủ trả số lượng thật (vượt tồn kho thì hạ xuống + báo), thành tiền dòng, tạm tính, tổng số món → cập nhật tại chỗ,
+ * kể cả số trên biểu tượng giỏ và trạng thái đủ / thiếu ví tái tiêu dùng ở trang thanh toán.
+ */
+const moneyText = value => `${new Intl.NumberFormat('vi-VN').format(value)}đ`;
+const cartTimers = new WeakMap();
+
+const syncWalletOption = subtotal => {
+  const label = document.querySelector('[data-pay-wallet]');
+  if (!label) return;
+  const radio = label.querySelector('input[type=radio]');
+  const enough = Number(label.dataset.reconsume) >= subtotal;
+  radio.disabled = !enough;
+  label.classList.toggle('cursor-pointer', enough);
+  label.classList.toggle('opacity-60', !enough);
+  label.querySelector('[data-wallet-ok]').hidden = !enough;
+  label.querySelector('[data-wallet-short]').hidden = enough;
+  label.querySelector('[data-wallet-short-amount]').textContent = moneyText(Math.max(0, subtotal - Number(label.dataset.reconsume)));
+  if (!enough && radio.checked) {
+    radio.checked = false;
+    const transfer = document.querySelector('input[name="payment_method"]:not([disabled])');
+    if (transfer) transfer.checked = true;
+  }
+};
+
+const sendCartQty = async box => {
+  cartTimers.delete(box);
+  const input = box.querySelector('[data-qty] input');
+  const line = box.closest('[data-cart-line]');
+  const message = line?.querySelector('[data-line-message]');
+  const body = new FormData();
+  body.append('_token', document.querySelector('input[name="_token"]')?.value || '');
+  body.append('_method', 'PATCH');
+  body.append('qty', input.value);
+  box.setAttribute('aria-busy', 'true');
+  try {
+    const res = await fetch(box.dataset.url || box.action, {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+    if (data.qty === 0) {
+      window.location.reload(); // hết hàng: dòng đã bị bỏ khỏi giỏ
+      return;
+    }
+    input.max = String(data.max); // tồn kho mới nhất
+    if (!cartTimers.has(box)) {
+      input.value = String(data.qty); // khách chưa bấm tiếp trong lúc chờ
+    }
+    syncQty(input.closest('[data-qty]'));
+    line?.querySelector('[data-line-total]')?.replaceChildren(data.line_text);
+    line?.querySelector('[data-stock-warning]')?.remove();
+    if (message) {
+      message.textContent = data.error || '';
+      message.hidden = !data.error;
+    }
+    document.querySelectorAll('[data-cart-subtotal], [data-summary-total]').forEach(el => (el.textContent = data.subtotal_text));
+    document.querySelectorAll('[data-summary-count]').forEach(el => (el.textContent = String(data.count)));
+    document.querySelectorAll('[data-cart-count]').forEach(el => (el.textContent = data.count > 99 ? '99+' : String(data.count)));
+    syncWalletOption(data.subtotal);
+  } catch {
+    if (message) {
+      message.textContent = 'Không cập nhật được số lượng, vui lòng thử lại.';
+      message.hidden = false;
+    }
+  } finally {
+    box.removeAttribute('aria-busy');
+  }
+};
+
+const queueCartQty = box => {
+  clearTimeout(cartTimers.get(box));
+  cartTimers.set(box, setTimeout(() => sendCartQty(box), 400));
+};
+document.addEventListener('change', e => {
+  const box = e.target.closest('[data-cart-qty]');
+  if (!box || !e.target.matches('[data-qty] input')) return;
+  clampQty(e.target);
+  syncQty(e.target.closest('[data-qty]'));
+  queueCartQty(box);
+});
+// Enter trong ô số lượng: chỉ cập nhật dòng đó (không gửi form giỏ kiểu cũ, không gửi form thanh toán)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.matches('[data-cart-qty] [data-qty] input')) return;
+  e.preventDefault();
+  e.target.dispatchEvent(new Event('change', { bubbles: true }));
+});
+document.addEventListener('submit', e => {
+  if (!e.target.matches('form[data-cart-qty]')) return;
+  e.preventDefault();
+  queueCartQty(e.target);
 });
 
 // Chọn biến thể (trang sản phẩm): đổi giá, tên biến thể, dòng tồn kho và số lượng tối đa theo lựa chọn

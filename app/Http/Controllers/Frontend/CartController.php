@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Support\Cart;
 use App\Support\Catalog;
+use App\Support\Money;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -61,22 +63,43 @@ class CartController extends Controller
             : back()->with('success', "Đã thêm “{$name}” vào giỏ hàng.")->with('cart_added', true);
     }
 
-    /** Sửa số lượng; vượt tồn kho thì đặt bằng số còn lại và báo. */
-    public function update(Request $request, Cart $cart, string $line): RedirectResponse
+    /**
+     * Sửa số lượng; vượt tồn kho thì đặt bằng số còn lại và báo. Nút −/+ ở giỏ hàng và trang thanh toán gọi bằng fetch
+     * (Accept: application/json) → trả số liệu mới để cập nhật tại chỗ, không tải lại trang (trang thanh toán giữ nguyên các
+     * ô khách đã nhập). Không có JS: form thường, quay về giỏ hàng.
+     */
+    public function update(Request $request, Cart $cart, string $line): RedirectResponse|JsonResponse
     {
         $data = $request->validate(['qty' => ['required', 'integer', 'min:0', 'max:'.Cart::MAX_QTY]]);
         $qty = (int) $data['qty'];
         $current = $cart->lines()->firstWhere('key', $line);
         $owner = $current ? ($current['variant'] ?? $current['product']) : null;
+        $error = null;
         if ($owner?->tracksStock() && $qty > $owner->stock) {
-            $cart->set($line, $owner->stock);
+            $qty = max(0, (int) $owner->stock);
             $name = $current['product']->name.($current['variant'] ? ' — '.$current['variant']->name : '');
-
-            return redirect()->route('shop.cart')->with('error', $owner->stock > 0 ? "“{$name}” chỉ còn {$owner->stock} sản phẩm." : "“{$name}” đã hết hàng.");
+            $error = $owner->stock > 0 ? "“{$name}” chỉ còn {$owner->stock} sản phẩm." : "“{$name}” đã hết hàng.";
         }
         $cart->set($line, $qty);
 
-        return redirect()->route('shop.cart');
+        if ($request->expectsJson()) {
+            $lines = $cart->lines();
+            $now = $lines->firstWhere('key', $line);
+            $subtotal = Cart::subtotal($lines);
+
+            return response()->json([
+                'qty' => $now['qty'] ?? 0,
+                'max' => $now ? max(1, ($now['variant'] ?? $now['product'])->maxOrderQty()) : 0, // tồn kho có thể đã đổi
+                'line_amount' => $now['line_amount'] ?? 0,
+                'line_text' => Money::format($now['line_amount'] ?? 0).'đ',
+                'subtotal' => $subtotal,
+                'subtotal_text' => Money::format($subtotal).'đ',
+                'count' => $cart->count(),
+                'error' => $error,
+            ]);
+        }
+
+        return $error ? redirect()->route('shop.cart')->with('error', $error) : redirect()->route('shop.cart');
     }
 
     public function destroy(Cart $cart, string $line): RedirectResponse
