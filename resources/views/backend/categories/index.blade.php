@@ -81,6 +81,9 @@
           <div class="cat-type-label font-medium">{{ $config['title'] }}</div>
         @endif
         <p class="cat-type-help" id="category-type-help">Đang quản lý danh mục dùng cho <strong>{{ $config['used_by'] }}</strong>.@if ($kinds->count() > 1) Muốn quản lý loại khác, chọn ở đây.@endif</p>
+        @if ($kind === 'product')
+          <p class="cat-type-help" data-home-order-hint>Trang chủ hiện mỗi danh mục gốc một khối 10 sản phẩm, <strong>theo đúng thứ tự ở đây</strong>@if ($canEdit) — kéo thả danh mục để đổi thứ tự@endif. Danh mục ẩn hoặc chưa có sản phẩm thì không hiện.</p>
+        @endif
       </div>
 
       <ul class="cat-tree" id="category-tree" data-tree role="tree" aria-label="{{ $config['title'] }}" @if ($canEdit) data-move-url="{{ route('backend.categories.move', [$kind, '__ID__']) }}" @endif>

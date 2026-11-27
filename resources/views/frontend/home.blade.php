@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
-{{-- Trang chủ cửa hàng (S1), theo luồng Shoplife: thẻ thành viên / lời mời đăng ký → nổi bật (hàng cuộn ngang) → link danh
-     mục gốc + số sản phẩm + sắp xếp → lưới sản phẩm (lượt bán, nút "+" thêm nhanh vào giỏ). --}}
+{{-- Trang chủ cửa hàng (S1), theo luồng Shoplife: thẻ thành viên / lời mời đăng ký → nổi bật (slider) → chip danh mục →
+     mỗi danh mục gốc một khối 10 sản phẩm (lượt bán, nút "+" thêm nhanh vào giỏ) + "Xem tất cả" sang trang danh mục. --}}
 @php use App\Support\Money; @endphp
 
 @section('content')
@@ -74,31 +74,33 @@
       </section>
     @endif
 
-    {{-- Tab nhóm sản phẩm + lưới --}}
+    {{-- Danh mục gốc: chip nhảy tới khối danh mục ngay trên trang chủ --}}
     <section class="scroll-mt-32 pt-8" id="san-pham">
-      {{-- Danh mục gốc: link sang trang danh mục; "Tất cả" = toàn bộ sản phẩm ngay tại trang chủ --}}
-      <nav class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" aria-label="Danh mục sản phẩm" data-group-tabs>
-        <a href="{{ route('home') }}#san-pham" aria-current="page" class="shrink-0 rounded-full border border-brand-600 bg-brand-600 px-4 py-2 text-sm font-medium whitespace-nowrap text-white">Tất cả</a>
-        @foreach ($roots as $category)
-          <a href="{{ $category->url() }}" data-group="{{ $category->slug }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-brand-500 hover:text-brand-700">{{ $category->name }}</a>
-        @endforeach
-      </nav>
-
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-500" data-product-count><strong class="text-slate-900">{{ Money::format($products->total()) }}</strong> sản phẩm</p>
-        @include('frontend.partials.sort')
-      </div>
-
-      @if ($products->isEmpty())
-        <div class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center text-slate-500">Cửa hàng đang cập nhật sản phẩm, mời bạn quay lại sau.</div>
+      @if ($sections->isEmpty())
+        <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center text-slate-500">Cửa hàng đang cập nhật sản phẩm, mời bạn quay lại sau.</div>
       @else
+        <nav class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" aria-label="Danh mục sản phẩm" data-group-tabs>
+          @foreach ($sections as $section)
+            <a href="#danh-muc-{{ $section['category']->slug }}" data-group="{{ $section['category']->slug }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:border-brand-500 hover:text-brand-700">{{ $section['category']->name }}</a>
+          @endforeach
+        </nav>
+      @endif
+    </section>
+
+    {{-- Mỗi danh mục gốc một khối: tối đa 10 sản phẩm (cả danh mục con), thứ tự theo trang quản trị Danh mục (kéo thả) --}}
+    @foreach ($sections as $section)
+      @php $category = $section['category']; @endphp
+      <section class="scroll-mt-32 pt-8" id="danh-muc-{{ $category->slug }}" data-home-category="{{ $category->slug }}">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-bold text-slate-900 md:text-xl"><a href="{{ $category->url() }}" class="hover:text-brand-700">{{ $category->name }}</a></h2>
+          <a href="{{ $category->url() }}" class="shrink-0 text-sm font-medium text-brand-700 hover:underline" data-category-all>Xem tất cả ({{ Money::format($section['total']) }}) ›</a>
+        </div>
         <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-          @foreach ($products as $product)
+          @foreach ($section['products'] as $product)
             @include('frontend.partials.product-card')
           @endforeach
         </div>
-        {{ $products->links('frontend.partials.pagination') }}
-      @endif
-    </section>
+      </section>
+    @endforeach
   </div>
 @endsection

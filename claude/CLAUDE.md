@@ -375,6 +375,14 @@ cộng ví tái tiêu dùng). Migration `2026_11_29_000001` (bảng `wallet_topu
 - Đơn đã thanh toán từ trước khi có engine: chạy một lần `php artisan levels:count-paid-orders` (có `--dry-run`).
 - Hoa hồng F1 / F2 + ví: xem mục riêng bên dưới. Test: `tests/Feature/LevelEngineTest.php`.
 
+## Trang chủ theo danh mục (27/11/2026)
+
+- `Frontend\HomeController`: slider "Sản phẩm nổi bật" → chip danh mục (neo `#danh-muc-{slug}`) → mỗi DANH MỤC GỐC một khối
+  tối đa `PER_CATEGORY = 10` sản phẩm (gồm danh mục con; nổi bật trước, rồi `sort_order`, mới nhất) + "Xem tất cả (N)" sang
+  trang danh mục. Bỏ lưới "tất cả sản phẩm" có phân trang / sắp xếp ở trang chủ. Thứ tự khối = thứ tự danh mục gốc
+  (`categories.priority`) — đổi bằng KÉO THẢ ở trang quản trị Danh mục (`categories.move`, đã có sẵn; có dòng chú thích
+  `data-home-order-hint`). Danh mục ẩn / chưa có sản phẩm không hiện khối. Test: `StorefrontTest`.
+
 ## Luồng mua hàng + thông báo cho kế toán (16/11/2026)
 
 - Nút −/+ số lượng ở giỏ hàng và trang thanh toán (27/11/2026): partial `frontend/partials/qty-stepper` (truyền đủ tham số,

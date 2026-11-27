@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Middleware\CaptureReferralCode;
 use App\Models\Category;
 use App\Models\Member;
@@ -57,9 +58,11 @@ class StorefrontTest extends TestCase
             ->assertSee('<title>Thuận Khang</title>', false)
             ->assertSee('data-join-card', false)->assertSee(route('member.register'))
             ->assertSee('Sản phẩm nổi bật')->assertSee('Dầu Cá Nổi Bật')->assertSee('480.000đ')
-            // Link danh mục gốc đang hiện; "Tất cả" gồm cả sản phẩm danh mục con
-            ->assertSee('href="/danh-muc/thuc-pham-chuc-nang" data-group="thuc-pham-chuc-nang"', false)->assertSee('data-group="gia-dung"', false)->assertDontSee('Danh mục ẩn')
-            ->assertSee('Vitamin Con')->assertSee('Nồi Chiên')->assertSeeInOrder(['data-product-count', '3', 'sản phẩm'], false)
+            // Mỗi danh mục gốc đang hiện một khối (gồm cả sản phẩm danh mục con) + link "Xem tất cả" sang trang danh mục
+            ->assertSee('href="#danh-muc-thuc-pham-chuc-nang" data-group="thuc-pham-chuc-nang"', false)->assertSee('data-group="gia-dung"', false)->assertDontSee('Danh mục ẩn')
+            ->assertSeeInOrder(['data-home-category="gia-dung"', 'href="/danh-muc/gia-dung"', 'Xem tất cả (1)', 'Nồi Chiên',
+                'data-home-category="thuc-pham-chuc-nang"', 'Xem tất cả (2)', 'Dầu Cá Nổi Bật', 'Vitamin Con'], false)
+            ->assertDontSee('data-home-category="vitamin"', false)->assertDontSee('data-home-category="danh-muc-an"', false)
             ->assertSee('data-quick-add', false)->assertSee('data-bottom-nav', false)->assertSee('data-slider-track', false)->assertSee('aria-label="Sản phẩm tiếp"', false)
             ->assertDontSee('Đang Ẩn')->assertDontSee('Thuộc Danh Mục Ẩn')->assertDontSee('Đã Xóa')
             ->assertDontSee('/backend', false);
@@ -67,6 +70,44 @@ class StorefrontTest extends TestCase
         $this->get('/?sort=x')->assertOk()->assertSee('Nồi Chiên');
         $this->get('/?sort[]=1')->assertOk();
         $this->actingAs(User::factory()->superAdmin()->create())->get('/')->assertOk();
+    }
+
+    public function test_home_shows_ten_products_per_category_in_admin_order(): void
+    {
+        $home = $this->category('Gia dụng', 'gia-dung');
+        $empty = $this->category('Chưa có hàng', 'chua-co-hang');
+        $this->food->update(['priority' => 2]);
+        $home->update(['priority' => 1]);
+        $empty->update(['priority' => 0]);
+        foreach (range(1, 12) as $i) {
+            $this->product(['name' => 'Vitamin số '.str_pad((string) $i, 2, '0', STR_PAD_LEFT), 'category_id' => $i % 2 ? $this->vitamin->id : $this->food->id, 'sort_order' => $i]);
+        }
+        $this->product(['name' => 'Vitamin nổi bật', 'is_featured' => true, 'sort_order' => 99]);
+        Product::factory()->create(['category_id' => $home->id, 'name' => 'Nồi Chiên']);
+
+        $html = $this->get('/')->assertOk()
+            // Thứ tự khối theo thứ tự danh mục ở trang quản trị; danh mục chưa có sản phẩm không hiện
+            ->assertSeeInOrder(['data-home-category="gia-dung"', 'data-home-category="thuc-pham-chuc-nang"'], false)
+            ->assertDontSee('data-home-category="chua-co-hang"', false)->assertDontSee('data-group="chua-co-hang"', false)
+            ->assertSee('Xem tất cả (13)')->getContent();
+
+        // Khối "Thực phẩm chức năng": đúng 10 sản phẩm (cả danh mục con), nổi bật trước rồi theo thứ tự sắp xếp
+        $section = substr($html, strpos($html, 'data-home-category="thuc-pham-chuc-nang"'));
+        $this->assertSame(HomeController::PER_CATEGORY, substr_count($section, ' data-product="'));
+        $this->assertLessThan(strpos($section, 'Vitamin số 01'), strpos($section, 'Vitamin nổi bật'));
+        $this->assertStringContainsString('Vitamin số 09', $section);
+        $this->assertStringNotContainsString('Vitamin số 10', $section);
+
+        // Kéo thả ở trang quản trị Danh mục (đặt "Gia dụng" sau "Thực phẩm chức năng") → khối trên trang chủ đổi chỗ
+        $admin = User::factory()->superAdmin()->create();
+        $this->actingAs($admin, 'web')->get('/backend/category?type=product')->assertOk()->assertSee('data-home-order-hint', false);
+        $this->actingAs($admin, 'web')->postJson(route('backend.categories.move', ['product', $home]), ['target_id' => $this->food->id, 'zone' => 'after'])->assertOk();
+        auth('web')->logout();
+        $this->get('/')->assertSeeInOrder(['data-home-category="thuc-pham-chuc-nang"', 'data-home-category="gia-dung"'], false);
+
+        // Chưa có sản phẩm nào: báo đang cập nhật
+        Product::query()->delete();
+        $this->get('/')->assertOk()->assertSee('Cửa hàng đang cập nhật sản phẩm')->assertDontSee('data-home-category', false);
     }
 
     public function test_home_member_card_sold_count_and_quick_add(): void
