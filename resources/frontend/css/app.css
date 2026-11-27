@@ -25,6 +25,27 @@
   body {
     @apply bg-slate-50 text-slate-800 antialiased;
   }
+  /* Tailwind v4 để con trỏ mặc định cho nút — mọi chỗ bấm được dùng con trỏ bàn tay như link; đang khóa thì "cấm" */
+  button,
+  [role='button'],
+  [type='button'],
+  [type='submit'],
+  [type='reset'],
+  [type='checkbox'],
+  [type='radio'],
+  [type='file']::file-selector-button,
+  select,
+  summary,
+  label:has(> input[type='checkbox'], > input[type='radio'], > input[type='file']) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [type='submit']:disabled,
+  [type='button']:disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
 }
 
 /* Nội dung soạn trong trang quản trị (mô tả sản phẩm) — đã lọc qua App\Support\RichText */
