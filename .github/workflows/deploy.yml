@@ -57,14 +57,25 @@ jobs:
 
       - name: Upload code (rsync)
         run: |
-          rsync -az \
+          # Không bật chế độ bảo trì: site vẫn chạy trong lúc deploy.
+          # -rltz: KHÔNG copy quyền (-p) / owner / group từ máy GitHub,
+          #   để giữ nguyên quyền thư mục gốc trên hosting (711) – nếu bị đổi thành 755 site sẽ lỗi 500.
+          # --delay-updates: chép hết file mới vào chỗ tạm rồi mới thay đồng loạt ở cuối,
+          #   rút ngắn khoảng thời gian code cũ/mới lẫn lộn còn vài giây.
+          # --delete-after: file bị xoá trong repo cũng bị xoá trên server (làm sau cùng).
+          #   Các đường dẫn --exclude bên dưới được BẢO VỆ, không bao giờ bị xoá/ghi đè.
+          rsync -rltz --no-perms --no-owner --no-group --delay-updates --delete-after \
             -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}" \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.env' \
+            --exclude='.user.ini' \
+            --exclude='error_log' \
             --exclude='node_modules/' \
             --exclude='storage/' \
             --exclude='public/storage' \
+            --exclude='public/.well-known/' \
+            --exclude='bootstrap/cache/' \
             --exclude='document/' \
             --exclude='claude/' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.TARGET_DIR }}/
@@ -72,12 +83,12 @@ jobs:
       - name: Run Laravel commands on server
         run: |
           ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            chmod 711 ${{ env.TARGET_DIR }} &&
             cd ${{ env.TARGET_DIR }} &&
-            php artisan down --retry=15 || true;
+            php artisan package:discover &&
             php artisan migrate --force &&
             php artisan optimize:clear &&
             php artisan config:cache &&
             php artisan route:cache &&
-            php artisan view:cache;
-            php artisan up
+            php artisan view:cache
           "
